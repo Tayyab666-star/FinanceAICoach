@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotifications } from '../contexts/NotificationContext';
+import { useDarkMode } from '../contexts/DarkModeContext';
 import { useTransactions, useGoals, useBudgetCategories } from '../hooks/useSupabaseData';
 import { supabase } from '../lib/supabase';
 import Card from '../components/Card';
@@ -41,9 +42,6 @@ const settingSections = [
   { id: 'data', name: 'Data & Privacy', icon: Database },
   { id: 'advanced', name: 'Advanced', icon: Shield }
 ];
-
-// Dark mode context
-const DarkModeContext = React.createContext();
 
 // Profile settings component
 const ProfileSettings = () => {
@@ -115,9 +113,9 @@ const ProfileSettings = () => {
   return (
     <Card>
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold">Profile Information</h3>
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Profile Information</h3>
         {hasChanges && (
-          <div className="flex items-center text-orange-600 text-sm">
+          <div className="flex items-center text-orange-600 dark:text-orange-400 text-sm">
             <AlertCircle className="w-4 h-4 mr-1" />
             Unsaved changes
           </div>
@@ -138,14 +136,14 @@ const ProfileSettings = () => {
           value={formData.email}
           onChange={(e) => handleInputChange('email', e.target.value)}
           disabled
-          className="bg-gray-50"
+          className="bg-gray-50 dark:bg-gray-700"
         />
-        <p className="text-xs text-gray-500 -mt-2">Email cannot be changed</p>
+        <p className="text-xs text-gray-500 dark:text-gray-400 -mt-2">Email cannot be changed</p>
         
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Timezone</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Timezone</label>
           <select
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             value={formData.timezone}
             onChange={(e) => handleInputChange('timezone', e.target.value)}
           >
@@ -238,9 +236,9 @@ const FinancialSettings = () => {
   return (
     <Card>
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold">Financial Settings</h3>
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Financial Settings</h3>
         {hasChanges && (
-          <div className="flex items-center text-orange-600 text-sm">
+          <div className="flex items-center text-orange-600 dark:text-orange-400 text-sm">
             <AlertCircle className="w-4 h-4 mr-1" />
             Unsaved changes
           </div>
@@ -249,18 +247,18 @@ const FinancialSettings = () => {
       
       <div className="space-y-6">
         {/* Current financial info */}
-        <div className="bg-blue-50 p-4 rounded-lg">
-          <h4 className="font-medium text-blue-900 mb-2">Current Financial Information</h4>
+        <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+          <h4 className="font-medium text-blue-900 dark:text-blue-300 mb-2">Current Financial Information</h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
             <div>
-              <span className="text-blue-700">Monthly Income:</span>
-              <span className="font-semibold text-blue-900 ml-2">
+              <span className="text-blue-700 dark:text-blue-400">Monthly Income:</span>
+              <span className="font-semibold text-blue-900 dark:text-blue-200 ml-2">
                 ${(userProfile?.monthly_income || 0).toLocaleString()}
               </span>
             </div>
             <div>
-              <span className="text-blue-700">Monthly Budget:</span>
-              <span className="font-semibold text-blue-900 ml-2">
+              <span className="text-blue-700 dark:text-blue-400">Monthly Budget:</span>
+              <span className="font-semibold text-blue-900 dark:text-blue-200 ml-2">
                 ${(userProfile?.monthly_budget || 0).toLocaleString()}
               </span>
             </div>
@@ -289,9 +287,9 @@ const FinancialSettings = () => {
 
         {/* Budget recommendation */}
         {formData.monthly_income > 0 && (
-          <div className="bg-green-50 p-4 rounded-lg">
-            <h4 className="font-medium text-green-900 mb-2">💡 Budget Recommendation</h4>
-            <p className="text-sm text-green-800">
+          <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg">
+            <h4 className="font-medium text-green-900 dark:text-green-300 mb-2">💡 Budget Recommendation</h4>
+            <p className="text-sm text-green-800 dark:text-green-200">
               Based on your income of ${parseFloat(formData.monthly_income).toLocaleString()}, 
               we recommend a budget of ${(parseFloat(formData.monthly_income) * 0.8).toLocaleString()} 
               (80% of income) to allow for savings and unexpected expenses.
@@ -312,22 +310,22 @@ const FinancialSettings = () => {
 
         {/* Financial preferences */}
         <div>
-          <h4 className="font-medium text-gray-900 mb-3">Preferences</h4>
+          <h4 className="font-medium text-gray-900 dark:text-white mb-3">Preferences</h4>
           <div className="space-y-3">
-            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+            <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
               <div>
-                <p className="font-medium text-gray-900">Auto-categorize transactions</p>
-                <p className="text-sm text-gray-600">Automatically assign categories to new transactions</p>
+                <p className="font-medium text-gray-900 dark:text-white">Auto-categorize transactions</p>
+                <p className="text-sm text-gray-600 dark:text-gray-300">Automatically assign categories to new transactions</p>
               </div>
               <button className="relative inline-flex h-6 w-11 items-center rounded-full bg-blue-600 transition-colors">
                 <span className="inline-block h-4 w-4 transform rounded-full bg-white transition-transform translate-x-6" />
               </button>
             </div>
             
-            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+            <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
               <div>
-                <p className="font-medium text-gray-900">Budget alerts</p>
-                <p className="text-sm text-gray-600">Get notified when approaching budget limits</p>
+                <p className="font-medium text-gray-900 dark:text-white">Budget alerts</p>
+                <p className="text-sm text-gray-600 dark:text-gray-300">Get notified when approaching budget limits</p>
               </div>
               <button className="relative inline-flex h-6 w-11 items-center rounded-full bg-blue-600 transition-colors">
                 <span className="inline-block h-4 w-4 transform rounded-full bg-white transition-transform translate-x-6" />
@@ -433,7 +431,7 @@ const SecuritySettings = () => {
     <div className="space-y-6">
       {/* Change Password */}
       <Card>
-        <h3 className="text-lg font-semibold mb-4">Change Password</h3>
+        <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Change Password</h3>
         
         <div className="space-y-4">
           <div className="relative">
@@ -445,7 +443,7 @@ const SecuritySettings = () => {
             />
             <button
               type="button"
-              className="absolute right-3 top-8 text-gray-400 hover:text-gray-600"
+              className="absolute right-3 top-8 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
               onClick={() => setShowCurrentPassword(!showCurrentPassword)}
             >
               {showCurrentPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -461,7 +459,7 @@ const SecuritySettings = () => {
             />
             <button
               type="button"
-              className="absolute right-3 top-8 text-gray-400 hover:text-gray-600"
+              className="absolute right-3 top-8 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
               onClick={() => setShowNewPassword(!showNewPassword)}
             >
               {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -481,17 +479,17 @@ const SecuritySettings = () => {
 
       {/* Two-Factor Authentication */}
       <Card>
-        <h3 className="text-lg font-semibold mb-4">Two-Factor Authentication</h3>
-        <p className="text-gray-600 mb-4">Add an extra layer of security to your account</p>
+        <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Two-Factor Authentication</h3>
+        <p className="text-gray-600 dark:text-gray-300 mb-4">Add an extra layer of security to your account</p>
         
         {!twoFactorEnabled ? (
           <div className="space-y-4">
-            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+            <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
               <div className="flex items-center space-x-3">
-                <Smartphone className="w-5 h-5 text-gray-600" />
+                <Smartphone className="w-5 h-5 text-gray-600 dark:text-gray-300" />
                 <div>
-                  <p className="font-medium text-gray-900">SMS Authentication</p>
-                  <p className="text-sm text-gray-600">Receive codes via text message</p>
+                  <p className="font-medium text-gray-900 dark:text-white">SMS Authentication</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-300">Receive codes via text message</p>
                 </div>
               </div>
               <Button variant="outline" onClick={handleEnableTwoFactor}>
@@ -500,8 +498,8 @@ const SecuritySettings = () => {
             </div>
 
             {showTwoFactorSetup && (
-              <div className="p-4 border border-blue-200 bg-blue-50 rounded-lg">
-                <h4 className="font-medium text-blue-900 mb-3">Set Up SMS Authentication</h4>
+              <div className="p-4 border border-blue-200 dark:border-blue-700 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                <h4 className="font-medium text-blue-900 dark:text-blue-300 mb-3">Set Up SMS Authentication</h4>
                 <div className="space-y-3">
                   <Input
                     label="Phone Number"
@@ -533,12 +531,12 @@ const SecuritySettings = () => {
           </div>
         ) : (
           <div className="space-y-4">
-            <div className="flex items-center justify-between p-4 bg-green-50 rounded-lg border border-green-200">
+            <div className="flex items-center justify-between p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-700">
               <div className="flex items-center space-x-3">
-                <CheckCircle className="w-5 h-5 text-green-600" />
+                <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" />
                 <div>
-                  <p className="font-medium text-green-900">SMS Authentication Enabled</p>
-                  <p className="text-sm text-green-700">Your account is protected with 2FA</p>
+                  <p className="font-medium text-green-900 dark:text-green-300">SMS Authentication Enabled</p>
+                  <p className="text-sm text-green-700 dark:text-green-200">Your account is protected with 2FA</p>
                 </div>
               </div>
               <Button variant="outline" onClick={handleDisableTwoFactor}>
@@ -551,7 +549,7 @@ const SecuritySettings = () => {
 
       {/* Login Sessions */}
       <Card>
-        <h3 className="text-lg font-semibold mb-4">Active Sessions</h3>
+        <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Active Sessions</h3>
         
         <div className="space-y-3">
           {[
@@ -559,13 +557,13 @@ const SecuritySettings = () => {
             { device: 'Safari on iPhone', location: 'New York, NY', current: false },
             { device: 'Chrome on Windows', location: 'Los Angeles, CA', current: false }
           ].map((session, index) => (
-            <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+            <div key={index} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
               <div>
-                <p className="font-medium text-gray-900">
+                <p className="font-medium text-gray-900 dark:text-white">
                   {session.device}
-                  {session.current && <span className="ml-2 text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">Current</span>}
+                  {session.current && <span className="ml-2 text-xs bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-300 px-2 py-1 rounded-full">Current</span>}
                 </p>
-                <p className="text-sm text-gray-600">{session.location}</p>
+                <p className="text-sm text-gray-600 dark:text-gray-300">{session.location}</p>
               </div>
               {!session.current && (
                 <Button 
@@ -623,19 +621,19 @@ const NotificationSettings = () => {
 
   return (
     <Card>
-      <h3 className="text-lg font-semibold mb-4">Notification Preferences</h3>
+      <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Notification Preferences</h3>
       
       <div className="space-y-4">
         {notificationOptions.map((option) => (
-          <div key={option.key} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+          <div key={option.key} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
             <div>
-              <p className="font-medium text-gray-900">{option.label}</p>
-              <p className="text-sm text-gray-600">{option.description}</p>
+              <p className="font-medium text-gray-900 dark:text-white">{option.label}</p>
+              <p className="text-sm text-gray-600 dark:text-gray-300">{option.description}</p>
             </div>
             <button
               onClick={() => handleToggle(option.key)}
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                notifications[option.key] ? 'bg-blue-600' : 'bg-gray-200'
+                notifications[option.key] ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-600'
               }`}
             >
               <span
@@ -728,20 +726,20 @@ const ConnectedAccounts = () => {
 
   return (
     <Card>
-      <h3 className="text-lg font-semibold mb-4">Connected Accounts</h3>
+      <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Connected Accounts</h3>
       
       <div className="space-y-3">
         {accounts.map((account) => (
-          <div key={account.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+          <div key={account.id} className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-600 rounded-lg">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                <CreditCard className="w-5 h-5 text-blue-600" />
+              <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/50 rounded-lg flex items-center justify-center">
+                <CreditCard className="w-5 h-5 text-blue-600 dark:text-blue-400" />
               </div>
               <div>
-                <p className="font-medium text-gray-900">{account.name}</p>
-                <p className="text-sm text-gray-600">{account.type}</p>
+                <p className="font-medium text-gray-900 dark:text-white">{account.name}</p>
+                <p className="text-sm text-gray-600 dark:text-gray-300">{account.type}</p>
                 {account.lastSync && (
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
                     Last synced: {account.lastSync.toLocaleString()}
                   </p>
                 )}
@@ -749,12 +747,12 @@ const ConnectedAccounts = () => {
             </div>
             
             <div className="text-right">
-              <p className="font-medium text-gray-900">{account.balance}</p>
+              <p className="font-medium text-gray-900 dark:text-white">{account.balance}</p>
               <div className="flex items-center space-x-2">
                 <span className={`text-xs px-2 py-1 rounded-full ${
                   account.status === 'Connected' 
-                    ? 'bg-green-100 text-green-800' 
-                    : 'bg-red-100 text-red-800'
+                    ? 'bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-300' 
+                    : 'bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-300'
                 }`}>
                   {account.status}
                 </span>
@@ -975,20 +973,20 @@ For questions or support, contact: support@financeapp.com
 
   return (
     <Card>
-      <h3 className="text-lg font-semibold mb-4">Data & Privacy</h3>
+      <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Data & Privacy</h3>
       <div className="space-y-4">
-        <div className="p-4 bg-blue-50 rounded-lg">
-          <h4 className="font-medium text-blue-900 mb-2">Data Export</h4>
-          <p className="text-sm text-blue-800 mb-3">Download a comprehensive report of all your financial data</p>
+        <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+          <h4 className="font-medium text-blue-900 dark:text-blue-300 mb-2">Data Export</h4>
+          <p className="text-sm text-blue-800 dark:text-blue-200 mb-3">Download a comprehensive report of all your financial data</p>
           <Button size="sm" variant="outline" onClick={handleExportData}>
             <Download className="w-4 h-4 mr-2" />
             Export Data
           </Button>
         </div>
         
-        <div className="p-4 bg-red-50 rounded-lg">
-          <h4 className="font-medium text-red-900 mb-2">Delete Account</h4>
-          <p className="text-sm text-red-800 mb-3">Permanently delete your account and all data</p>
+        <div className="p-4 bg-red-50 dark:bg-red-900/20 rounded-lg">
+          <h4 className="font-medium text-red-900 dark:text-red-300 mb-2">Delete Account</h4>
+          <p className="text-sm text-red-800 dark:text-red-200 mb-3">Permanently delete your account and all data</p>
           <Button 
             size="sm" 
             variant="danger" 
@@ -1005,22 +1003,22 @@ For questions or support, contact: support@financeapp.com
         <div className="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center z-50">
           <Card className="w-full max-w-md m-4">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-red-900">Delete Account</h3>
+              <h3 className="text-lg font-semibold text-red-900 dark:text-red-300">Delete Account</h3>
               <button 
                 onClick={() => setShowDeleteConfirm(false)}
-                className="p-1 hover:bg-gray-100 rounded"
+                className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
               >
-                <X className="w-5 h-5 text-gray-500" />
+                <X className="w-5 h-5 text-gray-500 dark:text-gray-400" />
               </button>
             </div>
             
             <div className="space-y-4">
-              <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-                <p className="text-sm text-red-800 font-medium mb-2">⚠️ This action cannot be undone!</p>
-                <p className="text-sm text-red-700">
+              <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg">
+                <p className="text-sm text-red-800 dark:text-red-200 font-medium mb-2">⚠️ This action cannot be undone!</p>
+                <p className="text-sm text-red-700 dark:text-red-300">
                   This will permanently delete:
                 </p>
-                <ul className="text-sm text-red-700 mt-2 ml-4 list-disc">
+                <ul className="text-sm text-red-700 dark:text-red-300 mt-2 ml-4 list-disc">
                   <li>Your profile and account information</li>
                   <li>All transaction history ({transactions.length} transactions)</li>
                   <li>All financial goals ({goals.length} goals)</li>
@@ -1030,7 +1028,7 @@ For questions or support, contact: support@financeapp.com
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Type "DELETE" to confirm:
                 </label>
                 <Input
@@ -1070,23 +1068,17 @@ For questions or support, contact: support@financeapp.com
 // Advanced settings with dark mode toggle
 const AdvancedSettings = () => {
   const { addNotification } = useNotifications();
-  const [isDarkMode, setIsDarkMode] = useState(false);
-  const [developerMode, setDeveloperMode] = useState(false);
+  const { isDarkMode, enableDarkMode, disableDarkMode } = useDarkMode();
+  const [developerMode, setDeveloperMode] = useState(isDarkMode);
 
   const handleDeveloperModeToggle = () => {
     const newDeveloperMode = !developerMode;
     setDeveloperMode(newDeveloperMode);
-    setIsDarkMode(newDeveloperMode);
     
-    // Apply dark mode to document
     if (newDeveloperMode) {
-      document.documentElement.classList.add('dark');
-      document.body.style.backgroundColor = '#1f2937';
-      document.body.style.color = '#f9fafb';
+      enableDarkMode();
     } else {
-      document.documentElement.classList.remove('dark');
-      document.body.style.backgroundColor = '';
-      document.body.style.color = '';
+      disableDarkMode();
     }
     
     addNotification({
@@ -1105,15 +1097,15 @@ const AdvancedSettings = () => {
   };
 
   return (
-    <Card className={isDarkMode ? 'bg-gray-800 border-gray-700' : ''}>
-      <h3 className={`text-lg font-semibold mb-4 ${isDarkMode ? 'text-white' : ''}`}>Advanced Settings</h3>
+    <Card>
+      <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Advanced Settings</h3>
       <div className="space-y-4">
-        <div className={`flex items-center justify-between p-3 rounded-lg ${isDarkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
+        <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
           <div className="flex items-center space-x-3">
             {isDarkMode ? <Moon className="w-5 h-5 text-blue-400" /> : <Sun className="w-5 h-5 text-gray-600" />}
             <div>
-              <p className={`font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Developer Mode</p>
-              <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+              <p className="font-medium text-gray-900 dark:text-white">Developer Mode</p>
+              <p className="text-sm text-gray-600 dark:text-gray-300">
                 Enable advanced features and dark mode
               </p>
             </div>
@@ -1127,10 +1119,10 @@ const AdvancedSettings = () => {
           </Button>
         </div>
         
-        <div className={`flex items-center justify-between p-3 rounded-lg ${isDarkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
+        <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
           <div>
-            <p className={`font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Beta Features</p>
-            <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+            <p className="font-medium text-gray-900 dark:text-white">Beta Features</p>
+            <p className="text-sm text-gray-600 dark:text-gray-300">
               Try new features before they're released
             </p>
           </div>
@@ -1146,14 +1138,8 @@ const AdvancedSettings = () => {
 // Main settings page component
 const Settings = () => {
   const { logout } = useAuth();
+  const { isDarkMode } = useDarkMode();
   const [activeSection, setActiveSection] = useState('profile');
-  const [isDarkMode, setIsDarkMode] = useState(false);
-
-  // Check for dark mode
-  useEffect(() => {
-    const darkMode = document.documentElement.classList.contains('dark');
-    setIsDarkMode(darkMode);
-  }, []);
 
   const handleLogout = async () => {
     try {
@@ -1185,12 +1171,12 @@ const Settings = () => {
   };
 
   return (
-    <div className={`space-y-6 ${isDarkMode ? 'text-white' : ''}`}>
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
         <div>
-          <h1 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Settings</h1>
-          <p className={isDarkMode ? 'text-gray-300' : 'text-gray-600'}>Manage your account and preferences</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Settings</h1>
+          <p className="text-gray-600 dark:text-gray-300">Manage your account and preferences</p>
         </div>
         
         <Button variant="outline" onClick={handleLogout}>
@@ -1201,7 +1187,7 @@ const Settings = () => {
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Settings navigation */}
         <div className="lg:col-span-1">
-          <Card className={`p-4 ${isDarkMode ? 'bg-gray-800 border-gray-700' : ''}`}>
+          <Card className="p-4">
             <nav className="space-y-1">
               {settingSections.map((section) => {
                 const Icon = section.icon;
@@ -1211,12 +1197,8 @@ const Settings = () => {
                     onClick={() => setActiveSection(section.id)}
                     className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
                       activeSection === section.id
-                        ? isDarkMode 
-                          ? 'bg-blue-900 text-blue-200' 
-                          : 'bg-blue-50 text-blue-700'
-                        : isDarkMode
-                          ? 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                          : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                        ? 'bg-blue-50 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300'
+                        : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white'
                     }`}
                   >
                     <Icon className="w-4 h-4 mr-3" />

@@ -35,30 +35,30 @@ const NotificationDropdown = ({ isOpen, onClose }) => {
   };
 
   return (
-    <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 z-50 max-h-96 overflow-hidden">
+    <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-50 max-h-96 overflow-hidden">
       {/* Header */}
-      <div className="p-4 border-b border-gray-200">
+      <div className="p-4 border-b border-gray-200 dark:border-gray-700">
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-gray-900">Notifications</h3>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Notifications</h3>
           <div className="flex items-center space-x-2">
             {unreadCount > 0 && (
               <button
                 onClick={markAllAsRead}
-                className="text-sm text-blue-600 hover:text-blue-800"
+                className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
               >
                 Mark all read
               </button>
             )}
             <button
               onClick={onClose}
-              className="p-1 hover:bg-gray-100 rounded"
+              className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
             >
-              <X className="w-4 h-4 text-gray-500" />
+              <X className="w-4 h-4 text-gray-500 dark:text-gray-400" />
             </button>
           </div>
         </div>
         {unreadCount > 0 && (
-          <p className="text-sm text-gray-600 mt-1">{unreadCount} unread notifications</p>
+          <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">{unreadCount} unread notifications</p>
         )}
       </div>
 
@@ -68,43 +68,43 @@ const NotificationDropdown = ({ isOpen, onClose }) => {
           notifications.map((notification) => (
             <div
               key={notification.id}
-              className={`p-4 border-b border-gray-100 hover:bg-gray-50 transition-colors ${
-                !notification.read ? 'bg-blue-50' : ''
+              className={`p-4 border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${
+                !notification.read ? 'bg-blue-50 dark:bg-blue-900/20' : ''
               }`}
             >
               <div className="flex items-start space-x-3">
                 <span className="text-lg">{getNotificationIcon(notification.type)}</span>
                 <div className="flex-1 min-w-0">
-                  <p className={`text-sm ${!notification.read ? 'font-semibold text-gray-900' : 'text-gray-800'}`}>
+                  <p className={`text-sm ${!notification.read ? 'font-semibold text-gray-900 dark:text-white' : 'text-gray-800 dark:text-gray-200'}`}>
                     {notification.title}
                   </p>
-                  <p className="text-sm text-gray-600 mt-1">{notification.message}</p>
-                  <p className="text-xs text-gray-500 mt-2">{formatTime(notification.timestamp)}</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">{notification.message}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">{formatTime(notification.timestamp)}</p>
                 </div>
                 <div className="flex items-center space-x-1">
                   {!notification.read && (
                     <button
                       onClick={() => markAsRead(notification.id)}
-                      className="p-1 hover:bg-gray-200 rounded"
+                      className="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded"
                       title="Mark as read"
                     >
-                      <Check className="w-3 h-3 text-gray-500" />
+                      <Check className="w-3 h-3 text-gray-500 dark:text-gray-400" />
                     </button>
                   )}
                   <button
                     onClick={() => removeNotification(notification.id)}
-                    className="p-1 hover:bg-gray-200 rounded"
+                    className="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded"
                     title="Remove notification"
                   >
-                    <Trash2 className="w-3 h-3 text-gray-500" />
+                    <Trash2 className="w-3 h-3 text-gray-500 dark:text-gray-400" />
                   </button>
                 </div>
               </div>
             </div>
           ))
         ) : (
-          <div className="p-8 text-center text-gray-500">
-            <Bell className="w-12 h-12 text-gray-300 mx-auto mb-2" />
+          <div className="p-8 text-center text-gray-500 dark:text-gray-400">
+            <Bell className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-2" />
             <p>No notifications yet</p>
             <p className="text-sm">You'll see updates about your transactions, goals, and budgets here</p>
           </div>
@@ -113,10 +113,10 @@ const NotificationDropdown = ({ isOpen, onClose }) => {
 
       {/* Footer */}
       {notifications.length > 0 && (
-        <div className="p-3 border-t border-gray-200 bg-gray-50">
+        <div className="p-3 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
           <button
             onClick={clearAllNotifications}
-            className="w-full text-sm text-red-600 hover:text-red-800 font-medium"
+            className="w-full text-sm text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 font-medium"
           >
             Clear all notifications
           </button>
@@ -146,19 +146,19 @@ const Header = ({ onMenuClick }) => {
   const displayName = React.useMemo(() => getUserDisplayName(), [userProfile, user]);
 
   return (
-    <header className="bg-white shadow-sm border-b border-gray-200 px-4 py-3">
+    <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 px-4 py-3 transition-colors duration-200">
       <div className="flex items-center justify-between">
         {/* Mobile menu button */}
         <button
           onClick={onMenuClick}
-          className="lg:hidden p-2 rounded-md hover:bg-gray-100 transition-colors"
+          className="lg:hidden p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
         >
-          <Menu className="w-5 h-5" />
+          <Menu className="w-5 h-5 text-gray-600 dark:text-gray-300" />
         </button>
         
         {/* Page title - hidden on mobile */}
         <div className="hidden lg:block">
-          <h2 className="text-lg font-semibold text-gray-900">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
             Welcome back, {displayName}!
           </h2>
         </div>
@@ -169,9 +169,9 @@ const Header = ({ onMenuClick }) => {
           <div className="relative">
             <button 
               onClick={() => setShowNotifications(!showNotifications)}
-              className="p-2 rounded-full hover:bg-gray-100 relative transition-colors"
+              className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 relative transition-colors"
             >
-              <Bell className="w-5 h-5 text-gray-600" />
+              <Bell className="w-5 h-5 text-gray-600 dark:text-gray-300" />
               {unreadCount > 0 && (
                 <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-medium">
                   {unreadCount > 9 ? '9+' : unreadCount}
@@ -189,26 +189,26 @@ const Header = ({ onMenuClick }) => {
           <div className="relative">
             <button 
               onClick={() => setShowUserMenu(!showUserMenu)}
-              className="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 transition-colors"
+              className="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
             >
               <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
                 <User className="w-4 h-4 text-white" />
               </div>
-              <span className="hidden md:block text-sm font-medium text-gray-700">
+              <span className="hidden md:block text-sm font-medium text-gray-700 dark:text-gray-200">
                 {displayName}
               </span>
             </button>
             
             {/* User dropdown menu */}
             {showUserMenu && (
-              <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
-                <div className="p-3 border-b border-gray-100">
-                  <p className="text-sm font-medium text-gray-900">{displayName}</p>
-                  <p className="text-xs text-gray-500">{user?.email}</p>
+              <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-50">
+                <div className="p-3 border-b border-gray-100 dark:border-gray-700">
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">{displayName}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">{user?.email}</p>
                 </div>
                 <button
                   onClick={handleLogout}
-                  className="flex items-center w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                  className="flex items-center w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                 >
                   <LogOut className="w-4 h-4 mr-2" />
                   Sign out

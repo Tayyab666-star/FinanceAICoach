@@ -1,6 +1,6 @@
 import React from 'react';
 
-// Reusable card component with consistent styling
+// Reusable card component with consistent styling and dark mode support
 const Card = ({ 
   children, 
   className = '', 
@@ -9,7 +9,7 @@ const Card = ({
 }) => {
   return (
     <div className={`
-      bg-white rounded-lg border border-gray-200 shadow-sm
+      bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm
       ${hover ? 'hover:shadow-md transition-shadow duration-200' : ''}
       ${padding}
       ${className}
