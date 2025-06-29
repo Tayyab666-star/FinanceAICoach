@@ -35,7 +35,7 @@ const NotificationDropdown = ({ isOpen, onClose }) => {
   };
 
   return (
-    <div className="absolute right-0 mt-2 w-72 sm:w-80 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-50 max-h-96 overflow-hidden">
+    <div className="absolute right-0 mt-2 w-72 sm:w-80 bg-white dark:bg-gray-800 shadow-lg border border-gray-200 dark:border-gray-700 z-50 max-h-96 overflow-hidden">
       {/* Header */}
       <div className="p-3 sm:p-4 border-b border-gray-200 dark:border-gray-700">
         <div className="flex items-center justify-between">
@@ -51,7 +51,7 @@ const NotificationDropdown = ({ isOpen, onClose }) => {
             )}
             <button
               onClick={onClose}
-              className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+              className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700"
             >
               <X className="w-4 h-4 text-gray-500 dark:text-gray-400" />
             </button>
@@ -85,7 +85,7 @@ const NotificationDropdown = ({ isOpen, onClose }) => {
                   {!notification.read && (
                     <button
                       onClick={() => markAsRead(notification.id)}
-                      className="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded"
+                      className="p-1 hover:bg-gray-200 dark:hover:bg-gray-600"
                       title="Mark as read"
                     >
                       <Check className="w-3 h-3 text-gray-500 dark:text-gray-400" />
@@ -93,7 +93,7 @@ const NotificationDropdown = ({ isOpen, onClose }) => {
                   )}
                   <button
                     onClick={() => removeNotification(notification.id)}
-                    className="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded"
+                    className="p-1 hover:bg-gray-200 dark:hover:bg-gray-600"
                     title="Remove notification"
                   >
                     <Trash2 className="w-3 h-3 text-gray-500 dark:text-gray-400" />
@@ -126,7 +126,7 @@ const NotificationDropdown = ({ isOpen, onClose }) => {
   );
 };
 
-// Top header component with user info and mobile menu - fully responsive
+// Top header component with improved mobile layout
 const Header = ({ onMenuClick }) => {
   const { user, userProfile, logout, getUserDisplayName } = useAuth();
   const { unreadCount } = useNotifications();
@@ -151,23 +151,39 @@ const Header = ({ onMenuClick }) => {
         {/* Mobile menu button */}
         <button
           onClick={onMenuClick}
-          className="lg:hidden p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+          className="lg:hidden p-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
         >
           <Menu className="w-5 h-5 text-gray-600 dark:text-gray-300" />
         </button>
         
-        {/* Page title - responsive */}
-        <div className="hidden sm:block">
+        {/* Desktop title */}
+        <div className="hidden lg:block">
           <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">
-            Welcome back, <span className="hidden md:inline">{displayName}</span><span className="md:hidden">User</span>!
+            Welcome back, {displayName}!
           </h2>
         </div>
         
-        {/* Mobile title */}
-        <div className="sm:hidden flex-1 text-center">
-          <h2 className="text-base font-semibold text-gray-900 dark:text-white truncate">
-            Finance AI Coach
-          </h2>
+        {/* Mobile/Tablet centered logo */}
+        <div className="lg:hidden flex-1 flex justify-center">
+          <div className="flex items-center space-x-2">
+            <img 
+              src="/WhatsApp Image 2025-06-29 at 13.46.00_d292e4a6.jpg" 
+              alt="Finance AI Coach" 
+              className="h-8 w-auto object-contain"
+              onError={(e) => {
+                e.target.style.display = 'none';
+                e.target.nextSibling.style.display = 'flex';
+              }}
+            />
+            <div 
+              className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center hidden"
+            >
+              <span className="text-white font-bold text-sm">F</span>
+            </div>
+            <span className="text-base font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              Finance AI
+            </span>
+          </div>
         </div>
         
         {/* Right side actions */}
@@ -176,11 +192,11 @@ const Header = ({ onMenuClick }) => {
           <div className="relative">
             <button 
               onClick={() => setShowNotifications(!showNotifications)}
-              className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 relative transition-colors"
+              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 relative transition-colors"
             >
               <Bell className={`w-5 h-5 ${unreadCount > 0 ? 'text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-300'}`} />
               {unreadCount > 0 && (
-                <span className="absolute -top-1 -right-1 w-4 h-4 sm:w-5 sm:h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-medium animate-pulse">
+                <span className="absolute -top-1 -right-1 w-4 h-4 sm:w-5 sm:h-5 bg-red-500 text-white text-xs flex items-center justify-center font-medium animate-pulse">
                   {unreadCount > 9 ? '9+' : unreadCount}
                 </span>
               )}
@@ -196,9 +212,9 @@ const Header = ({ onMenuClick }) => {
           <div className="relative">
             <button 
               onClick={() => setShowUserMenu(!showUserMenu)}
-              className="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              className="flex items-center space-x-2 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
             >
-              <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
+              <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center">
                 <User className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
               </div>
               <span className="hidden sm:block text-sm font-medium text-gray-700 dark:text-gray-200 max-w-24 md:max-w-none truncate">
@@ -208,7 +224,7 @@ const Header = ({ onMenuClick }) => {
             
             {/* User dropdown menu */}
             {showUserMenu && (
-              <div className="absolute right-0 mt-2 w-44 sm:w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-50">
+              <div className="absolute right-0 mt-2 w-44 sm:w-48 bg-white dark:bg-gray-800 shadow-lg border border-gray-200 dark:border-gray-700 z-50">
                 <div className="p-3 border-b border-gray-100 dark:border-gray-700">
                   <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{displayName}</p>
                   <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user?.email}</p>

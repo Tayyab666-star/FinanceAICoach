@@ -1,6 +1,6 @@
 import React from 'react';
 
-// Reusable input component with consistent styling, proper form attributes, and responsive design
+// Reusable input component with sharp edges and consistent styling
 const Input = ({ 
   label, 
   error, 
@@ -24,7 +24,7 @@ const Input = ({
         id={inputId}
         name={inputName}
         className={`
-          w-full px-3 py-2 border text-sm rounded-lg
+          w-full px-3 py-2 border text-sm
           focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
           bg-white dark:bg-gray-700 text-gray-900 dark:text-white
           transition-colors duration-200

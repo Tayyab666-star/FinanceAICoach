@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { X } from 'lucide-react';
 import Card from './Card';
 
-// Responsive modal component that handles overflow and mobile optimization
+// Responsive modal component with sharp edges
 const ResponsiveModal = ({ 
   isOpen, 
   onClose, 

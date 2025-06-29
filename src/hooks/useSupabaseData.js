@@ -67,9 +67,9 @@ export const useTransactions = () => {
       if (error) throw error;
       setTransactions(prev => [data, ...prev]);
       
-      // Add notification
+      // Add notification for user action
       addNotification({
-        type: 'transaction',
+        type: 'success',
         title: 'Transaction Added',
         message: `${transaction.type === 'income' ? 'Income' : 'Expense'} of $${Math.abs(transaction.amount).toFixed(2)} added for ${transaction.category}`
       });
@@ -102,9 +102,9 @@ export const useTransactions = () => {
       if (error) throw error;
       setTransactions(prev => prev.map(t => t.id === id ? data : t));
       
-      // Add notification
+      // Add notification for user action
       addNotification({
-        type: 'transaction',
+        type: 'success',
         title: 'Transaction Updated',
         message: `Transaction "${updates.description || data.description}" has been updated`
       });
@@ -136,10 +136,10 @@ export const useTransactions = () => {
       if (error) throw error;
       setTransactions(prev => prev.filter(t => t.id !== id));
       
-      // Add notification
+      // Add notification for user action
       if (transaction) {
         addNotification({
-          type: 'transaction',
+          type: 'success',
           title: 'Transaction Deleted',
           message: `Transaction "${transaction.description}" has been deleted`
         });
@@ -232,9 +232,9 @@ export const useGoals = () => {
       if (error) throw error;
       setGoals(prev => [data, ...prev]);
       
-      // Add notification
+      // Add notification for user action
       addNotification({
-        type: 'goal',
+        type: 'success',
         title: 'New Goal Created',
         message: `Goal "${goal.title}" created with target of $${goal.target_amount.toLocaleString()}`
       });
@@ -275,17 +275,24 @@ export const useGoals = () => {
         
         if (newProgress >= 100 && oldProgress < 100) {
           addNotification({
-            type: 'achievement',
+            type: 'success',
             title: 'Goal Achieved! 🎉',
             message: `Congratulations! You've reached your goal "${data.title}"`
           });
         } else if (updates.current_amount > oldGoal.current_amount) {
           addNotification({
-            type: 'goal',
+            type: 'success',
             title: 'Goal Progress Updated',
             message: `Added $${(updates.current_amount - oldGoal.current_amount).toFixed(2)} to "${data.title}" (${newProgress.toFixed(1)}% complete)`
           });
         }
+      } else {
+        // General goal update notification
+        addNotification({
+          type: 'success',
+          title: 'Goal Updated',
+          message: `Goal "${data.title}" has been updated`
+        });
       }
       
       return data;
@@ -315,10 +322,10 @@ export const useGoals = () => {
       if (error) throw error;
       setGoals(prev => prev.filter(g => g.id !== id));
       
-      // Add notification
+      // Add notification for user action
       if (goal) {
         addNotification({
-          type: 'goal',
+          type: 'success',
           title: 'Goal Deleted',
           message: `Goal "${goal.title}" has been deleted`
         });
@@ -428,9 +435,9 @@ export const useBudgetCategories = () => {
       if (error) throw error;
       setBudgets(budgetData);
       
-      // Add notification
+      // Add notification for user action
       addNotification({
-        type: 'budget',
+        type: 'success',
         title: 'Budget Updated',
         message: `Budget categories have been updated with total allocation of $${Object.values(budgetData).reduce((sum, amount) => sum + amount, 0).toLocaleString()}`
       });
@@ -463,9 +470,9 @@ export const useBudgetCategories = () => {
       if (error) throw error;
       setBudgets(prev => ({ ...prev, [category]: amount }));
       
-      // Add notification
+      // Add notification for user action
       addNotification({
-        type: 'budget',
+        type: 'success',
         title: 'Budget Category Updated',
         message: `${category} budget updated to $${amount.toLocaleString()}`
       });

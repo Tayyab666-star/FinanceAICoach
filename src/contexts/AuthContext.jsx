@@ -80,12 +80,17 @@ export const AuthProvider = ({ children }) => {
     };
   }, []);
 
-  // Helper function to capitalize name properly
+  // Helper function to capitalize name properly and extract only alphabetic characters
   const capitalizeName = (name) => {
     if (!name) return '';
     
+    // Extract only alphabetic characters and spaces, remove numbers and special chars
+    const cleanName = name.replace(/[^a-zA-Z\s]/g, '').trim();
+    
+    if (!cleanName) return name; // Return original if nothing left after cleaning
+    
     // Split by spaces and capitalize each word
-    return name
+    return cleanName
       .split(' ')
       .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
       .join(' ');
@@ -100,7 +105,7 @@ export const AuthProvider = ({ children }) => {
       const userData = { 
         id: authUser.id,
         email: authUser.email, 
-        name: authUser.email.split('@')[0]
+        name: capitalizeName(authUser.email.split('@')[0])
       };
       
       console.log('Setting user data immediately:', userData);
@@ -155,7 +160,7 @@ export const AuthProvider = ({ children }) => {
       const userData = { 
         id: authUser.id,
         email: authUser.email, 
-        name: authUser.email.split('@')[0]
+        name: capitalizeName(authUser.email.split('@')[0])
       };
       setUser(userData);
       localStorage.setItem('financeapp_user', JSON.stringify(userData));
@@ -329,29 +334,41 @@ export const AuthProvider = ({ children }) => {
     try {
       setError(null);
       
+      // Clean and capitalize name if provided
+      let cleanedUpdates = { ...updates };
+      if (updates.name) {
+        cleanedUpdates.name = capitalizeName(updates.name);
+      }
+      
+      console.log('Updating profile with:', cleanedUpdates);
+      
       // Update local state immediately for responsive UI
       const updatedProfile = {
         ...userProfile,
-        ...updates,
+        ...cleanedUpdates,
         updated_at: new Date().toISOString()
       };
       
-      if (updates.name) {
-        updatedProfile.name = capitalizeName(updates.name);
-      }
-      
-      console.log('Updating profile with:', updates);
       console.log('Updated profile will be:', updatedProfile);
       
       setUserProfile(updatedProfile);
       localStorage.setItem('financeapp_profile', JSON.stringify(updatedProfile));
       
+      // Update user object if name changed
+      if (cleanedUpdates.name) {
+        const updatedUser = {
+          ...user,
+          name: cleanedUpdates.name
+        };
+        setUser(updatedUser);
+        localStorage.setItem('financeapp_user', JSON.stringify(updatedUser));
+      }
+      
       // Update database in background
       const { data, error } = await supabase
         .from('user_profiles')
         .update({
-          ...updates,
-          name: updates.name ? capitalizeName(updates.name) : undefined,
+          ...cleanedUpdates,
           updated_at: new Date().toISOString()
         })
         .eq('id', user.id)
@@ -363,6 +380,10 @@ export const AuthProvider = ({ children }) => {
         // Revert local changes if database update fails
         setUserProfile(userProfile);
         localStorage.setItem('financeapp_profile', JSON.stringify(userProfile));
+        if (cleanedUpdates.name) {
+          setUser(user);
+          localStorage.setItem('financeapp_user', JSON.stringify(user));
+        }
         setError('Failed to update profile. Please try again.');
         throw error;
       }
@@ -372,6 +393,16 @@ export const AuthProvider = ({ children }) => {
         console.log('Profile updated successfully in database:', data);
         setUserProfile(data);
         localStorage.setItem('financeapp_profile', JSON.stringify(data));
+        
+        // Update user object with latest name
+        if (data.name) {
+          const updatedUser = {
+            ...user,
+            name: data.name
+          };
+          setUser(updatedUser);
+          localStorage.setItem('financeapp_user', JSON.stringify(updatedUser));
+        }
       }
       
       return data || updatedProfile;
@@ -440,14 +471,14 @@ export const AuthProvider = ({ children }) => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
         <div className="text-center">
-          <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
+          <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 animate-spin mx-auto mb-4"></div>
           <p className="text-gray-600 dark:text-gray-300">Initializing...</p>
           {error && (
-            <div className="mt-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg max-w-md mx-auto">
+            <div className="mt-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 max-w-md mx-auto">
               <p className="text-red-800 dark:text-red-200 text-sm">{error}</p>
               <button 
                 onClick={() => window.location.reload()} 
-                className="mt-2 px-4 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700 transition-colors"
+                className="mt-2 px-4 py-2 bg-red-600 text-white text-sm hover:bg-red-700 transition-colors"
               >
                 Reload Page
               </button>

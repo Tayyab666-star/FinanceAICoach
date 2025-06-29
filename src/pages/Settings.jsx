@@ -1,13 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { 
   User, 
-  Lock, 
   Bell, 
   CreditCard, 
   Database, 
   Shield, 
-  Eye,
-  EyeOff,
   Save,
   Plus,
   DollarSign,
@@ -36,14 +33,13 @@ import Input from '../components/Input';
 const settingSections = [
   { id: 'profile', name: 'Profile', icon: User },
   { id: 'financial', name: 'Financial Settings', icon: DollarSign },
-  { id: 'security', name: 'Security', icon: Lock },
+  { id: 'security', name: 'Security', icon: Shield },
   { id: 'notifications', name: 'Notifications', icon: Bell },
   { id: 'accounts', name: 'Connected Accounts', icon: CreditCard },
-  { id: 'data', name: 'Data & Privacy', icon: Database },
-  { id: 'advanced', name: 'Advanced', icon: Shield }
+  { id: 'data', name: 'Data & Privacy', icon: Database }
 ];
 
-// Profile settings component
+// Profile settings component with working name updates
 const ProfileSettings = () => {
   const { user, userProfile, updateUserProfile, getUserDisplayName, refreshUserProfile } = useAuth();
   const { addNotification } = useNotifications();
@@ -80,7 +76,7 @@ const ProfileSettings = () => {
     setLoading(true);
     try {
       await updateUserProfile({
-        name: formData.name,
+        name: formData.name.trim(),
         timezone: formData.timezone
       });
       
@@ -90,7 +86,7 @@ const ProfileSettings = () => {
       addNotification({
         type: 'success',
         title: 'Profile Updated',
-        message: 'Your profile information has been successfully updated'
+        message: `Your name has been updated to "${formData.name.trim()}"`
       });
       
       setHasChanges(false);
@@ -143,7 +139,7 @@ const ProfileSettings = () => {
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Timezone</label>
           <select
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             value={formData.timezone}
             onChange={(e) => handleInputChange('timezone', e.target.value)}
           >
@@ -247,7 +243,7 @@ const FinancialSettings = () => {
       
       <div className="space-y-6">
         {/* Current financial info */}
-        <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+        <div className="bg-blue-50 dark:bg-blue-900/20 p-4">
           <h4 className="font-medium text-blue-900 dark:text-blue-300 mb-2">Current Financial Information</h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
             <div>
@@ -287,7 +283,7 @@ const FinancialSettings = () => {
 
         {/* Budget recommendation */}
         {formData.monthly_income > 0 && (
-          <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg">
+          <div className="bg-green-50 dark:bg-green-900/20 p-4">
             <h4 className="font-medium text-green-900 dark:text-green-300 mb-2">💡 Budget Recommendation</h4>
             <p className="text-sm text-green-800 dark:text-green-200">
               Based on your income of ${parseFloat(formData.monthly_income).toLocaleString()}, 
@@ -312,23 +308,23 @@ const FinancialSettings = () => {
         <div>
           <h4 className="font-medium text-gray-900 dark:text-white mb-3">Preferences</h4>
           <div className="space-y-3">
-            <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+            <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700">
               <div>
                 <p className="font-medium text-gray-900 dark:text-white">Auto-categorize transactions</p>
                 <p className="text-sm text-gray-600 dark:text-gray-300">Automatically assign categories to new transactions</p>
               </div>
-              <button className="relative inline-flex h-6 w-11 items-center rounded-full bg-blue-600 transition-colors">
-                <span className="inline-block h-4 w-4 transform rounded-full bg-white transition-transform translate-x-6" />
+              <button className="relative inline-flex h-6 w-11 items-center bg-blue-600 transition-colors">
+                <span className="inline-block h-4 w-4 transform bg-white transition-transform translate-x-6" />
               </button>
             </div>
             
-            <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+            <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700">
               <div>
                 <p className="font-medium text-gray-900 dark:text-white">Budget alerts</p>
                 <p className="text-sm text-gray-600 dark:text-gray-300">Get notified when approaching budget limits</p>
               </div>
-              <button className="relative inline-flex h-6 w-11 items-center rounded-full bg-blue-600 transition-colors">
-                <span className="inline-block h-4 w-4 transform rounded-full bg-white transition-transform translate-x-6" />
+              <button className="relative inline-flex h-6 w-11 items-center bg-blue-600 transition-colors">
+                <span className="inline-block h-4 w-4 transform bg-white transition-transform translate-x-6" />
               </button>
             </div>
           </div>
@@ -338,49 +334,13 @@ const FinancialSettings = () => {
   );
 };
 
-// Security settings component with working 2FA
+// Simplified Security settings component (removed password fields)
 const SecuritySettings = () => {
   const { addNotification } = useNotifications();
-  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
-  const [showNewPassword, setShowNewPassword] = useState(false);
-  const [passwordData, setPasswordData] = useState({
-    currentPassword: '',
-    newPassword: '',
-    confirmPassword: ''
-  });
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
   const [showTwoFactorSetup, setShowTwoFactorSetup] = useState(false);
   const [verificationCode, setVerificationCode] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
-
-  const handlePasswordChange = async () => {
-    if (passwordData.newPassword !== passwordData.confirmPassword) {
-      addNotification({
-        type: 'error',
-        title: 'Password Mismatch',
-        message: 'New passwords do not match'
-      });
-      return;
-    }
-
-    if (passwordData.newPassword.length < 8) {
-      addNotification({
-        type: 'error',
-        title: 'Password Too Short',
-        message: 'Password must be at least 8 characters long'
-      });
-      return;
-    }
-
-    // Simulate password update
-    addNotification({
-      type: 'success',
-      title: 'Password Updated',
-      message: 'Your password has been successfully updated'
-    });
-    
-    setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
-  };
 
   const handleEnableTwoFactor = () => {
     setShowTwoFactorSetup(true);
@@ -429,54 +389,6 @@ const SecuritySettings = () => {
 
   return (
     <div className="space-y-6">
-      {/* Change Password */}
-      <Card>
-        <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Change Password</h3>
-        
-        <div className="space-y-4">
-          <div className="relative">
-            <Input
-              label="Current Password"
-              type={showCurrentPassword ? 'text' : 'password'}
-              value={passwordData.currentPassword}
-              onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
-            />
-            <button
-              type="button"
-              className="absolute right-3 top-8 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
-              onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-            >
-              {showCurrentPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-            </button>
-          </div>
-          
-          <div className="relative">
-            <Input
-              label="New Password"
-              type={showNewPassword ? 'text' : 'password'}
-              value={passwordData.newPassword}
-              onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
-            />
-            <button
-              type="button"
-              className="absolute right-3 top-8 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
-              onClick={() => setShowNewPassword(!showNewPassword)}
-            >
-              {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-            </button>
-          </div>
-          
-          <Input
-            label="Confirm New Password"
-            type="password"
-            value={passwordData.confirmPassword}
-            onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
-          />
-          
-          <Button onClick={handlePasswordChange}>Update Password</Button>
-        </div>
-      </Card>
-
       {/* Two-Factor Authentication */}
       <Card>
         <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Two-Factor Authentication</h3>
@@ -484,7 +396,7 @@ const SecuritySettings = () => {
         
         {!twoFactorEnabled ? (
           <div className="space-y-4">
-            <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+            <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700">
               <div className="flex items-center space-x-3">
                 <Smartphone className="w-5 h-5 text-gray-600 dark:text-gray-300" />
                 <div>
@@ -498,7 +410,7 @@ const SecuritySettings = () => {
             </div>
 
             {showTwoFactorSetup && (
-              <div className="p-4 border border-blue-200 dark:border-blue-700 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+              <div className="p-4 border border-blue-200 dark:border-blue-700 bg-blue-50 dark:bg-blue-900/20">
                 <h4 className="font-medium text-blue-900 dark:text-blue-300 mb-3">Set Up SMS Authentication</h4>
                 <div className="space-y-3">
                   <Input
@@ -531,7 +443,7 @@ const SecuritySettings = () => {
           </div>
         ) : (
           <div className="space-y-4">
-            <div className="flex items-center justify-between p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-700">
+            <div className="flex items-center justify-between p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700">
               <div className="flex items-center space-x-3">
                 <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" />
                 <div>
@@ -557,11 +469,11 @@ const SecuritySettings = () => {
             { device: 'Safari on iPhone', location: 'New York, NY', current: false },
             { device: 'Chrome on Windows', location: 'Los Angeles, CA', current: false }
           ].map((session, index) => (
-            <div key={index} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+            <div key={index} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700">
               <div>
                 <p className="font-medium text-gray-900 dark:text-white">
                   {session.device}
-                  {session.current && <span className="ml-2 text-xs bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-300 px-2 py-1 rounded-full">Current</span>}
+                  {session.current && <span className="ml-2 text-xs bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-300 px-2 py-1">Current</span>}
                 </p>
                 <p className="text-sm text-gray-600 dark:text-gray-300">{session.location}</p>
               </div>
@@ -625,19 +537,19 @@ const NotificationSettings = () => {
       
       <div className="space-y-4">
         {notificationOptions.map((option) => (
-          <div key={option.key} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+          <div key={option.key} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700">
             <div>
               <p className="font-medium text-gray-900 dark:text-white">{option.label}</p>
               <p className="text-sm text-gray-600 dark:text-gray-300">{option.description}</p>
             </div>
             <button
               onClick={() => handleToggle(option.key)}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+              className={`relative inline-flex h-6 w-11 items-center transition-colors ${
                 notifications[option.key] ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-600'
               }`}
             >
               <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                className={`inline-block h-4 w-4 transform bg-white transition-transform ${
                   notifications[option.key] ? 'translate-x-6' : 'translate-x-1'
                 }`}
               />
@@ -730,9 +642,9 @@ const ConnectedAccounts = () => {
       
       <div className="space-y-3">
         {accounts.map((account) => (
-          <div key={account.id} className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-600 rounded-lg">
+          <div key={account.id} className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-600">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/50 rounded-lg flex items-center justify-center">
+              <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center">
                 <CreditCard className="w-5 h-5 text-blue-600 dark:text-blue-400" />
               </div>
               <div>
@@ -749,7 +661,7 @@ const ConnectedAccounts = () => {
             <div className="text-right">
               <p className="font-medium text-gray-900 dark:text-white">{account.balance}</p>
               <div className="flex items-center space-x-2">
-                <span className={`text-xs px-2 py-1 rounded-full ${
+                <span className={`text-xs px-2 py-1 ${
                   account.status === 'Connected' 
                     ? 'bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-300' 
                     : 'bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-300'
@@ -975,7 +887,7 @@ For questions or support, contact: support@financeapp.com
     <Card>
       <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Data & Privacy</h3>
       <div className="space-y-4">
-        <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+        <div className="p-4 bg-blue-50 dark:bg-blue-900/20">
           <h4 className="font-medium text-blue-900 dark:text-blue-300 mb-2">Data Export</h4>
           <p className="text-sm text-blue-800 dark:text-blue-200 mb-3">Download a comprehensive report of all your financial data</p>
           <Button size="sm" variant="outline" onClick={handleExportData}>
@@ -984,7 +896,7 @@ For questions or support, contact: support@financeapp.com
           </Button>
         </div>
         
-        <div className="p-4 bg-red-50 dark:bg-red-900/20 rounded-lg">
+        <div className="p-4 bg-red-50 dark:bg-red-900/20">
           <h4 className="font-medium text-red-900 dark:text-red-300 mb-2">Delete Account</h4>
           <p className="text-sm text-red-800 dark:text-red-200 mb-3">Permanently delete your account and all data</p>
           <Button 
@@ -1006,14 +918,14 @@ For questions or support, contact: support@financeapp.com
               <h3 className="text-lg font-semibold text-red-900 dark:text-red-300">Delete Account</h3>
               <button 
                 onClick={() => setShowDeleteConfirm(false)}
-                className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+                className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700"
               >
                 <X className="w-5 h-5 text-gray-500 dark:text-gray-400" />
               </button>
             </div>
             
             <div className="space-y-4">
-              <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg">
+              <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700">
                 <p className="text-sm text-red-800 dark:text-red-200 font-medium mb-2">⚠️ This action cannot be undone!</p>
                 <p className="text-sm text-red-700 dark:text-red-300">
                   This will permanently delete:
@@ -1100,7 +1012,7 @@ const AdvancedSettings = () => {
     <Card>
       <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Advanced Settings</h3>
       <div className="space-y-4">
-        <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+        <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700">
           <div className="flex items-center space-x-3">
             {isDarkMode ? <Moon className="w-5 h-5 text-blue-400" /> : <Sun className="w-5 h-5 text-gray-600" />}
             <div>
@@ -1119,7 +1031,7 @@ const AdvancedSettings = () => {
           </Button>
         </div>
         
-        <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+        <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700">
           <div>
             <p className="font-medium text-gray-900 dark:text-white">Beta Features</p>
             <p className="text-sm text-gray-600 dark:text-gray-300">
@@ -1195,7 +1107,7 @@ const Settings = () => {
                   <button
                     key={section.id}
                     onClick={() => setActiveSection(section.id)}
-                    className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                    className={`w-full flex items-center px-3 py-2 text-sm font-medium transition-colors ${
                       activeSection === section.id
                         ? 'bg-blue-50 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300'
                         : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white'
