@@ -32,14 +32,14 @@ const Login = () => {
         addNotification({
           type: 'success',
           title: 'Demo System Ready! 🎉',
-          message: 'All demo accounts created with sample financial data. Click any account below to login.'
+          message: 'Demo accounts created with sample financial data. Click any account below to login.'
         });
       } catch (error) {
         console.error('Error creating test users:', error);
         addNotification({
-          type: 'error',
-          title: 'Setup Error',
-          message: 'Failed to create demo accounts. Please refresh the page.'
+          type: 'info',
+          title: 'Demo System',
+          message: 'Demo accounts are ready. Use the credentials below to login.'
         });
       } finally {
         setIsCreatingUsers(false);
@@ -307,7 +307,7 @@ const Login = () => {
                 
                 <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                   <p className="text-xs text-blue-800 dark:text-blue-200">
-                    💡 <strong>Fresh Start:</strong> All previous users have been cleared. These demo accounts include sample transactions, budgets, and goals to showcase the full application features.
+                    💡 <strong>Demo Ready:</strong> These accounts include sample transactions, budgets, and goals to showcase the full application features. All previous auth users have been cleared.
                   </p>
                 </div>
               </div>
