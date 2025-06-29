@@ -107,27 +107,40 @@ const SetupModal = ({ isOpen, onClose, onSave, userProfile }) => {
 };
 
 // Quick action card component with navigation
-const QuickActionCard = ({ title, description, icon: Icon, onClick, color = 'blue' }) => (
-  <Card className="p-4 hover:shadow-md transition-shadow cursor-pointer" onClick={onClick}>
-    <div className="flex items-center space-x-3">
-      <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-        color === 'blue' ? 'bg-blue-100' :
-        color === 'green' ? 'bg-green-100' :
-        color === 'purple' ? 'bg-purple-100' : 'bg-gray-100'
-      }`}>
-        <Icon className={`w-5 h-5 ${
-          color === 'blue' ? 'text-blue-600' :
-          color === 'green' ? 'text-green-600' :
-          color === 'purple' ? 'text-purple-600' : 'text-gray-600'
-        }`} />
+const QuickActionCard = ({ title, description, icon: Icon, color = 'blue', path }) => {
+  const navigate = useNavigate();
+  
+  const handleClick = () => {
+    if (path) {
+      navigate(path);
+    }
+  };
+
+  return (
+    <Card 
+      className="p-4 hover:shadow-md transition-shadow cursor-pointer" 
+      onClick={handleClick}
+    >
+      <div className="flex items-center space-x-3">
+        <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+          color === 'blue' ? 'bg-blue-100' :
+          color === 'green' ? 'bg-green-100' :
+          color === 'purple' ? 'bg-purple-100' : 'bg-gray-100'
+        }`}>
+          <Icon className={`w-5 h-5 ${
+            color === 'blue' ? 'text-blue-600' :
+            color === 'green' ? 'text-green-600' :
+            color === 'purple' ? 'text-purple-600' : 'text-gray-600'
+          }`} />
+        </div>
+        <div>
+          <h3 className="font-medium text-gray-900">{title}</h3>
+          <p className="text-sm text-gray-600">{description}</p>
+        </div>
       </div>
-      <div>
-        <h3 className="font-medium text-gray-900">{title}</h3>
-        <p className="text-sm text-gray-600">{description}</p>
-      </div>
-    </div>
-  </Card>
-);
+    </Card>
+  );
+};
 
 // Metric card component
 const MetricCard = ({ title, value, change, icon: Icon, trend, prefix = '$', onEdit }) => (
@@ -482,26 +495,6 @@ const Dashboard = () => {
     setShowSetupModal(true);
   };
 
-  // Quick action handlers with proper navigation
-  const handleQuickAction = (action) => {
-    switch (action) {
-      case 'add-transaction':
-        navigate('/transactions');
-        break;
-      case 'set-budget':
-        navigate('/budget');
-        break;
-      case 'create-goal':
-        navigate('/goals');
-        break;
-      case 'view-reports':
-        navigate('/reports');
-        break;
-      default:
-        break;
-    }
-  };
-
   if (transactionsLoading || goalsLoading || budgetsLoading) {
     return <LoadingSpinner />;
   }
@@ -617,28 +610,28 @@ const Dashboard = () => {
               description="Record income or expense"
               icon={Plus}
               color="blue"
-              onClick={() => handleQuickAction('add-transaction')}
+              path="/transactions"
             />
             <QuickActionCard
               title="Set Budget"
               description="Plan your spending"
               icon={PieChart}
               color="green"
-              onClick={() => handleQuickAction('set-budget')}
+              path="/budget"
             />
             <QuickActionCard
               title="Create Goal"
               description="Set financial target"
               icon={Target}
               color="purple"
-              onClick={() => handleQuickAction('create-goal')}
+              path="/goals"
             />
             <QuickActionCard
               title="View Reports"
               description="Analyze your finances"
               icon={BarChart}
               color="blue"
-              onClick={() => handleQuickAction('view-reports')}
+              path="/reports"
             />
           </div>
         </div>
