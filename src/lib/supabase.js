@@ -38,14 +38,31 @@ export const RECEIPTS_BUCKET = 'receipts';
 // Helper function to upload receipt image
 export const uploadReceipt = async (file, userId) => {
   try {
+    // Ensure user is authenticated
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      throw new Error('User must be authenticated to upload receipts');
+    }
+
+    // Validate that the userId matches the authenticated user
+    if (user.id !== userId) {
+      throw new Error('User ID mismatch - unauthorized upload attempt');
+    }
+
     const fileExt = file.name.split('.').pop();
     const fileName = `${userId}/${Date.now()}.${fileExt}`;
     
     const { data, error } = await supabase.storage
       .from(RECEIPTS_BUCKET)
-      .upload(fileName, file);
+      .upload(fileName, file, {
+        cacheControl: '3600',
+        upsert: false
+      });
 
-    if (error) throw error;
+    if (error) {
+      console.error('Storage upload error:', error);
+      throw error;
+    }
 
     // Get public URL
     const { data: { publicUrl } } = supabase.storage
@@ -62,10 +79,27 @@ export const uploadReceipt = async (file, userId) => {
 // Helper function to delete receipt
 export const deleteReceipt = async (url) => {
   try {
-    const fileName = url.split('/').pop();
+    // Ensure user is authenticated
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      throw new Error('User must be authenticated to delete receipts');
+    }
+
+    // Extract filename from URL
+    const urlParts = url.split('/');
+    const fileName = urlParts[urlParts.length - 1];
+    const userFolder = urlParts[urlParts.length - 2];
+    
+    // Verify the user owns this file
+    if (userFolder !== user.id) {
+      throw new Error('Unauthorized: Cannot delete another user\'s receipt');
+    }
+
+    const fullPath = `${userFolder}/${fileName}`;
+    
     const { error } = await supabase.storage
       .from(RECEIPTS_BUCKET)
-      .remove([fileName]);
+      .remove([fullPath]);
 
     if (error) throw error;
   } catch (error) {
@@ -192,6 +226,7 @@ const parseReceiptText = (text) => {
     amount: amount || 0,
     category,
     date,
+    extracted_text: text,
     confidence: calculateConfidence(description, amount, date)
   };
 };
@@ -223,6 +258,7 @@ const generateMockReceiptData = () => {
   return {
     ...randomReceipt,
     date: new Date().toISOString().split('T')[0],
+    extracted_text: `Mock receipt data for ${randomReceipt.description}`,
     confidence: 85 + Math.floor(Math.random() * 15) // 85-100% confidence
   };
 };
@@ -230,6 +266,17 @@ const generateMockReceiptData = () => {
 // Store receipt data in Supabase
 export const storeReceiptData = async (receiptData, userId) => {
   try {
+    // Ensure user is authenticated
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      throw new Error('User must be authenticated to store receipt data');
+    }
+
+    // Validate that the userId matches the authenticated user
+    if (user.id !== userId) {
+      throw new Error('User ID mismatch - unauthorized data storage attempt');
+    }
+
     const { data, error } = await supabase
       .from('receipts')
       .insert([{
@@ -243,7 +290,11 @@ export const storeReceiptData = async (receiptData, userId) => {
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      console.error('Database insert error:', error);
+      throw error;
+    }
+    
     return data;
   } catch (error) {
     console.error('Error storing receipt data:', error);
