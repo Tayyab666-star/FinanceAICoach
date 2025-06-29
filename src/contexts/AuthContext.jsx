@@ -12,58 +12,54 @@ export const AuthProvider = ({ children }) => {
   const [isInitialized, setIsInitialized] = useState(false);
   const [error, setError] = useState(null);
 
-  // Initialize auth state on mount with persistent session
+  // Initialize auth state on mount with proper session validation
   useEffect(() => {
     let mounted = true;
 
-    // Get initial session immediately with persistent storage check
+    // Get initial session with proper error handling
     const getInitialSession = async () => {
       try {
         setIsLoading(true);
         setError(null);
         
-        // First check localStorage for cached user data
-        const cachedUser = localStorage.getItem('financeapp_user');
-        const cachedProfile = localStorage.getItem('financeapp_profile');
-        
-        if (cachedUser && cachedProfile) {
-          try {
-            const userData = JSON.parse(cachedUser);
-            const profileData = JSON.parse(cachedProfile);
-            
-            console.log('Found cached user data:', userData.email);
-            setUser(userData);
-            setUserProfile(profileData);
-          } catch (e) {
-            console.warn('Invalid cached data, clearing:', e);
-            localStorage.removeItem('financeapp_user');
-            localStorage.removeItem('financeapp_profile');
-          }
-        }
-        
-        // Then check Supabase session
+        // Check Supabase session first - this is the source of truth
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
           console.error('Error getting session:', error);
-          // Don't set error if we have cached data
-          if (!cachedUser) {
-            setError('Failed to load session. Please refresh the page.');
-          }
+          // Clear all cached data when session is invalid
+          console.log('Clearing cached data due to session error');
+          setUser(null);
+          setUserProfile(null);
+          localStorage.removeItem('financeapp_user');
+          localStorage.removeItem('financeapp_profile');
+          localStorage.removeItem('financeapp_session_timestamp');
+          setError('Session expired. Please log in again.');
         } else if (session?.user && mounted) {
-          console.log('Found existing Supabase session for user:', session.user.email);
+          console.log('Found valid Supabase session for user:', session.user.email);
           await handleAuthUser(session.user);
-        } else if (!cachedUser && mounted) {
-          // No session and no cached data - user is not logged in
-          console.log('No session found and no cached data');
+        } else {
+          // No session - check if we have cached data that should be cleared
+          const cachedUser = localStorage.getItem('financeapp_user');
+          if (cachedUser) {
+            console.log('No valid session but found cached data - clearing it');
+            localStorage.removeItem('financeapp_user');
+            localStorage.removeItem('financeapp_profile');
+            localStorage.removeItem('financeapp_session_timestamp');
+          }
+          console.log('No session found - user is not logged in');
           setUser(null);
           setUserProfile(null);
         }
       } catch (error) {
         console.error('Error in getInitialSession:', error);
-        if (!localStorage.getItem('financeapp_user')) {
-          setError('Failed to initialize authentication. Please refresh the page.');
-        }
+        // Clear everything on any error
+        setUser(null);
+        setUserProfile(null);
+        localStorage.removeItem('financeapp_user');
+        localStorage.removeItem('financeapp_profile');
+        localStorage.removeItem('financeapp_session_timestamp');
+        setError('Failed to initialize authentication. Please refresh the page.');
       } finally {
         if (mounted) {
           setIsLoading(false);
@@ -72,7 +68,7 @@ export const AuthProvider = ({ children }) => {
       }
     };
 
-    // Listen for auth changes with persistent session handling
+    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!mounted) return;
 
@@ -89,13 +85,11 @@ export const AuthProvider = ({ children }) => {
           console.log('User signed out');
           setUser(null);
           setUserProfile(null);
-          // Clear persistent storage on explicit logout
           localStorage.removeItem('financeapp_user');
           localStorage.removeItem('financeapp_profile');
           localStorage.removeItem('financeapp_session_timestamp');
         } else if (event === 'TOKEN_REFRESHED' && session?.user) {
           console.log('Token refreshed for user:', session.user.email);
-          // Update session timestamp on token refresh
           localStorage.setItem('financeapp_session_timestamp', Date.now().toString());
         }
       } catch (error) {
@@ -240,7 +234,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Enhanced send verification code with persistent session setup
+  // Enhanced send verification code
   const sendVerificationCode = async (email) => {
     try {
       console.log('Sending OTP to:', email);
@@ -282,7 +276,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Enhanced verify code with persistent session setup
+  // Enhanced verify code
   const verifyCode = async (email, token) => {
     try {
       console.log('Verifying OTP for:', email, 'Token length:', token.length);
@@ -579,18 +573,7 @@ export const AuthProvider = ({ children }) => {
     setError(null);
   };
 
-  // Check session validity for persistent auth
-  const isSessionValid = () => {
-    const sessionTimestamp = localStorage.getItem('financeapp_session_timestamp');
-    if (!sessionTimestamp) return false;
-    
-    const sessionAge = Date.now() - parseInt(sessionTimestamp);
-    const maxAge = 30 * 24 * 60 * 60 * 1000; // 30 days
-    
-    return sessionAge < maxAge;
-  };
-
-  // Don't render children until auth is initialized - but make it fast
+  // Don't render children until auth is initialized
   if (!isInitialized) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
@@ -627,8 +610,7 @@ export const AuthProvider = ({ children }) => {
       updateUserProfile,
       getUserDisplayName,
       refreshUserProfile,
-      clearError,
-      isSessionValid
+      clearError
     }}>
       {children}
     </AuthContext.Provider>
