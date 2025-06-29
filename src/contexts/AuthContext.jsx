@@ -8,28 +8,57 @@ export const useAuth = () => useContext(AuthContext);
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [userProfile, setUserProfile] = useState(null);
-  const [isLoading, setIsLoading] = useState(true); // Start with true
+  const [isLoading, setIsLoading] = useState(true);
   const [isInitialized, setIsInitialized] = useState(false);
 
   // Initialize auth state on mount
   useEffect(() => {
-    // Check if user data exists in localStorage
-    const savedUser = localStorage.getItem('financeapp_user');
-    const savedProfile = localStorage.getItem('financeapp_profile');
-    
-    if (savedUser && savedProfile) {
+    let mounted = true;
+
+    // Get initial session
+    const getInitialSession = async () => {
       try {
-        setUser(JSON.parse(savedUser));
-        setUserProfile(JSON.parse(savedProfile));
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error('Error getting session:', error);
+        } else if (session?.user && mounted) {
+          await handleAuthUser(session.user);
+        }
       } catch (error) {
-        console.error('Error parsing saved user data:', error);
+        console.error('Error in getInitialSession:', error);
+      } finally {
+        if (mounted) {
+          setIsLoading(false);
+          setIsInitialized(true);
+        }
+      }
+    };
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (!mounted) return;
+
+      console.log('Auth state changed:', event, session?.user?.id);
+      
+      if (event === 'SIGNED_IN' && session?.user) {
+        await handleAuthUser(session.user);
+      } else if (event === 'SIGNED_OUT') {
+        setUser(null);
+        setUserProfile(null);
         localStorage.removeItem('financeapp_user');
         localStorage.removeItem('financeapp_profile');
       }
-    }
-    
-    setIsLoading(false);
-    setIsInitialized(true);
+      
+      setIsLoading(false);
+    });
+
+    getInitialSession();
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   // Helper function to capitalize name properly
@@ -43,14 +72,35 @@ export const AuthProvider = ({ children }) => {
       .join(' ');
   };
 
-  // Create or get user profile
-  const createOrGetUserProfile = async (email) => {
+  // Handle authenticated user
+  const handleAuthUser = async (authUser) => {
     try {
-      // First, try to get existing profile
+      const profile = await createOrGetUserProfile(authUser.id, authUser.email);
+      const userData = { 
+        id: authUser.id, // Use Supabase auth user ID
+        email: authUser.email, 
+        name: profile.name 
+      };
+      
+      setUser(userData);
+      setUserProfile(profile);
+      
+      // Save to localStorage for persistence
+      localStorage.setItem('financeapp_user', JSON.stringify(userData));
+      localStorage.setItem('financeapp_profile', JSON.stringify(profile));
+    } catch (error) {
+      console.error('Error handling auth user:', error);
+    }
+  };
+
+  // Create or get user profile using Supabase auth user ID
+  const createOrGetUserProfile = async (authUserId, email) => {
+    try {
+      // First, try to get existing profile using auth user ID
       const { data: existingProfiles, error: fetchError } = await supabase
         .from('user_profiles')
         .select('*')
-        .eq('email', email)
+        .eq('id', authUserId) // Use auth user ID as primary key
         .limit(1);
 
       if (fetchError) {
@@ -62,14 +112,14 @@ export const AuthProvider = ({ children }) => {
         return existingProfiles[0];
       }
 
-      // If no profile exists, create a new one with minimal setup
+      // If no profile exists, create a new one using auth user ID
       const firstName = email.split('@')[0];
       const capitalizedName = capitalizeName(firstName);
       
       const { data: newProfile, error: insertError } = await supabase
         .from('user_profiles')
         .insert([{
-          id: crypto.randomUUID(),
+          id: authUserId, // Use Supabase auth user ID
           email: email,
           name: capitalizedName,
           monthly_income: 0,
@@ -94,35 +144,39 @@ export const AuthProvider = ({ children }) => {
   const login = async (email) => {
     setIsLoading(true);
     try {
-      const profile = await createOrGetUserProfile(email);
-      const userData = { id: profile.id, email: profile.email, name: profile.name };
-      
-      setUser(userData);
-      setUserProfile(profile);
-      
-      // Save to localStorage for persistence
-      localStorage.setItem('financeapp_user', JSON.stringify(userData));
-      localStorage.setItem('financeapp_profile', JSON.stringify(profile));
-      
-      return profile;
+      // Use Supabase OTP sign-in for passwordless authentication
+      const { error } = await supabase.auth.signInWithOtp({
+        email: email,
+        options: {
+          emailRedirectTo: window.location.origin + '/dashboard'
+        }
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      // The auth state change will be handled by the listener
+      return { success: true, message: 'Check your email for the login link!' };
     } catch (error) {
       console.error('Login error:', error);
-      throw error;
-    } finally {
       setIsLoading(false);
+      throw error;
     }
   };
 
   const logout = async () => {
-    setUser(null);
-    setUserProfile(null);
-    
-    // Clear localStorage
-    localStorage.removeItem('financeapp_user');
-    localStorage.removeItem('financeapp_profile');
-    
-    // Navigate to login page
-    window.location.href = '/login';
+    try {
+      await supabase.auth.signOut();
+      // The auth state change will be handled by the listener
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Still clear local state even if signOut fails
+      setUser(null);
+      setUserProfile(null);
+      localStorage.removeItem('financeapp_user');
+      localStorage.removeItem('financeapp_profile');
+    }
   };
 
   const updateUserProfile = async (updates) => {

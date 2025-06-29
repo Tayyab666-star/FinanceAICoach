@@ -8,6 +8,7 @@ import Button from '../components/Button';
 const Login = () => {
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { user, login, isLoading } = useAuth();
 
@@ -32,9 +33,15 @@ const Login = () => {
     setIsSubmitting(true);
     try {
       setError('');
-      await login(email);
+      setSuccess('');
+      
+      const result = await login(email);
+      
+      if (result.success) {
+        setSuccess(result.message);
+      }
     } catch (error) {
-      setError('Failed to access account. Please try again.');
+      setError('Failed to send login email. Please try again.');
       console.error('Login error:', error);
     } finally {
       setIsSubmitting(false);
@@ -61,7 +68,7 @@ const Login = () => {
             <span className="text-2xl font-bold text-white">F</span>
           </div>
           <h1 className="text-3xl font-bold text-gray-900">FinanceApp</h1>
-          <p className="text-gray-600 mt-2">Enter your email to access your financial dashboard</p>
+          <p className="text-gray-600 mt-2">Enter your email to receive a secure login link</p>
         </div>
         
         <Card className="shadow-xl border-0">
@@ -71,13 +78,17 @@ const Login = () => {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="Enter your email (e.g., 382ahmadraza@gmail.com)"
+              placeholder="Enter your email address"
               className="text-lg"
               disabled={isSubmitting}
             />
             
             {error && (
-              <p className="text-sm text-red-600 bg-red-50 p-3">{error}</p>
+              <p className="text-sm text-red-600 bg-red-50 p-3 rounded-lg">{error}</p>
+            )}
+            
+            {success && (
+              <p className="text-sm text-green-600 bg-green-50 p-3 rounded-lg">{success}</p>
             )}
             
             <Button
@@ -86,13 +97,13 @@ const Login = () => {
               disabled={isSubmitting}
               className="w-full text-lg py-3"
             >
-              {isSubmitting ? 'Accessing Account...' : 'Access Dashboard'}
+              {isSubmitting ? 'Sending Login Link...' : 'Send Login Link'}
             </Button>
           </form>
           
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-500">
-              New users will automatically get a demo account with sample data
+              We'll send you a secure login link via email. No password required!
             </p>
           </div>
         </Card>

@@ -269,18 +269,21 @@ const ReceiptUploadModal = ({ isOpen, onClose, onAdd }) => {
       console.log('OCR processing completed:', ocrData);
       setExtractedText(ocrData.extracted_text || '');
       
-      // Create result object with enhanced data
+      // Create result object WITHOUT confidence (it doesn't exist in transactions table)
       const result = {
         description: ocrData.description,
         amount: ocrData.amount,
         category: ocrData.category,
         date: ocrData.date,
         type: 'expense',
-        receipt_url: imageUrl,
-        confidence: ocrData.confidence
+        receipt_url: imageUrl
+        // Remove confidence from here - it's stored in receipts table only
       };
       
-      setOcrResult(result);
+      setOcrResult({
+        ...result,
+        confidence: ocrData.confidence // Keep for display purposes only
+      });
       setProcessing(false);
       setProcessingStep('');
       
@@ -321,7 +324,9 @@ const ReceiptUploadModal = ({ isOpen, onClose, onAdd }) => {
 
   const handleConfirm = async () => {
     try {
-      await onAdd(ocrResult);
+      // Remove confidence from the transaction data before saving
+      const { confidence, ...transactionData } = ocrResult;
+      await onAdd(transactionData);
       onClose();
       resetModal();
       
