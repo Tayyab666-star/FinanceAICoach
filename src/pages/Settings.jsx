@@ -43,7 +43,6 @@ const ProfileSettings = () => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    phone: '',
     timezone: 'UTC-05:00'
   });
   const [loading, setLoading] = useState(false);
@@ -55,7 +54,6 @@ const ProfileSettings = () => {
       setFormData({
         name: userProfile.name || getUserDisplayName(),
         email: userProfile.email || user?.email || '',
-        phone: userProfile.phone || '',
         timezone: userProfile.timezone || 'UTC-05:00'
       });
     }
@@ -66,7 +64,6 @@ const ProfileSettings = () => {
     if (userProfile) {
       const hasChanged = 
         formData.name !== (userProfile.name || getUserDisplayName()) ||
-        formData.phone !== (userProfile.phone || '') ||
         formData.timezone !== (userProfile.timezone || 'UTC-05:00');
       setHasChanges(hasChanged);
     }
@@ -77,7 +74,6 @@ const ProfileSettings = () => {
     try {
       await updateUserProfile({
         name: formData.name,
-        phone: formData.phone,
         timezone: formData.timezone
       });
       
@@ -136,13 +132,6 @@ const ProfileSettings = () => {
           className="bg-gray-50"
         />
         <p className="text-xs text-gray-500 -mt-2">Email cannot be changed</p>
-        
-        <Input
-          label="Phone Number"
-          value={formData.phone}
-          onChange={(e) => handleInputChange('phone', e.target.value)}
-          placeholder="+1 (555) 123-4567"
-        />
         
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Timezone</label>
