@@ -183,7 +183,8 @@ const Login = () => {
       <div className="max-w-md w-full">
         {/* Header */}
         <div className="text-center mb-6 sm:mb-8">
-          <div className="flex justify-center items-center mb-4 space-x-3">
+          {/* Logo - Centered on mobile/tablet, left-aligned on desktop */}
+          <div className="flex flex-col sm:flex-row justify-center sm:justify-center items-center mb-4 space-y-3 sm:space-y-0 sm:space-x-3">
             <img 
               src="/WhatsApp Image 2025-06-29 at 13.46.00_d292e4a6.jpg" 
               alt="Finance AI Coach" 
@@ -199,7 +200,7 @@ const Login = () => {
             >
               <span className="text-xl sm:text-2xl font-bold text-white">F</span>
             </div>
-            <div className="text-left">
+            <div className="text-center sm:text-left">
               <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white">
                 Finance AI Coach
               </h1>

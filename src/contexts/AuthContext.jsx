@@ -92,26 +92,45 @@ export const AuthProvider = ({ children }) => {
       console.log('Setting user data immediately:', userData);
       setUser(userData);
       
-      // Create immediate fallback profile - don't wait for database
-      const fallbackProfile = {
+      // Try to get real profile from database first
+      try {
+        const { data: existingProfile, error: fetchError } = await supabase
+          .from('user_profiles')
+          .select('*')
+          .eq('id', authUser.id)
+          .maybeSingle();
+
+        if (existingProfile) {
+          console.log('Found existing profile:', existingProfile);
+          setUserProfile(existingProfile);
+          localStorage.setItem('financeapp_user', JSON.stringify(userData));
+          localStorage.setItem('financeapp_profile', JSON.stringify(existingProfile));
+          return;
+        }
+      } catch (error) {
+        console.log('Error fetching existing profile:', error);
+      }
+
+      // Create new profile for new users - with setup_completed: false to trigger setup modal
+      const newProfile = {
         id: authUser.id,
         email: authUser.email,
         name: capitalizeName(authUser.email.split('@')[0]),
-        monthly_income: 5000, // Default values to avoid setup modal
-        monthly_budget: 4000,
-        setup_completed: true, // Mark as completed to skip setup
+        monthly_income: 0,
+        monthly_budget: 0,
+        setup_completed: false, // This will trigger the setup modal
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       };
       
-      console.log('Setting immediate profile:', fallbackProfile);
-      setUserProfile(fallbackProfile);
+      console.log('Setting new user profile:', newProfile);
+      setUserProfile(newProfile);
       
       // Save to localStorage immediately
       localStorage.setItem('financeapp_user', JSON.stringify(userData));
-      localStorage.setItem('financeapp_profile', JSON.stringify(fallbackProfile));
+      localStorage.setItem('financeapp_profile', JSON.stringify(newProfile));
       
-      // Try to get/create real profile in background without blocking UI
+      // Create profile in database in background
       createProfileInBackground(authUser.id, authUser.email);
       
     } catch (error) {
@@ -132,20 +151,6 @@ export const AuthProvider = ({ children }) => {
     try {
       console.log('Creating profile in background for:', email);
       
-      // Check if profile already exists first
-      const { data: existingProfile, error: fetchError } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .eq('id', authUserId)
-        .maybeSingle();
-
-      if (existingProfile) {
-        console.log('Found existing profile in background:', existingProfile);
-        setUserProfile(existingProfile);
-        localStorage.setItem('financeapp_profile', JSON.stringify(existingProfile));
-        return;
-      }
-
       // Create new profile if it doesn't exist
       const { data, error } = await supabase
         .from('user_profiles')

@@ -33,7 +33,7 @@ import {
   ResponsiveContainer
 } from 'recharts';
 
-// Setup modal for income and budget - only show if really needed
+// Setup modal for income and budget - show for new users
 const SetupModal = ({ isOpen, onClose, onSave, userProfile }) => {
   const [formData, setFormData] = useState({
     monthly_income: userProfile?.monthly_income || 5000,
@@ -63,11 +63,11 @@ const SetupModal = ({ isOpen, onClose, onSave, userProfile }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center z-50">
-      <Card className="w-full max-w-md m-4">
-        <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Complete Your Setup</h3>
+    <div className="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center z-50 p-4">
+      <Card className="w-full max-w-md">
+        <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Welcome! Let's Set Up Your Account</h3>
         <p className="text-gray-600 dark:text-gray-300 mb-6">
-          Please enter your monthly income and budget to get started with your financial dashboard.
+          To get started with your financial dashboard, please enter your monthly income and budget.
         </p>
         
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -98,7 +98,7 @@ const SetupModal = ({ isOpen, onClose, onSave, userProfile }) => {
           </div>
           
           <Button type="submit" className="w-full" loading={loading}>
-            Save & Continue
+            Complete Setup & Continue
           </Button>
         </form>
       </Card>
@@ -423,11 +423,15 @@ const Dashboard = () => {
   const { budgets, loading: budgetsLoading } = useBudgetCategories();
   const [showSetupModal, setShowSetupModal] = useState(false);
 
-  // Only show setup modal if user explicitly needs it (not on first load)
-  const needsSetup = userProfile && 
-                    userProfile.monthly_income === 0 && 
-                    userProfile.monthly_budget === 0 && 
-                    !userProfile.setup_completed;
+  // Show setup modal for new users who haven't completed setup
+  const needsSetup = userProfile && !userProfile.setup_completed;
+
+  // Auto-show setup modal for new users
+  React.useEffect(() => {
+    if (needsSetup) {
+      setShowSetupModal(true);
+    }
+  }, [needsSetup]);
 
   // Calculate metrics
   const totalIncome = useMemo(() => 
@@ -642,7 +646,7 @@ const Dashboard = () => {
       {/* AI Insights with navigation */}
       <AIInsights insights={insights} />
 
-      {/* Setup Modal - only show when explicitly requested */}
+      {/* Setup Modal - show for new users */}
       {showSetupModal && (
         <SetupModal
           isOpen={showSetupModal}
