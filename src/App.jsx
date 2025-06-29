@@ -17,17 +17,20 @@ import LoadingSpinner from './components/LoadingSpinner';
 import ToastContainer from './components/ToastContainer';
  
 const ProtectedRoute = ({ children }) => {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, error } = useAuth();
   
-  // Show loading spinner while checking auth state - but make it fast
+  // Show loading spinner while checking auth state
   if (isLoading) {
+    return <LoadingSpinner message="Checking authentication..." />;
+  }
+  
+  // Show error state if there's an authentication error
+  if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
-        <div className="text-center">
-          <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600 dark:text-gray-300">Loading...</p>
-        </div>
-      </div>
+      <LoadingSpinner 
+        error={error} 
+        onRetry={() => window.location.reload()} 
+      />
     );
   }
   
@@ -36,22 +39,25 @@ const ProtectedRoute = ({ children }) => {
     return <Navigate to="/login" replace />;
   }
   
-  // Render protected content immediately
+  // Render protected content
   return children;
 };
 
 const PublicRoute = ({ children }) => {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, error } = useAuth();
   
-  // Show loading spinner while checking auth state - but make it fast
+  // Show loading spinner while checking auth state
   if (isLoading) {
+    return <LoadingSpinner message="Loading application..." />;
+  }
+  
+  // Show error state if there's an authentication error
+  if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
-        <div className="text-center">
-          <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600 dark:text-gray-300">Loading...</p>
-        </div>
-      </div>
+      <LoadingSpinner 
+        error={error} 
+        onRetry={() => window.location.reload()} 
+      />
     );
   }
   

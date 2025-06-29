@@ -15,11 +15,18 @@ const Login = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isReturningUser, setIsReturningUser] = useState(false);
   const [lastCodeSentAt, setLastCodeSentAt] = useState(null);
-  const { user, sendVerificationCode, verifyCode, checkUserExists, isLoading } = useAuth();
+  const { user, sendVerificationCode, verifyCode, checkUserExists, isLoading, error: authError, clearError } = useAuth();
   const { addNotification } = useNotifications();
 
   // Redirect if already logged in
   if (user) return <Navigate to="/dashboard" replace />;
+
+  // Clear auth errors when component mounts or step changes
+  React.useEffect(() => {
+    if (authError) {
+      clearError();
+    }
+  }, [step, authError, clearError]);
 
   const canResendCode = () => {
     if (!lastCodeSentAt) return true;
@@ -71,16 +78,7 @@ const Login = () => {
       }
     } catch (error) {
       console.error('Email submission error:', error);
-      
-      if (error.message?.includes('rate limit')) {
-        setError('Too many requests. Please wait a moment before trying again.');
-      } else if (error.message?.includes('Email address') && error.message?.includes('invalid')) {
-        setError('This email domain is not allowed. Please contact support or try a different email.');
-      } else if (error.message?.includes('Signup is disabled')) {
-        setError('New account creation is currently disabled. Please contact support.');
-      } else {
-        setError('Failed to send verification code. Please try again.');
-      }
+      setError(error.message || 'Failed to send verification code. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -110,16 +108,7 @@ const Login = () => {
       }
     } catch (error) {
       console.error('Code verification error:', error);
-      
-      if (error.message?.includes('expired')) {
-        setError('Verification code has expired. Please request a new one.');
-      } else if (error.message?.includes('Invalid')) {
-        setError('Invalid verification code. Please check and try again.');
-      } else if (error.message?.includes('Token has expired')) {
-        setError('Verification code has expired. Please request a new one.');
-      } else {
-        setError('Failed to verify code. Please try again.');
-      }
+      setError(error.message || 'Failed to verify code. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -148,11 +137,7 @@ const Login = () => {
       }
     } catch (error) {
       console.error('Resend error:', error);
-      if (error.message?.includes('rate limit')) {
-        setError('Too many requests. Please wait before requesting another code.');
-      } else {
-        setError('Failed to resend code. Please try again.');
-      }
+      setError(error.message || 'Failed to resend code. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -173,6 +158,11 @@ const Login = () => {
         <div className="text-center">
           <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-gray-600 dark:text-gray-300">Loading...</p>
+          {authError && (
+            <div className="mt-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg max-w-md mx-auto">
+              <p className="text-red-800 dark:text-red-200 text-sm">{authError}</p>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -219,6 +209,16 @@ const Login = () => {
             }
           </p>
         </div>
+
+        {/* Global Error Display */}
+        {(error || authError) && (
+          <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg">
+            <div className="flex items-center">
+              <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 mr-2 flex-shrink-0" />
+              <p className="text-red-800 dark:text-red-200 text-sm">{error || authError}</p>
+            </div>
+          </div>
+        )}
         
         <Card className="shadow-xl border-0 backdrop-blur-sm bg-white/90 dark:bg-gray-800/90 p-4 sm:p-6">
           {step === 'email' ? (
@@ -237,14 +237,13 @@ const Login = () => {
                   placeholder="Enter your email address"
                   className="pl-12 text-base sm:text-lg"
                   disabled={isSubmitting}
-                  error={error}
                 />
               </div>
               
               <Button
                 type="submit"
                 loading={isSubmitting}
-                disabled={isSubmitting}
+                disabled={isSubmitting || !email}
                 className="w-full text-base sm:text-lg py-3"
               >
                 {isSubmitting ? 'Sending Code...' : (
@@ -310,7 +309,6 @@ const Login = () => {
                   placeholder="000000"
                   className="text-center text-xl sm:text-2xl tracking-widest font-mono"
                   disabled={isSubmitting}
-                  error={error}
                   maxLength={6}
                 />
               </div>

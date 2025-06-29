@@ -10,6 +10,7 @@ export const AuthProvider = ({ children }) => {
   const [userProfile, setUserProfile] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [error, setError] = useState(null);
 
   // Initialize auth state on mount
   useEffect(() => {
@@ -18,16 +19,21 @@ export const AuthProvider = ({ children }) => {
     // Get initial session immediately
     const getInitialSession = async () => {
       try {
+        setIsLoading(true);
+        setError(null);
+        
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
           console.error('Error getting session:', error);
+          setError('Failed to load session. Please refresh the page.');
         } else if (session?.user && mounted) {
           console.log('Found existing session for user:', session.user.email);
           await handleAuthUser(session.user);
         }
       } catch (error) {
         console.error('Error in getInitialSession:', error);
+        setError('Failed to initialize authentication. Please refresh the page.');
       } finally {
         if (mounted) {
           setIsLoading(false);
@@ -42,19 +48,27 @@ export const AuthProvider = ({ children }) => {
 
       console.log('Auth state changed:', event, session?.user?.email);
       
-      if (event === 'SIGNED_IN' && session?.user) {
-        console.log('User signed in:', session.user.email);
-        await handleAuthUser(session.user);
-      } else if (event === 'SIGNED_OUT') {
-        console.log('User signed out');
-        setUser(null);
-        setUserProfile(null);
-        localStorage.removeItem('financeapp_user');
-        localStorage.removeItem('financeapp_profile');
-      }
-      
-      if (mounted) {
-        setIsLoading(false);
+      try {
+        setError(null);
+        
+        if (event === 'SIGNED_IN' && session?.user) {
+          console.log('User signed in:', session.user.email);
+          setIsLoading(true);
+          await handleAuthUser(session.user);
+        } else if (event === 'SIGNED_OUT') {
+          console.log('User signed out');
+          setUser(null);
+          setUserProfile(null);
+          localStorage.removeItem('financeapp_user');
+          localStorage.removeItem('financeapp_profile');
+        }
+      } catch (error) {
+        console.error('Error handling auth state change:', error);
+        setError('Authentication error occurred. Please try again.');
+      } finally {
+        if (mounted) {
+          setIsLoading(false);
+        }
       }
     });
 
@@ -135,6 +149,8 @@ export const AuthProvider = ({ children }) => {
       
     } catch (error) {
       console.error('Error handling auth user:', error);
+      setError('Failed to load user profile. Please try again.');
+      
       // Still set basic user data even if profile fails
       const userData = { 
         id: authUser.id,
@@ -182,6 +198,7 @@ export const AuthProvider = ({ children }) => {
   const sendVerificationCode = async (email) => {
     try {
       console.log('Sending OTP to:', email);
+      setError(null);
       
       // Use signInWithOtp with explicit options to force OTP codes
       const { data, error } = await supabase.auth.signInWithOtp({
@@ -214,6 +231,7 @@ export const AuthProvider = ({ children }) => {
       return { success: true, message: 'Verification code sent to your email!' };
     } catch (error) {
       console.error('Send verification code error:', error);
+      setError(error.message || 'Failed to send verification code');
       throw error;
     }
   };
@@ -222,6 +240,7 @@ export const AuthProvider = ({ children }) => {
   const verifyCode = async (email, token) => {
     try {
       console.log('Verifying OTP for:', email, 'Token length:', token.length);
+      setError(null);
       
       const { data, error } = await supabase.auth.verifyOtp({
         email: email,
@@ -249,6 +268,7 @@ export const AuthProvider = ({ children }) => {
       return { success: true, user: data.user };
     } catch (error) {
       console.error('Verify code error:', error);
+      setError(error.message || 'Failed to verify code');
       throw error;
     }
   };
@@ -256,6 +276,8 @@ export const AuthProvider = ({ children }) => {
   // Check if user exists (for returning users)
   const checkUserExists = async (email) => {
     try {
+      setError(null);
+      
       // Try to get user profile by email
       const { data: profiles, error } = await supabase
         .from('user_profiles')
@@ -274,6 +296,7 @@ export const AuthProvider = ({ children }) => {
       };
     } catch (error) {
       console.error('Error in checkUserExists:', error);
+      setError('Failed to check user status');
       return { exists: false };
     }
   };
@@ -281,10 +304,13 @@ export const AuthProvider = ({ children }) => {
   const logout = async () => {
     try {
       console.log('Logging out user');
+      setError(null);
       await supabase.auth.signOut();
       // The auth state change will be handled by the listener
     } catch (error) {
       console.error('Logout error:', error);
+      setError('Failed to logout. Please try again.');
+      
       // Still clear local state even if signOut fails
       setUser(null);
       setUserProfile(null);
@@ -296,10 +322,13 @@ export const AuthProvider = ({ children }) => {
   const updateUserProfile = async (updates) => {
     if (!user?.id) {
       console.error('No user ID available for profile update');
+      setError('No user session found. Please login again.');
       return;
     }
     
     try {
+      setError(null);
+      
       // Update local state immediately for responsive UI
       const updatedProfile = {
         ...userProfile,
@@ -331,6 +360,7 @@ export const AuthProvider = ({ children }) => {
         // Revert local changes if database update fails
         setUserProfile(userProfile);
         localStorage.setItem('financeapp_profile', JSON.stringify(userProfile));
+        setError('Failed to update profile. Please try again.');
         throw error;
       }
       
@@ -343,6 +373,7 @@ export const AuthProvider = ({ children }) => {
       return data || updatedProfile;
     } catch (error) {
       console.error('Error updating user profile:', error);
+      setError(error.message || 'Failed to update profile');
       throw error;
     }
   };
@@ -352,6 +383,8 @@ export const AuthProvider = ({ children }) => {
     if (!user?.id) return;
     
     try {
+      setError(null);
+      
       const { data, error } = await supabase
         .from('user_profiles')
         .select('*')
@@ -360,6 +393,7 @@ export const AuthProvider = ({ children }) => {
 
       if (error) {
         console.error('Error refreshing profile:', error);
+        setError('Failed to refresh profile data');
         return;
       }
       
@@ -377,6 +411,7 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem('financeapp_profile', JSON.stringify(data));
     } catch (error) {
       console.error('Error refreshing user profile:', error);
+      setError('Failed to refresh profile data');
     }
   };
 
@@ -391,13 +426,29 @@ export const AuthProvider = ({ children }) => {
     return 'User';
   };
 
+  // Clear error function
+  const clearError = () => {
+    setError(null);
+  };
+
   // Don't render children until auth is initialized - but make it fast
   if (!isInitialized) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
         <div className="text-center">
           <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600 dark:text-gray-300">Loading...</p>
+          <p className="text-gray-600 dark:text-gray-300">Initializing...</p>
+          {error && (
+            <div className="mt-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg max-w-md mx-auto">
+              <p className="text-red-800 dark:text-red-200 text-sm">{error}</p>
+              <button 
+                onClick={() => window.location.reload()} 
+                className="mt-2 px-4 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700 transition-colors"
+              >
+                Reload Page
+              </button>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -408,13 +459,15 @@ export const AuthProvider = ({ children }) => {
       user, 
       userProfile,
       isLoading, 
+      error,
       sendVerificationCode,
       verifyCode,
       checkUserExists,
       logout,
       updateUserProfile,
       getUserDisplayName,
-      refreshUserProfile
+      refreshUserProfile,
+      clearError
     }}>
       {children}
     </AuthContext.Provider>
