@@ -6,7 +6,7 @@ import { createTestUsers, testUsers } from '../utils/createTestUsers';
 import Card from '../components/Card';
 import Input from '../components/Input';
 import Button from '../components/Button';
-import { Eye, EyeOff, Mail, Lock, Users } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, Users, RefreshCw } from 'lucide-react';
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -31,11 +31,16 @@ const Login = () => {
         await createTestUsers();
         addNotification({
           type: 'success',
-          title: 'Test Users Created',
-          message: 'Demo accounts are ready! Check the login credentials below.'
+          title: 'Demo System Ready! 🎉',
+          message: 'All demo accounts created with sample financial data. Click any account below to login.'
         });
       } catch (error) {
         console.error('Error creating test users:', error);
+        addNotification({
+          type: 'error',
+          title: 'Setup Error',
+          message: 'Failed to create demo accounts. Please refresh the page.'
+        });
       } finally {
         setIsCreatingUsers(false);
       }
@@ -112,6 +117,28 @@ const Login = () => {
       email: testUser.email,
       password: testUser.password
     });
+    setErrors({});
+  };
+
+  const handleRecreateUsers = async () => {
+    setIsCreatingUsers(true);
+    try {
+      await createTestUsers();
+      addNotification({
+        type: 'success',
+        title: 'Demo Accounts Refreshed',
+        message: 'All demo accounts have been recreated with fresh sample data.'
+      });
+    } catch (error) {
+      console.error('Error recreating users:', error);
+      addNotification({
+        type: 'error',
+        title: 'Refresh Failed',
+        message: 'Failed to refresh demo accounts. Please try again.'
+      });
+    } finally {
+      setIsCreatingUsers(false);
+    }
   };
 
   // Show loading state while auth is being checked
@@ -227,15 +254,27 @@ const Login = () => {
         {/* Test Users Panel */}
         <div className="max-w-md w-full mx-auto">
           <Card className="shadow-xl border-0 backdrop-blur-sm bg-white/90 dark:bg-gray-800/90">
-            <div className="flex items-center mb-4">
-              <Users className="w-5 h-5 text-blue-600 dark:text-blue-400 mr-2" />
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Demo Accounts</h3>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center">
+                <Users className="w-5 h-5 text-blue-600 dark:text-blue-400 mr-2" />
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Demo Accounts</h3>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleRecreateUsers}
+                disabled={isCreatingUsers}
+                loading={isCreatingUsers}
+              >
+                <RefreshCw className="w-4 h-4 mr-1" />
+                Refresh
+              </Button>
             </div>
             
             {isCreatingUsers ? (
               <div className="text-center py-8">
                 <div className="w-6 h-6 border-2 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-2"></div>
-                <p className="text-sm text-gray-600 dark:text-gray-300">Setting up demo accounts...</p>
+                <p className="text-sm text-gray-600 dark:text-gray-300">Setting up demo accounts with sample data...</p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -268,7 +307,7 @@ const Login = () => {
                 
                 <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                   <p className="text-xs text-blue-800 dark:text-blue-200">
-                    💡 <strong>Tip:</strong> These demo accounts come with sample financial data including transactions, budgets, and goals to showcase the full application features.
+                    💡 <strong>Fresh Start:</strong> All previous users have been cleared. These demo accounts include sample transactions, budgets, and goals to showcase the full application features.
                   </p>
                 </div>
               </div>
