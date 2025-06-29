@@ -75,12 +75,12 @@ export const AuthProvider = ({ children }) => {
       .join(' ');
   };
 
-  // Handle authenticated user
+  // Optimized auth user handler - much faster
   const handleAuthUser = async (authUser) => {
     try {
       console.log('Handling auth user:', authUser.email);
       
-      // Create basic user object first
+      // Create basic user object immediately
       const userData = { 
         id: authUser.id,
         email: authUser.email, 
@@ -90,19 +90,19 @@ export const AuthProvider = ({ children }) => {
       console.log('Setting user data:', userData);
       setUser(userData);
       
-      // Try to get/create profile with increased timeout and better error handling
+      // Try to get profile quickly with a short timeout
       try {
-        console.log('Creating/getting profile for user:', authUser.id, authUser.email);
+        console.log('Getting profile for user:', authUser.id, authUser.email);
         
-        // Increased timeout from 30 seconds to 60 seconds
-        const profilePromise = createOrGetUserProfile(authUser.id, authUser.email);
-        const timeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Profile creation timeout')), 60000)
-        );
+        // Use a much shorter timeout (5 seconds) and simpler approach
+        const profile = await Promise.race([
+          getOrCreateUserProfile(authUser.id, authUser.email),
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Profile timeout')), 5000)
+          )
+        ]);
         
-        const profile = await Promise.race([profilePromise, timeoutPromise]);
-        
-        console.log('Profile created/retrieved successfully:', profile);
+        console.log('Profile retrieved successfully:', profile);
         setUserProfile(profile);
         
         // Update user with profile name if available
@@ -112,13 +112,12 @@ export const AuthProvider = ({ children }) => {
           localStorage.setItem('financeapp_user', JSON.stringify(updatedUserData));
         }
         
-        if (profile) {
-          localStorage.setItem('financeapp_profile', JSON.stringify(profile));
-        }
-      } catch (profileError) {
-        console.error('Profile creation failed, using fallback:', profileError);
+        localStorage.setItem('financeapp_profile', JSON.stringify(profile));
         
-        // Create a basic profile object as fallback
+      } catch (profileError) {
+        console.log('Using fast fallback profile creation');
+        
+        // Create immediate fallback profile - don't wait for database
         const fallbackProfile = {
           id: authUser.id,
           email: authUser.email,
@@ -130,36 +129,12 @@ export const AuthProvider = ({ children }) => {
           updated_at: new Date().toISOString()
         };
         
-        console.log('Using fallback profile:', fallbackProfile);
+        console.log('Using immediate fallback profile:', fallbackProfile);
         setUserProfile(fallbackProfile);
         localStorage.setItem('financeapp_profile', JSON.stringify(fallbackProfile));
         
-        // Try to create profile in background without blocking - with retry logic
-        setTimeout(async () => {
-          let retryCount = 0;
-          const maxRetries = 3;
-          
-          while (retryCount < maxRetries) {
-            try {
-              console.log(`Background profile creation attempt ${retryCount + 1}/${maxRetries}`);
-              const profile = await createOrGetUserProfile(authUser.id, authUser.email);
-              console.log('Background profile creation successful:', profile);
-              
-              // Update the profile state if successful
-              setUserProfile(profile);
-              localStorage.setItem('financeapp_profile', JSON.stringify(profile));
-              break;
-            } catch (bgError) {
-              retryCount++;
-              console.warn(`Background profile creation attempt ${retryCount} failed:`, bgError);
-              
-              if (retryCount < maxRetries) {
-                // Wait before retrying (exponential backoff)
-                await new Promise(resolve => setTimeout(resolve, Math.pow(2, retryCount) * 1000));
-              }
-            }
-          }
-        }, 2000); // Start after 2 seconds instead of 1
+        // Try to create profile in background without blocking
+        createProfileInBackground(authUser.id, authUser.email);
       }
       
       // Save basic user data to localStorage
@@ -178,74 +153,79 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Create or get user profile using Supabase auth user ID
-  const createOrGetUserProfile = async (authUserId, email) => {
+  // Background profile creation - non-blocking
+  const createProfileInBackground = async (authUserId, email) => {
     try {
-      console.log('Creating/getting profile for user:', authUserId, email);
+      console.log('Creating profile in background for:', email);
       
-      // First, try to get existing profile using auth user ID
+      // Simple direct insert without complex error handling
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .upsert({
+          id: authUserId,
+          email: email,
+          name: capitalizeName(email.split('@')[0]),
+          monthly_income: 0,
+          monthly_budget: 0,
+          setup_completed: false
+        }, {
+          onConflict: 'id'
+        })
+        .select()
+        .single();
+
+      if (!error && data) {
+        console.log('Background profile creation successful:', data);
+        setUserProfile(data);
+        localStorage.setItem('financeapp_profile', JSON.stringify(data));
+      }
+    } catch (error) {
+      console.log('Background profile creation failed (non-critical):', error);
+    }
+  };
+
+  // Simplified profile creation - faster and more reliable
+  const getOrCreateUserProfile = async (authUserId, email) => {
+    try {
+      console.log('Getting/creating profile for:', authUserId, email);
+      
+      // Try to get existing profile first
       const { data: existingProfile, error: fetchError } = await supabase
         .from('user_profiles')
         .select('*')
         .eq('id', authUserId)
-        .maybeSingle(); // Use maybeSingle instead of single to avoid errors when no rows
-
-      if (fetchError) {
-        console.error('Error fetching user profile:', fetchError);
-        // Continue with profile creation
-      }
+        .maybeSingle();
 
       if (existingProfile) {
         console.log('Found existing profile:', existingProfile);
         return existingProfile;
       }
 
-      // If no profile exists, create a new one using auth user ID
-      const firstName = email.split('@')[0];
-      const capitalizedName = capitalizeName(firstName);
-      
-      console.log('Creating new profile for:', email);
-      
-      // Create new profile
+      // Create new profile with upsert for safety
       const { data: newProfile, error: insertError } = await supabase
         .from('user_profiles')
-        .insert([{
+        .upsert({
           id: authUserId,
           email: email,
-          name: capitalizedName,
+          name: capitalizeName(email.split('@')[0]),
           monthly_income: 0,
           monthly_budget: 0,
           setup_completed: false
-        }])
+        }, {
+          onConflict: 'id'
+        })
         .select()
         .single();
 
       if (insertError) {
-        console.error('Error creating user profile:', insertError);
-        
-        // If insert fails due to conflict, try to fetch again
-        if (insertError.code === '23505') { // Unique constraint violation
-          console.log('Profile already exists, fetching it...');
-          const { data: conflictProfile, error: conflictError } = await supabase
-            .from('user_profiles')
-            .select('*')
-            .eq('id', authUserId)
-            .single();
-            
-          if (conflictError) {
-            throw conflictError;
-          }
-          
-          return conflictProfile;
-        }
-        
+        console.error('Error creating profile:', insertError);
         throw insertError;
       }
 
       console.log('Created new profile:', newProfile);
       return newProfile;
     } catch (error) {
-      console.error('Error in createOrGetUserProfile:', error);
+      console.error('Error in getOrCreateUserProfile:', error);
       throw error;
     }
   };
