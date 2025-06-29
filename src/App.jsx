@@ -19,7 +19,7 @@ import ToastContainer from './components/ToastContainer';
 const ProtectedRoute = ({ children }) => {
   const { user, isLoading } = useAuth();
   
-  console.log('ProtectedRoute - User:', user, 'Loading:', isLoading);
+  console.log('ProtectedRoute - User:', user?.email, 'Loading:', isLoading);
   
   // Show loading spinner while checking auth state
   if (isLoading) {
@@ -39,7 +39,7 @@ const ProtectedRoute = ({ children }) => {
     return <Navigate to="/login" replace />;
   }
   
-  console.log('User authenticated, rendering protected content');
+  console.log('User authenticated, rendering protected content for:', user.email);
   // Render protected content
   return children;
 };
@@ -47,7 +47,7 @@ const ProtectedRoute = ({ children }) => {
 const PublicRoute = ({ children }) => {
   const { user, isLoading } = useAuth();
   
-  console.log('PublicRoute - User:', user, 'Loading:', isLoading);
+  console.log('PublicRoute - User:', user?.email, 'Loading:', isLoading);
   
   // Show loading spinner while checking auth state
   if (isLoading) {

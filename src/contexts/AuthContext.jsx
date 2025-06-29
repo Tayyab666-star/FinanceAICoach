@@ -79,25 +79,61 @@ export const AuthProvider = ({ children }) => {
   const handleAuthUser = async (authUser) => {
     try {
       console.log('Handling auth user:', authUser.email);
-      const profile = await createOrGetUserProfile(authUser.id, authUser.email);
+      
+      // Create basic user object first
       const userData = { 
         id: authUser.id,
         email: authUser.email, 
-        name: profile?.name || authUser.email.split('@')[0]
+        name: authUser.email.split('@')[0]
       };
       
       console.log('Setting user data:', userData);
       setUser(userData);
-      setUserProfile(profile);
       
-      // Save to localStorage for persistence
-      localStorage.setItem('financeapp_user', JSON.stringify(userData));
-      if (profile) {
-        localStorage.setItem('financeapp_profile', JSON.stringify(profile));
+      // Try to get/create profile, but don't block if it fails
+      try {
+        const profile = await createOrGetUserProfile(authUser.id, authUser.email);
+        console.log('Profile created/retrieved:', profile);
+        setUserProfile(profile);
+        
+        // Update user with profile name if available
+        if (profile?.name) {
+          const updatedUserData = { ...userData, name: profile.name };
+          setUser(updatedUserData);
+          localStorage.setItem('financeapp_user', JSON.stringify(updatedUserData));
+        }
+        
+        if (profile) {
+          localStorage.setItem('financeapp_profile', JSON.stringify(profile));
+        }
+      } catch (profileError) {
+        console.error('Profile creation failed, but continuing with basic user:', profileError);
+        // Create a basic profile object as fallback
+        const fallbackProfile = {
+          id: authUser.id,
+          email: authUser.email,
+          name: capitalizeName(authUser.email.split('@')[0]),
+          monthly_income: 0,
+          monthly_budget: 0,
+          setup_completed: false
+        };
+        setUserProfile(fallbackProfile);
+        localStorage.setItem('financeapp_profile', JSON.stringify(fallbackProfile));
       }
+      
+      // Save basic user data to localStorage
+      localStorage.setItem('financeapp_user', JSON.stringify(userData));
+      
     } catch (error) {
       console.error('Error handling auth user:', error);
-      // Don't throw error, just log it and continue
+      // Still set basic user data even if profile fails
+      const userData = { 
+        id: authUser.id,
+        email: authUser.email, 
+        name: authUser.email.split('@')[0]
+      };
+      setUser(userData);
+      localStorage.setItem('financeapp_user', JSON.stringify(userData));
     }
   };
 
@@ -115,7 +151,7 @@ export const AuthProvider = ({ children }) => {
 
       if (fetchError) {
         console.error('Error fetching user profile:', fetchError);
-        // Don't throw error, continue with profile creation
+        // Continue with profile creation
       }
 
       if (existingProfiles && existingProfiles.length > 0) {
@@ -128,45 +164,33 @@ export const AuthProvider = ({ children }) => {
       const capitalizedName = capitalizeName(firstName);
       
       console.log('Creating new profile for:', email);
+      
+      // Use upsert to handle potential race conditions
       const { data: newProfile, error: insertError } = await supabase
         .from('user_profiles')
-        .insert([{
+        .upsert([{
           id: authUserId,
           email: email,
           name: capitalizedName,
           monthly_income: 0,
           monthly_budget: 0,
           setup_completed: false
-        }])
+        }], {
+          onConflict: 'id'
+        })
         .select()
         .single();
 
       if (insertError) {
         console.error('Error creating user profile:', insertError);
-        // Return a basic profile object even if database insert fails
-        return {
-          id: authUserId,
-          email: email,
-          name: capitalizedName,
-          monthly_income: 0,
-          monthly_budget: 0,
-          setup_completed: false
-        };
+        throw insertError;
       }
 
       console.log('Created new profile:', newProfile);
       return newProfile;
     } catch (error) {
       console.error('Error in createOrGetUserProfile:', error);
-      // Return a basic profile object as fallback
-      return {
-        id: authUserId,
-        email: email,
-        name: capitalizeName(email.split('@')[0]),
-        monthly_income: 0,
-        monthly_budget: 0,
-        setup_completed: false
-      };
+      throw error;
     }
   };
 
