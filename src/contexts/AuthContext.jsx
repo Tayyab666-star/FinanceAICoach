@@ -32,6 +32,17 @@ export const AuthProvider = ({ children }) => {
     setIsInitialized(true);
   }, []);
 
+  // Helper function to capitalize name properly
+  const capitalizeName = (name) => {
+    if (!name) return '';
+    
+    // Split by spaces and capitalize each word
+    return name
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ');
+  };
+
   // Create or get user profile
   const createOrGetUserProfile = async (email) => {
     try {
@@ -53,7 +64,7 @@ export const AuthProvider = ({ children }) => {
 
       // If no profile exists, create a new one with minimal setup
       const firstName = email.split('@')[0];
-      const capitalizedName = firstName.charAt(0).toUpperCase() + firstName.slice(1);
+      const capitalizedName = capitalizeName(firstName);
       
       const { data: newProfile, error: insertError } = await supabase
         .from('user_profiles')
@@ -120,12 +131,19 @@ export const AuthProvider = ({ children }) => {
     try {
       setIsLoading(true);
       
+      // Capitalize the name if it's being updated
+      const processedUpdates = {
+        ...updates,
+        updated_at: new Date().toISOString()
+      };
+      
+      if (updates.name) {
+        processedUpdates.name = capitalizeName(updates.name);
+      }
+      
       const { data, error } = await supabase
         .from('user_profiles')
-        .update({
-          ...updates,
-          updated_at: new Date().toISOString()
-        })
+        .update(processedUpdates)
         .eq('id', user.id)
         .select()
         .single();
@@ -185,13 +203,13 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Get user display name with fallback logic
+  // Get user display name with fallback logic and proper capitalization
   const getUserDisplayName = () => {
-    if (userProfile?.name) return userProfile.name;
-    if (user?.name) return user.name;
+    if (userProfile?.name) return capitalizeName(userProfile.name);
+    if (user?.name) return capitalizeName(user.name);
     if (user?.email) {
       const emailPart = user.email.split('@')[0];
-      return emailPart.charAt(0).toUpperCase() + emailPart.slice(1);
+      return capitalizeName(emailPart);
     }
     return 'User';
   };
