@@ -1,0 +1,373 @@
+import { useState, useEffect } from 'react';
+import { supabase } from '../lib/supabase';
+import { useAuth } from '../contexts/AuthContext';
+import { useNotifications } from '../contexts/NotificationContext';
+
+// Custom hook for transactions
+export const useTransactions = () => {
+  const { user } = useAuth();
+  const { addNotification } = useNotifications();
+  const [transactions, setTransactions] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (user?.id) {
+      fetchTransactions();
+    } else {
+      setTransactions([]);
+      setLoading(false);
+    }
+  }, [user]);
+
+  const fetchTransactions = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('transactions')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('date', { ascending: false });
+
+      if (error) throw error;
+      setTransactions(data || []);
+    } catch (error) {
+      console.error('Error fetching transactions:', error);
+      setTransactions([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const addTransaction = async (transaction) => {
+    try {
+      const { data, error } = await supabase
+        .from('transactions')
+        .insert([{ ...transaction, user_id: user.id }])
+        .select()
+        .single();
+
+      if (error) throw error;
+      setTransactions(prev => [data, ...prev]);
+      
+      // Add notification
+      addNotification({
+        type: 'transaction',
+        title: 'Transaction Added',
+        message: `${transaction.type === 'income' ? 'Income' : 'Expense'} of $${Math.abs(transaction.amount).toFixed(2)} added for ${transaction.category}`
+      });
+      
+      return data;
+    } catch (error) {
+      console.error('Error adding transaction:', error);
+      throw error;
+    }
+  };
+
+  const updateTransaction = async (id, updates) => {
+    try {
+      const { data, error } = await supabase
+        .from('transactions')
+        .update(updates)
+        .eq('id', id)
+        .eq('user_id', user.id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      setTransactions(prev => prev.map(t => t.id === id ? data : t));
+      
+      // Add notification
+      addNotification({
+        type: 'transaction',
+        title: 'Transaction Updated',
+        message: `Transaction "${updates.description || data.description}" has been updated`
+      });
+      
+      return data;
+    } catch (error) {
+      console.error('Error updating transaction:', error);
+      throw error;
+    }
+  };
+
+  const deleteTransaction = async (id) => {
+    try {
+      const transaction = transactions.find(t => t.id === id);
+      const { error } = await supabase
+        .from('transactions')
+        .delete()
+        .eq('id', id)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+      setTransactions(prev => prev.filter(t => t.id !== id));
+      
+      // Add notification
+      if (transaction) {
+        addNotification({
+          type: 'transaction',
+          title: 'Transaction Deleted',
+          message: `Transaction "${transaction.description}" has been deleted`
+        });
+      }
+    } catch (error) {
+      console.error('Error deleting transaction:', error);
+      throw error;
+    }
+  };
+
+  return {
+    transactions,
+    loading,
+    addTransaction,
+    updateTransaction,
+    deleteTransaction,
+    refetch: fetchTransactions
+  };
+};
+
+// Custom hook for goals
+export const useGoals = () => {
+  const { user } = useAuth();
+  const { addNotification } = useNotifications();
+  const [goals, setGoals] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (user?.id) {
+      fetchGoals();
+    } else {
+      setGoals([]);
+      setLoading(false);
+    }
+  }, [user]);
+
+  const fetchGoals = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('goals')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setGoals(data || []);
+    } catch (error) {
+      console.error('Error fetching goals:', error);
+      setGoals([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const addGoal = async (goal) => {
+    try {
+      const { data, error } = await supabase
+        .from('goals')
+        .insert([{ ...goal, user_id: user.id }])
+        .select()
+        .single();
+
+      if (error) throw error;
+      setGoals(prev => [data, ...prev]);
+      
+      // Add notification
+      addNotification({
+        type: 'goal',
+        title: 'New Goal Created',
+        message: `Goal "${goal.title}" created with target of $${goal.target_amount.toLocaleString()}`
+      });
+      
+      return data;
+    } catch (error) {
+      console.error('Error adding goal:', error);
+      throw error;
+    }
+  };
+
+  const updateGoal = async (id, updates) => {
+    try {
+      const oldGoal = goals.find(g => g.id === id);
+      const { data, error } = await supabase
+        .from('goals')
+        .update(updates)
+        .eq('id', id)
+        .eq('user_id', user.id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      setGoals(prev => prev.map(g => g.id === id ? data : g));
+      
+      // Check for goal completion or significant progress
+      if (updates.current_amount && oldGoal) {
+        const oldProgress = (oldGoal.current_amount / oldGoal.target_amount) * 100;
+        const newProgress = (data.current_amount / data.target_amount) * 100;
+        
+        if (newProgress >= 100 && oldProgress < 100) {
+          addNotification({
+            type: 'achievement',
+            title: 'Goal Achieved! 🎉',
+            message: `Congratulations! You've reached your goal "${data.title}"`
+          });
+        } else if (updates.current_amount > oldGoal.current_amount) {
+          addNotification({
+            type: 'goal',
+            title: 'Goal Progress Updated',
+            message: `Added $${(updates.current_amount - oldGoal.current_amount).toFixed(2)} to "${data.title}" (${newProgress.toFixed(1)}% complete)`
+          });
+        }
+      }
+      
+      return data;
+    } catch (error) {
+      console.error('Error updating goal:', error);
+      throw error;
+    }
+  };
+
+  const deleteGoal = async (id) => {
+    try {
+      const goal = goals.find(g => g.id === id);
+      const { error } = await supabase
+        .from('goals')
+        .delete()
+        .eq('id', id)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+      setGoals(prev => prev.filter(g => g.id !== id));
+      
+      // Add notification
+      if (goal) {
+        addNotification({
+          type: 'goal',
+          title: 'Goal Deleted',
+          message: `Goal "${goal.title}" has been deleted`
+        });
+      }
+    } catch (error) {
+      console.error('Error deleting goal:', error);
+      throw error;
+    }
+  };
+
+  return {
+    goals,
+    loading,
+    addGoal,
+    updateGoal,
+    deleteGoal,
+    refetch: fetchGoals
+  };
+};
+
+// Custom hook for budget categories
+export const useBudgetCategories = () => {
+  const { user } = useAuth();
+  const { addNotification } = useNotifications();
+  const [budgets, setBudgets] = useState({});
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (user?.id) {
+      fetchBudgets();
+    } else {
+      setBudgets({});
+      setLoading(false);
+    }
+  }, [user]);
+
+  const fetchBudgets = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('budgets')
+        .select('*')
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+      
+      // Convert array to object for easier access
+      const budgetObj = {};
+      data?.forEach(budget => {
+        budgetObj[budget.category] = budget.allocated_amount;
+      });
+      
+      setBudgets(budgetObj);
+    } catch (error) {
+      console.error('Error fetching budgets:', error);
+      setBudgets({});
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateBudgets = async (budgetData) => {
+    try {
+      // Delete existing budgets
+      await supabase
+        .from('budgets')
+        .delete()
+        .eq('user_id', user.id);
+
+      // Insert new budgets
+      const budgetArray = Object.entries(budgetData).map(([category, amount]) => ({
+        user_id: user.id,
+        category,
+        allocated_amount: amount
+      }));
+
+      const { error } = await supabase
+        .from('budgets')
+        .insert(budgetArray);
+
+      if (error) throw error;
+      setBudgets(budgetData);
+      
+      // Add notification
+      addNotification({
+        type: 'budget',
+        title: 'Budget Updated',
+        message: `Budget categories have been updated with total allocation of $${Object.values(budgetData).reduce((sum, amount) => sum + amount, 0).toLocaleString()}`
+      });
+    } catch (error) {
+      console.error('Error updating budgets:', error);
+      throw error;
+    }
+  };
+
+  const updateSingleBudget = async (category, amount) => {
+    try {
+      const { error } = await supabase
+        .from('budgets')
+        .upsert({
+          user_id: user.id,
+          category,
+          allocated_amount: amount
+        });
+
+      if (error) throw error;
+      setBudgets(prev => ({ ...prev, [category]: amount }));
+      
+      // Add notification
+      addNotification({
+        type: 'budget',
+        title: 'Budget Category Updated',
+        message: `${category} budget updated to $${amount.toLocaleString()}`
+      });
+    } catch (error) {
+      console.error('Error updating single budget:', error);
+      throw error;
+    }
+  };
+
+  return {
+    budgets,
+    loading,
+    updateBudgets,
+    updateSingleBudget,
+    refetch: fetchBudgets
+  };
+};
