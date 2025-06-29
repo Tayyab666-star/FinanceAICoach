@@ -10,11 +10,15 @@ import {
   X,
   Edit,
   Trash2,
-  ChevronDown
+  ChevronDown,
+  Eye,
+  FileImage,
+  Loader
 } from 'lucide-react';
 import { useTransactions } from '../hooks/useSupabaseData';
-import { uploadReceipt } from '../lib/supabase';
+import { uploadReceipt, processReceiptOCR, storeReceiptData } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import { useNotifications } from '../contexts/NotificationContext';
 import Card from '../components/Card';
 import Button from '../components/Button';
 import Input from '../components/Input';
@@ -141,7 +145,7 @@ const TransactionModal = ({ isOpen, onClose, onSave, transaction = null }) => {
           <select
             id="category-select"
             name="category"
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             value={formData.category}
             onChange={(e) => setFormData({ ...formData, category: e.target.value })}
           >
@@ -178,54 +182,107 @@ const TransactionModal = ({ isOpen, onClose, onSave, transaction = null }) => {
   );
 };
 
-// Receipt upload modal with OCR simulation
+// Enhanced Receipt upload modal with real OCR processing
 const ReceiptUploadModal = ({ isOpen, onClose, onAdd }) => {
   const { user } = useAuth();
+  const { addNotification } = useNotifications();
   const [uploading, setUploading] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [ocrResult, setOcrResult] = useState(null);
   const [confidence, setConfidence] = useState(0);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(null);
+  const [extractedText, setExtractedText] = useState('');
 
-  const handleFileUpload = async (e) => {
+  const handleFileSelect = (e) => {
     const file = e.target.files[0];
     if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      addNotification({
+        type: 'error',
+        title: 'Invalid File Type',
+        message: 'Please select an image file (JPG, PNG, etc.)'
+      });
+      return;
+    }
+
+    // Validate file size (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      addNotification({
+        type: 'error',
+        title: 'File Too Large',
+        message: 'Please select an image smaller than 10MB'
+      });
+      return;
+    }
+
+    setSelectedFile(file);
+    
+    // Create preview URL
+    const url = URL.createObjectURL(file);
+    setPreviewUrl(url);
+  };
+
+  const handleProcessReceipt = async () => {
+    if (!selectedFile) return;
 
     setUploading(true);
     
     try {
-      // Upload to Supabase Storage
-      const receiptUrl = await uploadReceipt(file, user.id);
+      // Upload image to Supabase Storage
+      const imageUrl = await uploadReceipt(selectedFile, user.id);
       
+      setUploading(false);
       setProcessing(true);
-      setUploading(false);
+      setConfidence(0);
       
-      // Simulate OCR processing with progress
-      for (let i = 0; i <= 100; i += 10) {
-        setConfidence(i);
-        await new Promise(resolve => setTimeout(resolve, 100));
-      }
-      
-      // Mock OCR result
-      const mockResults = [
-        { description: 'Walmart Supercenter', amount: 67.89, category: 'Food' },
-        { description: 'Shell Gas Station', amount: 45.20, category: 'Transport' },
-        { description: 'Starbucks Coffee', amount: 12.50, category: 'Food' },
-        { description: 'Amazon Purchase', amount: 89.99, category: 'Shopping' }
-      ];
-      
-      const randomResult = mockResults[Math.floor(Math.random() * mockResults.length)];
-      
-      setOcrResult({
-        ...randomResult,
-        date: new Date().toISOString().split('T')[0],
-        type: 'expense',
-        receipt_url: receiptUrl
+      // Process OCR
+      const ocrData = await processReceiptOCR(selectedFile, (progress) => {
+        setConfidence(progress);
       });
+      
+      setExtractedText(ocrData.extracted_text || '');
+      
+      // Create result object
+      const result = {
+        description: ocrData.description,
+        amount: ocrData.amount,
+        category: ocrData.category,
+        date: ocrData.date,
+        type: 'expense',
+        receipt_url: imageUrl,
+        confidence: ocrData.confidence
+      };
+      
+      setOcrResult(result);
       setProcessing(false);
+      
+      // Store receipt data in database
+      await storeReceiptData({
+        image_url: imageUrl,
+        extracted_text: ocrData.extracted_text || '',
+        parsed_data: result,
+        confidence_score: ocrData.confidence
+      }, user.id);
+      
+      addNotification({
+        type: 'success',
+        title: 'Receipt Processed',
+        message: `Receipt processed with ${ocrData.confidence}% confidence`
+      });
+      
     } catch (error) {
-      console.error('Error uploading receipt:', error);
-      alert('Failed to upload receipt. Please try again.');
+      console.error('Error processing receipt:', error);
       setUploading(false);
+      setProcessing(false);
+      
+      addNotification({
+        type: 'error',
+        title: 'Processing Failed',
+        message: 'Failed to process receipt. Please try again or enter manually.'
+      });
     }
   };
 
@@ -234,9 +291,19 @@ const ReceiptUploadModal = ({ isOpen, onClose, onAdd }) => {
       await onAdd(ocrResult);
       onClose();
       resetModal();
+      
+      addNotification({
+        type: 'success',
+        title: 'Transaction Added',
+        message: 'Receipt transaction has been added successfully'
+      });
     } catch (error) {
       console.error('Error adding transaction:', error);
-      alert('Failed to add transaction. Please try again.');
+      addNotification({
+        type: 'error',
+        title: 'Failed to Add Transaction',
+        message: 'Please try again or add the transaction manually'
+      });
     }
   };
 
@@ -245,106 +312,209 @@ const ReceiptUploadModal = ({ isOpen, onClose, onAdd }) => {
     setConfidence(0);
     setProcessing(false);
     setUploading(false);
+    setSelectedFile(null);
+    setPreviewUrl(null);
+    setExtractedText('');
+    
+    // Clean up preview URL
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+    }
+  };
+
+  const handleClose = () => {
+    onClose();
+    resetModal();
   };
 
   return (
     <ResponsiveModal
       isOpen={isOpen}
-      onClose={() => { onClose(); resetModal(); }}
+      onClose={handleClose}
       title="Upload Receipt"
-      size="md"
+      size="lg"
     >
-      {!ocrResult && !processing && (
-        <div className="space-y-4">
-          <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-8 text-center">
-            <Camera className="w-12 h-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
-            <p className="text-gray-600 dark:text-gray-300 mb-4">Upload receipt image for automatic processing</p>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleFileUpload}
-              className="hidden"
-              id="receipt-upload"
-            />
-            <label htmlFor="receipt-upload">
-              <Button as="span" variant="outline" disabled={uploading}>
-                {uploading ? 'Uploading...' : 'Choose File'}
-              </Button>
-            </label>
-          </div>
-        </div>
-      )}
-      
-      {processing && (
-        <div className="text-center py-8">
-          <div className="animate-spin w-8 h-8 border-4 border-blue-200 dark:border-blue-800 border-t-blue-600 dark:border-t-blue-400 rounded-full mx-auto mb-4"></div>
-          <p className="text-gray-600 dark:text-gray-300 mb-2">Processing receipt...</p>
-          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-            <div 
-              className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-              style={{ width: `${confidence}%` }}
-            ></div>
-          </div>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">Confidence: {confidence}%</p>
-        </div>
-      )}
-      
-      {ocrResult && (
-        <div className="space-y-4">
-          <div className="flex items-center text-green-600 dark:text-green-400 mb-4">
-            <CheckCircle className="w-5 h-5 mr-2" />
-            <span>Receipt processed successfully!</span>
-          </div>
-          
-          <div className="space-y-3">
-            <Input
-              label="Description"
-              name="description"
-              value={ocrResult.description}
-              onChange={(e) => setOcrResult({ ...ocrResult, description: e.target.value })}
-            />
-            <Input
-              label="Amount"
-              name="amount"
-              type="number"
-              step="0.01"
-              value={ocrResult.amount}
-              onChange={(e) => setOcrResult({ ...ocrResult, amount: parseFloat(e.target.value) })}
-            />
-            <div>
-              <label htmlFor="ocr-category" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Category</label>
-              <select
-                id="ocr-category"
-                name="category"
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                value={ocrResult.category}
-                onChange={(e) => setOcrResult({ ...ocrResult, category: e.target.value })}
-              >
-                <option value="Food">Food & Dining</option>
-                <option value="Transport">Transportation</option>
-                <option value="Entertainment">Entertainment</option>
-                <option value="Shopping">Shopping</option>
-                <option value="Bills">Bills & Utilities</option>
-                <option value="Healthcare">Healthcare</option>
-                <option value="Education">Education</option>
-                <option value="Other">Other</option>
-              </select>
+      <div className="space-y-6">
+        {/* File Upload Section */}
+        {!selectedFile && !ocrResult && (
+          <div className="space-y-4">
+            <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 p-8 text-center">
+              <Camera className="w-12 h-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
+              <p className="text-gray-600 dark:text-gray-300 mb-4">Upload receipt image for automatic processing</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Supports JPG, PNG, WebP (max 10MB)</p>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleFileSelect}
+                className="hidden"
+                id="receipt-upload"
+              />
+              <label htmlFor="receipt-upload">
+                <Button as="span" variant="outline">
+                  <Upload className="w-4 h-4 mr-2" />
+                  Choose File
+                </Button>
+              </label>
             </div>
-            <Input
-              label="Date"
-              name="date"
-              type="date"
-              value={ocrResult.date}
-              onChange={(e) => setOcrResult({ ...ocrResult, date: e.target.value })}
-            />
           </div>
-          
-          <div className="flex space-x-3 pt-4">
-            <Button onClick={handleConfirm} className="flex-1">Confirm & Add</Button>
-            <Button variant="secondary" onClick={resetModal}>Try Again</Button>
+        )}
+
+        {/* File Preview and Processing */}
+        {selectedFile && !ocrResult && (
+          <div className="space-y-4">
+            <div className="flex items-center space-x-4">
+              <div className="flex-shrink-0">
+                <img 
+                  src={previewUrl} 
+                  alt="Receipt preview" 
+                  className="w-20 h-20 object-cover border border-gray-200 dark:border-gray-600"
+                />
+              </div>
+              <div className="flex-1">
+                <p className="font-medium text-gray-900 dark:text-white">{selectedFile.name}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+                </p>
+              </div>
+            </div>
+
+            {!processing && !uploading && (
+              <div className="flex space-x-3">
+                <Button onClick={handleProcessReceipt} className="flex-1">
+                  <FileImage className="w-4 h-4 mr-2" />
+                  Process Receipt
+                </Button>
+                <Button variant="outline" onClick={resetModal}>
+                  Choose Different File
+                </Button>
+              </div>
+            )}
+
+            {(uploading || processing) && (
+              <div className="text-center py-6">
+                <div className="flex items-center justify-center mb-4">
+                  <Loader className="w-8 h-8 animate-spin text-blue-600 dark:text-blue-400" />
+                </div>
+                <p className="text-gray-600 dark:text-gray-300 mb-2">
+                  {uploading ? 'Uploading image...' : 'Processing receipt...'}
+                </p>
+                {processing && (
+                  <>
+                    <div className="w-full bg-gray-200 dark:bg-gray-700 h-2 mb-2">
+                      <div 
+                        className="bg-blue-600 h-2 transition-all duration-300"
+                        style={{ width: `${confidence}%` }}
+                      ></div>
+                    </div>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      OCR Progress: {confidence}%
+                    </p>
+                  </>
+                )}
+              </div>
+            )}
           </div>
-        </div>
-      )}
+        )}
+
+        {/* OCR Results */}
+        {ocrResult && (
+          <div className="space-y-4">
+            <div className="flex items-center text-green-600 dark:text-green-400 mb-4">
+              <CheckCircle className="w-5 h-5 mr-2" />
+              <span>Receipt processed successfully! (Confidence: {ocrResult.confidence}%)</span>
+            </div>
+
+            {/* Receipt Preview */}
+            <div className="flex items-center space-x-4 p-3 bg-gray-50 dark:bg-gray-700">
+              <img 
+                src={previewUrl} 
+                alt="Receipt" 
+                className="w-16 h-16 object-cover border border-gray-200 dark:border-gray-600"
+              />
+              <div className="flex-1">
+                <p className="font-medium text-gray-900 dark:text-white">Receipt Image</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Stored securely in your account
+                </p>
+              </div>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => window.open(previewUrl, '_blank')}
+              >
+                <Eye className="w-4 h-4 mr-1" />
+                View
+              </Button>
+            </div>
+
+            {/* Editable Transaction Data */}
+            <div className="space-y-3">
+              <Input
+                label="Description"
+                value={ocrResult.description}
+                onChange={(e) => setOcrResult({ ...ocrResult, description: e.target.value })}
+                placeholder="Store or merchant name"
+              />
+              
+              <Input
+                label="Amount"
+                type="number"
+                step="0.01"
+                value={ocrResult.amount}
+                onChange={(e) => setOcrResult({ ...ocrResult, amount: parseFloat(e.target.value) || 0 })}
+                placeholder="0.00"
+              />
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Category</label>
+                <select
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  value={ocrResult.category}
+                  onChange={(e) => setOcrResult({ ...ocrResult, category: e.target.value })}
+                >
+                  <option value="Food">Food & Dining</option>
+                  <option value="Transport">Transportation</option>
+                  <option value="Entertainment">Entertainment</option>
+                  <option value="Shopping">Shopping</option>
+                  <option value="Bills">Bills & Utilities</option>
+                  <option value="Healthcare">Healthcare</option>
+                  <option value="Education">Education</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+              
+              <Input
+                label="Date"
+                type="date"
+                value={ocrResult.date}
+                onChange={(e) => setOcrResult({ ...ocrResult, date: e.target.value })}
+              />
+            </div>
+
+            {/* Extracted Text Preview */}
+            {extractedText && (
+              <div className="mt-4">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Extracted Text (for reference)
+                </label>
+                <div className="p-3 bg-gray-50 dark:bg-gray-700 text-xs text-gray-600 dark:text-gray-300 max-h-32 overflow-y-auto">
+                  {extractedText}
+                </div>
+              </div>
+            )}
+            
+            <div className="flex space-x-3 pt-4">
+              <Button onClick={handleConfirm} className="flex-1">
+                <CheckCircle className="w-4 h-4 mr-2" />
+                Add Transaction
+              </Button>
+              <Button variant="outline" onClick={resetModal}>
+                Try Again
+              </Button>
+            </div>
+          </div>
+        )}
+      </div>
     </ResponsiveModal>
   );
 };
@@ -355,7 +525,7 @@ const FilterDropdown = ({ filterType, filterCategory, onTypeChange, onCategoryCh
     <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
       <ResponsiveDropdown
         trigger={
-          <button className="flex items-center justify-between px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 min-w-[120px]">
+          <button className="flex items-center justify-between px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 min-w-[120px]">
             <span className="text-sm text-gray-900 dark:text-white">{filterType === 'all' ? 'All Types' : filterType === 'income' ? 'Income' : 'Expenses'}</span>
             <ChevronDown className="w-4 h-4 ml-2 text-gray-600 dark:text-gray-300" />
           </button>
@@ -384,7 +554,7 @@ const FilterDropdown = ({ filterType, filterCategory, onTypeChange, onCategoryCh
 
       <ResponsiveDropdown
         trigger={
-          <button className="flex items-center justify-between px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 min-w-[140px]">
+          <button className="flex items-center justify-between px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 min-w-[140px]">
             <span className="text-sm truncate text-gray-900 dark:text-white">
               {filterCategory === 'all' ? 'All Categories' : filterCategory}
             </span>
@@ -528,7 +698,7 @@ const Transactions = () => {
                 type="text"
                 name="search"
                 placeholder="Search transactions..."
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -553,7 +723,7 @@ const Transactions = () => {
               className="flex items-center justify-between p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
             >
               <div className="flex items-center space-x-4 flex-1 min-w-0">
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
+                <div className={`w-10 h-10 flex items-center justify-center flex-shrink-0 ${
                   transaction.type === 'income' ? 'bg-green-100 dark:bg-green-900/50' : 'bg-red-100 dark:bg-red-900/50'
                 }`}>
                   {transaction.type === 'income' ? (
@@ -574,7 +744,13 @@ const Transactions = () => {
                     {transaction.receipt_url && (
                       <>
                         <span>•</span>
-                        <span className="text-blue-600 dark:text-blue-400">📎 Receipt</span>
+                        <button
+                          onClick={() => window.open(transaction.receipt_url, '_blank')}
+                          className="text-blue-600 dark:text-blue-400 hover:underline flex items-center"
+                        >
+                          <FileImage className="w-3 h-3 mr-1" />
+                          Receipt
+                        </button>
                       </>
                     )}
                   </div>
@@ -591,14 +767,14 @@ const Transactions = () => {
                 <div className="flex space-x-1">
                   <button
                     onClick={() => handleEditTransaction(transaction)}
-                    className="p-1 hover:bg-gray-100 dark:hover:bg-gray-600 rounded transition-colors"
+                    className="p-1 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
                     aria-label="Edit transaction"
                   >
                     <Edit className="w-4 h-4 text-gray-600 dark:text-gray-300" />
                   </button>
                   <button
                     onClick={() => handleDeleteTransaction(transaction.id)}
-                    className="p-1 hover:bg-gray-100 dark:hover:bg-gray-600 rounded transition-colors"
+                    className="p-1 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
                     aria-label="Delete transaction"
                   >
                     <Trash2 className="w-4 h-4 text-gray-600 dark:text-gray-300" />
