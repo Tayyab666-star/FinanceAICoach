@@ -58,7 +58,7 @@ const Sidebar = ({ isOpen, onClose }) => {
             <img 
               src="https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=40&h=40&fit=crop&crop=center&auto=format&q=80" 
               alt="FinanceApp Logo" 
-              className="w-8 h-8 rounded-lg object-cover"
+              className="w-8 h-8 object-cover"
               onError={(e) => {
                 // Fallback to a different financial icon if image fails to load
                 e.target.style.display = 'none';
@@ -66,7 +66,7 @@ const Sidebar = ({ isOpen, onClose }) => {
               }}
             />
             <div 
-              className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center hidden"
+              className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center hidden"
             >
               <span className="text-white font-bold text-sm">F</span>
             </div>
@@ -74,7 +74,7 @@ const Sidebar = ({ isOpen, onClose }) => {
           </button>
           <button 
             onClick={onClose}
-            className="lg:hidden p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
+            className="lg:hidden p-2 hover:bg-gray-100 dark:hover:bg-gray-700"
           >
             <X className="w-5 h-5 text-gray-600 dark:text-gray-300" />
           </button>
@@ -88,7 +88,7 @@ const Sidebar = ({ isOpen, onClose }) => {
               to={to}
               onClick={onClose}
               className={({ isActive }) => `
-                flex items-center px-3 py-2 mb-1 rounded-lg text-sm font-medium transition-colors
+                flex items-center px-3 py-2 mb-1 text-sm font-medium transition-colors
                 ${isActive 
                   ? 'bg-blue-50 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 border-r-2 border-blue-700 dark:border-blue-400' 
                   : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white'

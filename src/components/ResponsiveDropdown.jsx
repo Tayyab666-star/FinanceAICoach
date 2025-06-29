@@ -91,7 +91,7 @@ const ResponsiveDropdown = ({
         <div
           ref={dropdownRef}
           style={dropdownStyle}
-          className="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 min-w-[200px]"
+          className="bg-white dark:bg-gray-800 shadow-lg border border-gray-200 dark:border-gray-700 py-1 min-w-[200px]"
         >
           {children}
         </div>

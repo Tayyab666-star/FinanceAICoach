@@ -24,7 +24,7 @@ const Input = ({
         id={inputId}
         name={inputName}
         className={`
-          w-full px-3 py-2 border rounded-lg text-sm
+          w-full px-3 py-2 border text-sm
           focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
           bg-white dark:bg-gray-700 text-gray-900 dark:text-white
           ${error 

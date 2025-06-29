@@ -64,7 +64,7 @@ const Toast = ({ notification, onRemove }) => {
   return (
     <div
       className={`
-        w-full max-w-sm bg-white dark:bg-gray-800 shadow-lg rounded-lg pointer-events-auto 
+        w-full max-w-sm bg-white dark:bg-gray-800 shadow-lg pointer-events-auto 
         border border-gray-200 dark:border-gray-700 border-l-4 ${getBorderColor()}
         transform transition-all duration-300 ease-in-out
         ${isVisible && !isExiting ? 'translate-x-0 opacity-100 scale-100' : 'translate-x-full opacity-0 scale-95'}
@@ -89,7 +89,7 @@ const Toast = ({ notification, onRemove }) => {
           
           {/* Close button */}
           <button
-            className="flex-shrink-0 p-1 rounded-md text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            className="flex-shrink-0 p-1 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
             onClick={handleRemove}
             aria-label="Close notification"
           >
