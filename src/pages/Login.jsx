@@ -185,7 +185,7 @@ const Login = () => {
         <div className="text-center mb-8">
           <div className="flex justify-center mb-4">
             <img 
-              src="/WhatsApp Image 2025-06-29 at 14.00.10_f73cb93b.jpg" 
+              src="/WhatsApp Image 2025-06-29 at 13.46.00_d292e4a6.jpg" 
               alt="Finance AI Coach" 
               className="h-16 w-auto object-contain"
               onError={(e) => {

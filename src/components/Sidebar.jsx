@@ -56,7 +56,7 @@ const Sidebar = ({ isOpen, onClose }) => {
             className="flex items-center hover:opacity-80 transition-opacity cursor-pointer"
           >
             <img 
-              src="/WhatsApp Image 2025-06-29 at 14.00.10_f73cb93b.jpg" 
+              src="/WhatsApp Image 2025-06-29 at 13.46.00_d292e4a6.jpg" 
               alt="Finance AI Coach" 
               className="h-10 w-auto object-contain"
               onError={(e) => {
