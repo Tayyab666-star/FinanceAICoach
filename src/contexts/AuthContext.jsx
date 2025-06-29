@@ -141,14 +141,14 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const login = async (email) => {
-    setIsLoading(true);
+  // Send verification code to email
+  const sendVerificationCode = async (email) => {
     try {
-      // Use Supabase OTP sign-in for passwordless authentication
       const { error } = await supabase.auth.signInWithOtp({
         email: email,
         options: {
-          emailRedirectTo: window.location.origin + '/dashboard'
+          shouldCreateUser: true,
+          emailRedirectTo: undefined // Disable email redirect, we'll use OTP verification
         }
       });
 
@@ -156,12 +156,56 @@ export const AuthProvider = ({ children }) => {
         throw error;
       }
 
-      // The auth state change will be handled by the listener
-      return { success: true, message: 'Check your email for the login link!' };
+      return { success: true, message: 'Verification code sent to your email!' };
     } catch (error) {
-      console.error('Login error:', error);
-      setIsLoading(false);
+      console.error('Send verification code error:', error);
       throw error;
+    }
+  };
+
+  // Verify the code entered by user
+  const verifyCode = async (email, token) => {
+    try {
+      const { data, error } = await supabase.auth.verifyOtp({
+        email: email,
+        token: token,
+        type: 'email'
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      // The auth state change will be handled by the listener
+      return { success: true, user: data.user };
+    } catch (error) {
+      console.error('Verify code error:', error);
+      throw error;
+    }
+  };
+
+  // Check if user exists (for returning users)
+  const checkUserExists = async (email) => {
+    try {
+      // Try to get user profile by email
+      const { data: profiles, error } = await supabase
+        .from('user_profiles')
+        .select('id, email, name')
+        .eq('email', email)
+        .limit(1);
+
+      if (error) {
+        console.error('Error checking user:', error);
+        return { exists: false };
+      }
+
+      return { 
+        exists: profiles && profiles.length > 0,
+        profile: profiles?.[0] || null
+      };
+    } catch (error) {
+      console.error('Error in checkUserExists:', error);
+      return { exists: false };
     }
   };
 
@@ -271,10 +315,10 @@ export const AuthProvider = ({ children }) => {
   // Don't render children until auth is initialized
   if (!isInitialized) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
         <div className="text-center">
           <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">Initializing...</p>
+          <p className="text-gray-600 dark:text-gray-300">Initializing...</p>
         </div>
       </div>
     );
@@ -285,7 +329,9 @@ export const AuthProvider = ({ children }) => {
       user, 
       userProfile,
       isLoading, 
-      login, 
+      sendVerificationCode,
+      verifyCode,
+      checkUserExists,
       logout,
       updateUserProfile,
       getUserDisplayName,
