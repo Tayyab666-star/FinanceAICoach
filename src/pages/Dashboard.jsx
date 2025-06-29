@@ -11,7 +11,9 @@ import {
   CheckCircle,
   Plus,
   BarChart,
-  Edit
+  Edit,
+  ShoppingBag,
+  Brain
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -106,39 +108,87 @@ const SetupModal = ({ isOpen, onClose, onSave, userProfile }) => {
   );
 };
 
-// Quick action card component with navigation
-const QuickActionCard = ({ title, description, icon: Icon, color = 'blue', path }) => {
+// Enhanced Quick action card component with navigation and improved colors
+const QuickActionCard = ({ title, description, icon: Icon, color = 'blue', path, onClick }) => {
   const navigate = useNavigate();
   
   const handleClick = () => {
-    if (path) {
+    if (onClick) {
+      onClick();
+    } else if (path) {
       navigate(path);
     }
   };
 
+  const colorClasses = {
+    blue: {
+      bg: 'bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/30',
+      icon: 'bg-blue-500 text-white',
+      hover: 'hover:from-blue-100 hover:to-blue-200 dark:hover:from-blue-800/40 dark:hover:to-blue-700/40',
+      border: 'border-blue-200 dark:border-blue-700'
+    },
+    green: {
+      bg: 'bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-900/30 dark:to-emerald-800/30',
+      icon: 'bg-emerald-500 text-white',
+      hover: 'hover:from-emerald-100 hover:to-emerald-200 dark:hover:from-emerald-800/40 dark:hover:to-emerald-700/40',
+      border: 'border-emerald-200 dark:border-emerald-700'
+    },
+    purple: {
+      bg: 'bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/30 dark:to-purple-800/30',
+      icon: 'bg-purple-500 text-white',
+      hover: 'hover:from-purple-100 hover:to-purple-200 dark:hover:from-purple-800/40 dark:hover:to-purple-700/40',
+      border: 'border-purple-200 dark:border-purple-700'
+    },
+    orange: {
+      bg: 'bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/30 dark:to-orange-800/30',
+      icon: 'bg-orange-500 text-white',
+      hover: 'hover:from-orange-100 hover:to-orange-200 dark:hover:from-orange-800/40 dark:hover:to-orange-700/40',
+      border: 'border-orange-200 dark:border-orange-700'
+    },
+    indigo: {
+      bg: 'bg-gradient-to-br from-indigo-50 to-indigo-100 dark:from-indigo-900/30 dark:to-indigo-800/30',
+      icon: 'bg-indigo-500 text-white',
+      hover: 'hover:from-indigo-100 hover:to-indigo-200 dark:hover:from-indigo-800/40 dark:hover:to-indigo-700/40',
+      border: 'border-indigo-200 dark:border-indigo-700'
+    },
+    pink: {
+      bg: 'bg-gradient-to-br from-pink-50 to-pink-100 dark:from-pink-900/30 dark:to-pink-800/30',
+      icon: 'bg-pink-500 text-white',
+      hover: 'hover:from-pink-100 hover:to-pink-200 dark:hover:from-pink-800/40 dark:hover:to-pink-700/40',
+      border: 'border-pink-200 dark:border-pink-700'
+    }
+  };
+
+  const colors = colorClasses[color] || colorClasses.blue;
+
   return (
-    <Card 
-      className="p-4 hover:shadow-md transition-shadow cursor-pointer" 
+    <div 
+      className={`
+        ${colors.bg} ${colors.hover} ${colors.border}
+        border rounded-xl p-4 cursor-pointer transition-all duration-300 
+        hover:shadow-lg hover:scale-105 transform
+        group
+      `}
       onClick={handleClick}
     >
-      <div className="flex items-center space-x-3">
-        <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-          color === 'blue' ? 'bg-blue-100 dark:bg-blue-900/50' :
-          color === 'green' ? 'bg-green-100 dark:bg-green-900/50' :
-          color === 'purple' ? 'bg-purple-100 dark:bg-purple-900/50' : 'bg-gray-100 dark:bg-gray-700'
-        }`}>
-          <Icon className={`w-5 h-5 ${
-            color === 'blue' ? 'text-blue-600 dark:text-blue-400' :
-            color === 'green' ? 'text-green-600 dark:text-green-400' :
-            color === 'purple' ? 'text-purple-600 dark:text-purple-400' : 'text-gray-600 dark:text-gray-300'
-          }`} />
+      <div className="flex items-center space-x-4">
+        <div className={`
+          w-12 h-12 rounded-xl flex items-center justify-center 
+          ${colors.icon} shadow-lg
+          group-hover:scale-110 transition-transform duration-300
+        `}>
+          <Icon className="w-6 h-6" />
         </div>
-        <div>
-          <h3 className="font-medium text-gray-900 dark:text-white">{title}</h3>
-          <p className="text-sm text-gray-600 dark:text-gray-300">{description}</p>
+        <div className="flex-1">
+          <h3 className="font-semibold text-gray-900 dark:text-white group-hover:text-gray-800 dark:group-hover:text-gray-100 transition-colors">
+            {title}
+          </h3>
+          <p className="text-sm text-gray-600 dark:text-gray-300 group-hover:text-gray-700 dark:group-hover:text-gray-200 transition-colors">
+            {description}
+          </p>
         </div>
       </div>
-    </Card>
+    </div>
   );
 };
 
@@ -599,10 +649,10 @@ const Dashboard = () => {
         </Card>
       </div>
 
-      {/* Quick actions with working navigation */}
+      {/* Enhanced Quick actions with navigation and beautiful colors */}
       <Card>
         <div className="p-6">
-          <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Quick Actions</h3>
+          <h3 className="text-lg font-semibold mb-6 text-gray-900 dark:text-white">Quick Actions</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <QuickActionCard
               title="Add Transaction"
@@ -612,25 +662,53 @@ const Dashboard = () => {
               path="/transactions"
             />
             <QuickActionCard
-              title="Set Budget"
+              title="Manage Budget"
               description="Plan your spending"
               icon={PieChart}
               color="green"
               path="/budget"
             />
             <QuickActionCard
-              title="Create Goal"
-              description="Set financial target"
+              title="Set Goals"
+              description="Create financial targets"
               icon={Target}
               color="purple"
               path="/goals"
             />
             <QuickActionCard
-              title="View Reports"
+              title="AI Coach"
+              description="Get financial insights"
+              icon={Brain}
+              color="indigo"
+              path="/ai-coach"
+            />
+            <QuickActionCard
+              title="View Analytics"
               description="Analyze your finances"
               icon={BarChart}
-              color="blue"
+              color="orange"
+              path="/analytics"
+            />
+            <QuickActionCard
+              title="Generate Reports"
+              description="Export financial data"
+              icon={Calendar}
+              color="pink"
               path="/reports"
+            />
+            <QuickActionCard
+              title="Shopping Tracker"
+              description="Track your purchases"
+              icon={ShoppingBag}
+              color="green"
+              path="/transactions"
+            />
+            <QuickActionCard
+              title="Settings"
+              description="Manage your account"
+              icon={Edit}
+              color="blue"
+              path="/settings"
             />
           </div>
         </div>
