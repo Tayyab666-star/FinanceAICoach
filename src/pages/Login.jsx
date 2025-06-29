@@ -5,7 +5,7 @@ import { useNotifications } from '../contexts/NotificationContext';
 import Card from '../components/Card';
 import Input from '../components/Input';
 import Button from '../components/Button';
-import { Mail, Shield, ArrowRight, CheckCircle } from 'lucide-react';
+import { Mail, Shield, ArrowRight, CheckCircle, AlertCircle } from 'lucide-react';
 
 const Login = () => {
   const [step, setStep] = useState('email'); // 'email' or 'verification'
@@ -236,9 +236,24 @@ const Login = () => {
                 </p>
               </div>
 
+              {/* Important note about email type */}
+              <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg border border-yellow-200 dark:border-yellow-700">
+                <div className="flex items-start">
+                  <AlertCircle className="w-5 h-5 text-yellow-600 dark:text-yellow-400 mr-2 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+                      Check your email for the verification code
+                    </p>
+                    <p className="text-xs text-yellow-700 dark:text-yellow-300 mt-1">
+                      If you received a "Magic Link" email instead of a code, please click the link in the email to complete your login. The system will automatically redirect you to the dashboard.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
               <div className="relative">
                 <Input
-                  label="Verification Code"
+                  label="Verification Code (if received)"
                   type="text"
                   value={verificationCode}
                   onChange={(e) => {

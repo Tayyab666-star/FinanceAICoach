@@ -141,14 +141,17 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Send verification code to email
+  // Send verification code to email (using OTP type)
   const sendVerificationCode = async (email) => {
     try {
       const { error } = await supabase.auth.signInWithOtp({
         email: email,
         options: {
           shouldCreateUser: true,
-          emailRedirectTo: undefined // Disable email redirect, we'll use OTP verification
+          emailRedirectTo: undefined, // Disable email redirect
+          data: {
+            // Additional metadata if needed
+          }
         }
       });
 
