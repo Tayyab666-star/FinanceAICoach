@@ -1,16 +1,14 @@
-import React, { useState } from 'react';
-import { Link, Navigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotifications } from '../contexts/NotificationContext';
 import Card from '../components/Card';
 import Input from '../components/Input';
 import Button from '../components/Button';
-import { Eye, EyeOff, Mail, Lock, User } from 'lucide-react';
+import { Lock, Eye, EyeOff, CheckCircle } from 'lucide-react';
 
-const Signup = () => {
+const ResetPassword = () => {
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
     password: '',
     confirmPassword: ''
   });
@@ -18,12 +16,26 @@ const Signup = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [emailSent, setEmailSent] = useState(false);
-  const { user, signUp, isLoading } = useAuth();
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const { updatePassword } = useAuth();
   const { addNotification } = useNotifications();
 
-  // Redirect if already logged in
-  if (user) return <Navigate to="/dashboard" replace />;
+  useEffect(() => {
+    // Check if we have the required tokens from the URL
+    const accessToken = searchParams.get('access_token');
+    const refreshToken = searchParams.get('refresh_token');
+    
+    if (!accessToken || !refreshToken) {
+      addNotification({
+        type: 'error',
+        title: 'Invalid Reset Link',
+        message: 'This password reset link is invalid or has expired.'
+      });
+      navigate('/forgot-password');
+    }
+  }, [searchParams, navigate, addNotification]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -37,18 +49,6 @@ const Signup = () => {
 
   const validateForm = () => {
     const newErrors = {};
-    
-    if (!formData.name.trim()) {
-      newErrors.name = 'Name is required';
-    } else if (formData.name.trim().length < 2) {
-      newErrors.name = 'Name must be at least 2 characters';
-    }
-    
-    if (!formData.email) {
-      newErrors.email = 'Email is required';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Please enter a valid email address';
-    }
     
     if (!formData.password) {
       newErrors.password = 'Password is required';
@@ -78,82 +78,47 @@ const Signup = () => {
     setErrors({});
 
     try {
-      const result = await signUp(formData.email, formData.password, formData.name);
+      await updatePassword(formData.password);
+      setIsSuccess(true);
       
-      if (result.needsEmailConfirmation) {
-        setEmailSent(true);
-        addNotification({
-          type: 'info',
-          title: 'Check Your Email',
-          message: 'We sent you a confirmation link. Please check your email to complete registration.'
-        });
-      } else {
-        addNotification({
-          type: 'success',
-          title: 'Account Created!',
-          message: 'Welcome to FinanceApp! Your account has been created successfully.'
-        });
-      }
+      addNotification({
+        type: 'success',
+        title: 'Password Updated',
+        message: 'Your password has been successfully updated.'
+      });
+
+      // Redirect to login after 3 seconds
+      setTimeout(() => {
+        navigate('/login');
+      }, 3000);
     } catch (error) {
-      console.error('Signup error:', error);
-      
-      if (error.message.includes('already exists')) {
-        setErrors({ 
-          email: 'An account with this email already exists. Please try logging in instead.' 
-        });
-      } else if (error.message.includes('Password should be')) {
-        setErrors({ 
-          password: 'Password should be at least 6 characters long' 
-        });
-      } else {
-        setErrors({ 
-          general: error.message || 'Failed to create account. Please try again.' 
-        });
-      }
+      console.error('Update password error:', error);
+      setErrors({ 
+        general: 'Failed to update password. Please try again.' 
+      });
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // Show loading state while auth is being checked
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
-        <div className="text-center">
-          <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600 dark:text-gray-300">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Show email confirmation message
-  if (emailSent) {
+  if (isSuccess) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 px-4">
         <div className="max-w-md w-full">
           <Card className="shadow-xl border-0 backdrop-blur-sm bg-white/90 dark:bg-gray-800/90 text-center">
             <div className="w-16 h-16 bg-green-100 dark:bg-green-900/50 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Mail className="w-8 h-8 text-green-600 dark:text-green-400" />
+              <CheckCircle className="w-8 h-8 text-green-600 dark:text-green-400" />
             </div>
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Check Your Email</h2>
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Password Updated!</h2>
             <p className="text-gray-600 dark:text-gray-300 mb-6">
-              We've sent a confirmation link to <strong>{formData.email}</strong>. 
-              Please check your email and click the link to complete your registration.
+              Your password has been successfully updated. You will be redirected to the login page shortly.
             </p>
-            <div className="space-y-3">
-              <Link to="/login">
-                <Button className="w-full">
-                  Back to Login
-                </Button>
-              </Link>
-              <button
-                onClick={() => setEmailSent(false)}
-                className="text-sm text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300"
-              >
-                Didn't receive the email? Try again
-              </button>
-            </div>
+            <Button 
+              onClick={() => navigate('/login')}
+              className="w-full"
+            >
+              Go to Login
+            </Button>
           </Card>
         </div>
       </div>
@@ -168,54 +133,22 @@ const Signup = () => {
           <div className="w-16 h-16 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
             <span className="text-2xl font-bold text-white">F</span>
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Create Account</h1>
-          <p className="text-gray-600 dark:text-gray-300 mt-2">Join FinanceApp to manage your finances</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Reset Password</h1>
+          <p className="text-gray-600 dark:text-gray-300 mt-2">Enter your new password</p>
         </div>
         
         <Card className="shadow-xl border-0 backdrop-blur-sm bg-white/90 dark:bg-gray-800/90">
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Name Input */}
-            <div className="relative">
-              <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <Input
-                label="Full Name"
-                type="text"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                placeholder="Enter your full name"
-                className="pl-12"
-                error={errors.name}
-                disabled={isSubmitting}
-              />
-            </div>
-            
-            {/* Email Input */}
-            <div className="relative">
-              <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <Input
-                label="Email Address"
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                placeholder="Enter your email"
-                className="pl-12"
-                error={errors.email}
-                disabled={isSubmitting}
-              />
-            </div>
-            
             {/* Password Input */}
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               <Input
-                label="Password"
+                label="New Password"
                 type={showPassword ? 'text' : 'password'}
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
-                placeholder="Create a password"
+                placeholder="Enter your new password"
                 className="pl-12 pr-12"
                 error={errors.password}
                 disabled={isSubmitting}
@@ -233,12 +166,12 @@ const Signup = () => {
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               <Input
-                label="Confirm Password"
+                label="Confirm New Password"
                 type={showConfirmPassword ? 'text' : 'password'}
                 name="confirmPassword"
                 value={formData.confirmPassword}
                 onChange={handleChange}
-                placeholder="Confirm your password"
+                placeholder="Confirm your new password"
                 className="pl-12 pr-12"
                 error={errors.confirmPassword}
                 disabled={isSubmitting}
@@ -259,6 +192,15 @@ const Signup = () => {
               </div>
             )}
             
+            {/* Password Requirements */}
+            <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg">
+              <p className="text-sm text-blue-800 dark:text-blue-200 font-medium mb-1">Password Requirements:</p>
+              <ul className="text-xs text-blue-700 dark:text-blue-300 space-y-1">
+                <li>• At least 6 characters long</li>
+                <li>• Should be unique and not easily guessable</li>
+              </ul>
+            </div>
+            
             {/* Submit Button */}
             <Button
               type="submit"
@@ -266,26 +208,13 @@ const Signup = () => {
               disabled={isSubmitting}
               className="w-full text-lg py-3"
             >
-              {isSubmitting ? 'Creating Account...' : 'Create Account'}
+              {isSubmitting ? 'Updating Password...' : 'Update Password'}
             </Button>
           </form>
-          
-          {/* Login Link */}
-          <div className="mt-6 text-center">
-            <p className="text-sm text-gray-600 dark:text-gray-300">
-              Already have an account?{' '}
-              <Link 
-                to="/login" 
-                className="text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300 font-medium"
-              >
-                Sign in here
-              </Link>
-            </p>
-          </div>
         </Card>
       </div>
     </div>
   );
 };
 
-export default Signup;
+export default ResetPassword;

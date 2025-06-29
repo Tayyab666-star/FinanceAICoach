@@ -4,6 +4,9 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { NotificationProvider } from './contexts/NotificationContext';
 import { DarkModeProvider } from './contexts/DarkModeContext';
 import Login from './pages/Login';
+import Signup from './pages/Signup';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 import Dashboard from './pages/Dashboard';
 import Transactions from './pages/Transactions';
 import Analytics from './pages/Analytics';
@@ -72,6 +75,7 @@ function App() {
           <Router>
             <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
               <Routes>
+                {/* Public Routes */}
                 <Route 
                   path="/login" 
                   element={
@@ -80,6 +84,28 @@ function App() {
                     </PublicRoute>
                   } 
                 />
+                <Route 
+                  path="/signup" 
+                  element={
+                    <PublicRoute>
+                      <Signup />
+                    </PublicRoute>
+                  } 
+                />
+                <Route 
+                  path="/forgot-password" 
+                  element={
+                    <PublicRoute>
+                      <ForgotPassword />
+                    </PublicRoute>
+                  } 
+                />
+                <Route 
+                  path="/reset-password" 
+                  element={<ResetPassword />} 
+                />
+                
+                {/* Protected Routes */}
                 <Route 
                   path="/" 
                   element={
@@ -98,6 +124,8 @@ function App() {
                   <Route path="reports" element={<Reports />} />
                   <Route path="settings" element={<Settings />} />
                 </Route>
+                
+                {/* Catch all route */}
                 <Route path="*" element={<Navigate to="/login" replace />} />
               </Routes>
               <ToastContainer />
