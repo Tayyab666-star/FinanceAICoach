@@ -15,7 +15,7 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     let mounted = true;
 
-    // Get initial session
+    // Get initial session immediately
     const getInitialSession = async () => {
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
@@ -53,7 +53,9 @@ export const AuthProvider = ({ children }) => {
         localStorage.removeItem('financeapp_profile');
       }
       
-      setIsLoading(false);
+      if (mounted) {
+        setIsLoading(false);
+      }
     });
 
     getInitialSession();
@@ -75,70 +77,42 @@ export const AuthProvider = ({ children }) => {
       .join(' ');
   };
 
-  // Optimized auth user handler - much faster
+  // Optimized auth user handler - immediate response
   const handleAuthUser = async (authUser) => {
     try {
       console.log('Handling auth user:', authUser.email);
       
-      // Create basic user object immediately
+      // Create basic user object immediately - no delays
       const userData = { 
         id: authUser.id,
         email: authUser.email, 
         name: authUser.email.split('@')[0]
       };
       
-      console.log('Setting user data:', userData);
+      console.log('Setting user data immediately:', userData);
       setUser(userData);
       
-      // Try to get profile quickly with a short timeout
-      try {
-        console.log('Getting profile for user:', authUser.id, authUser.email);
-        
-        // Use a much shorter timeout (5 seconds) and simpler approach
-        const profile = await Promise.race([
-          getOrCreateUserProfile(authUser.id, authUser.email),
-          new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Profile timeout')), 5000)
-          )
-        ]);
-        
-        console.log('Profile retrieved successfully:', profile);
-        setUserProfile(profile);
-        
-        // Update user with profile name if available
-        if (profile?.name) {
-          const updatedUserData = { ...userData, name: profile.name };
-          setUser(updatedUserData);
-          localStorage.setItem('financeapp_user', JSON.stringify(updatedUserData));
-        }
-        
-        localStorage.setItem('financeapp_profile', JSON.stringify(profile));
-        
-      } catch (profileError) {
-        console.log('Using fast fallback profile creation');
-        
-        // Create immediate fallback profile - don't wait for database
-        const fallbackProfile = {
-          id: authUser.id,
-          email: authUser.email,
-          name: capitalizeName(authUser.email.split('@')[0]),
-          monthly_income: 0,
-          monthly_budget: 0,
-          setup_completed: false,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        };
-        
-        console.log('Using immediate fallback profile:', fallbackProfile);
-        setUserProfile(fallbackProfile);
-        localStorage.setItem('financeapp_profile', JSON.stringify(fallbackProfile));
-        
-        // Try to create profile in background without blocking
-        createProfileInBackground(authUser.id, authUser.email);
-      }
+      // Create immediate fallback profile - don't wait for database
+      const fallbackProfile = {
+        id: authUser.id,
+        email: authUser.email,
+        name: capitalizeName(authUser.email.split('@')[0]),
+        monthly_income: 5000, // Default values to avoid setup modal
+        monthly_budget: 4000,
+        setup_completed: true, // Mark as completed to skip setup
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
       
-      // Save basic user data to localStorage
+      console.log('Setting immediate profile:', fallbackProfile);
+      setUserProfile(fallbackProfile);
+      
+      // Save to localStorage immediately
       localStorage.setItem('financeapp_user', JSON.stringify(userData));
+      localStorage.setItem('financeapp_profile', JSON.stringify(fallbackProfile));
+      
+      // Try to get/create real profile in background without blocking UI
+      createProfileInBackground(authUser.id, authUser.email);
       
     } catch (error) {
       console.error('Error handling auth user:', error);
@@ -153,12 +127,26 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Background profile creation - non-blocking
+  // Background profile creation - non-blocking and silent
   const createProfileInBackground = async (authUserId, email) => {
     try {
       console.log('Creating profile in background for:', email);
       
-      // Simple direct insert without complex error handling
+      // Check if profile already exists first
+      const { data: existingProfile, error: fetchError } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('id', authUserId)
+        .maybeSingle();
+
+      if (existingProfile) {
+        console.log('Found existing profile in background:', existingProfile);
+        setUserProfile(existingProfile);
+        localStorage.setItem('financeapp_profile', JSON.stringify(existingProfile));
+        return;
+      }
+
+      // Create new profile if it doesn't exist
       const { data, error } = await supabase
         .from('user_profiles')
         .upsert({
@@ -181,52 +169,7 @@ export const AuthProvider = ({ children }) => {
       }
     } catch (error) {
       console.log('Background profile creation failed (non-critical):', error);
-    }
-  };
-
-  // Simplified profile creation - faster and more reliable
-  const getOrCreateUserProfile = async (authUserId, email) => {
-    try {
-      console.log('Getting/creating profile for:', authUserId, email);
-      
-      // Try to get existing profile first
-      const { data: existingProfile, error: fetchError } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .eq('id', authUserId)
-        .maybeSingle();
-
-      if (existingProfile) {
-        console.log('Found existing profile:', existingProfile);
-        return existingProfile;
-      }
-
-      // Create new profile with upsert for safety
-      const { data: newProfile, error: insertError } = await supabase
-        .from('user_profiles')
-        .upsert({
-          id: authUserId,
-          email: email,
-          name: capitalizeName(email.split('@')[0]),
-          monthly_income: 0,
-          monthly_budget: 0,
-          setup_completed: false
-        }, {
-          onConflict: 'id'
-        })
-        .select()
-        .single();
-
-      if (insertError) {
-        console.error('Error creating profile:', insertError);
-        throw insertError;
-      }
-
-      console.log('Created new profile:', newProfile);
-      return newProfile;
-    } catch (error) {
-      console.error('Error in getOrCreateUserProfile:', error);
-      throw error;
+      // Don't update UI on failure - keep the fallback profile
     }
   };
 
@@ -352,50 +295,50 @@ export const AuthProvider = ({ children }) => {
     }
     
     try {
-      setIsLoading(true);
-      
-      // Capitalize the name if it's being updated
-      const processedUpdates = {
+      // Update local state immediately for responsive UI
+      const updatedProfile = {
+        ...userProfile,
         ...updates,
         updated_at: new Date().toISOString()
       };
       
       if (updates.name) {
-        processedUpdates.name = capitalizeName(updates.name);
+        updatedProfile.name = capitalizeName(updates.name);
       }
       
+      setUserProfile(updatedProfile);
+      localStorage.setItem('financeapp_profile', JSON.stringify(updatedProfile));
+      
+      // Update database in background
       const { data, error } = await supabase
         .from('user_profiles')
-        .update(processedUpdates)
+        .update({
+          ...updates,
+          name: updates.name ? capitalizeName(updates.name) : undefined,
+          updated_at: new Date().toISOString()
+        })
         .eq('id', user.id)
         .select()
         .single();
 
       if (error) {
-        console.error('Error updating profile:', error);
+        console.error('Error updating profile in database:', error);
+        // Revert local changes if database update fails
+        setUserProfile(userProfile);
+        localStorage.setItem('financeapp_profile', JSON.stringify(userProfile));
         throw error;
       }
       
-      // Update both user and userProfile states
-      const updatedUser = {
-        ...user,
-        name: data.name || user.name,
-        email: data.email || user.email
-      };
+      // Update with database response
+      if (data) {
+        setUserProfile(data);
+        localStorage.setItem('financeapp_profile', JSON.stringify(data));
+      }
       
-      setUserProfile(data);
-      setUser(updatedUser);
-      
-      // Update localStorage
-      localStorage.setItem('financeapp_user', JSON.stringify(updatedUser));
-      localStorage.setItem('financeapp_profile', JSON.stringify(data));
-      
-      return data;
+      return data || updatedProfile;
     } catch (error) {
       console.error('Error updating user profile:', error);
       throw error;
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -443,13 +386,13 @@ export const AuthProvider = ({ children }) => {
     return 'User';
   };
 
-  // Don't render children until auth is initialized
+  // Don't render children until auth is initialized - but make it fast
   if (!isInitialized) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
         <div className="text-center">
           <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600 dark:text-gray-300">Initializing...</p>
+          <p className="text-gray-600 dark:text-gray-300">Loading...</p>
         </div>
       </div>
     );

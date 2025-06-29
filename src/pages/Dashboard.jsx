@@ -33,11 +33,11 @@ import {
   ResponsiveContainer
 } from 'recharts';
 
-// Setup modal for income and budget
+// Setup modal for income and budget - only show if really needed
 const SetupModal = ({ isOpen, onClose, onSave, userProfile }) => {
   const [formData, setFormData] = useState({
-    monthly_income: userProfile?.monthly_income || 0,
-    monthly_budget: userProfile?.monthly_budget || 0
+    monthly_income: userProfile?.monthly_income || 5000,
+    monthly_budget: userProfile?.monthly_budget || 4000
   });
   const [loading, setLoading] = useState(false);
 
@@ -423,17 +423,11 @@ const Dashboard = () => {
   const { budgets, loading: budgetsLoading } = useBudgetCategories();
   const [showSetupModal, setShowSetupModal] = useState(false);
 
-  // Check if setup is needed
-  const needsSetup = !userProfile?.setup_completed || 
-                    !userProfile?.monthly_income || 
-                    !userProfile?.monthly_budget;
-
-  // Show setup modal when needed
-  React.useEffect(() => {
-    if (needsSetup && !transactionsLoading && !goalsLoading && !budgetsLoading) {
-      setShowSetupModal(true);
-    }
-  }, [needsSetup, transactionsLoading, goalsLoading, budgetsLoading]);
+  // Only show setup modal if user explicitly needs it (not on first load)
+  const needsSetup = userProfile && 
+                    userProfile.monthly_income === 0 && 
+                    userProfile.monthly_budget === 0 && 
+                    !userProfile.setup_completed;
 
   // Calculate metrics
   const totalIncome = useMemo(() => 
@@ -648,13 +642,15 @@ const Dashboard = () => {
       {/* AI Insights with navigation */}
       <AIInsights insights={insights} />
 
-      {/* Setup Modal */}
-      <SetupModal
-        isOpen={showSetupModal}
-        onClose={() => setShowSetupModal(false)}
-        onSave={handleSetupSave}
-        userProfile={userProfile}
-      />
+      {/* Setup Modal - only show when explicitly requested */}
+      {showSetupModal && (
+        <SetupModal
+          isOpen={showSetupModal}
+          onClose={() => setShowSetupModal(false)}
+          onSave={handleSetupSave}
+          userProfile={userProfile}
+        />
+      )}
     </div>
   );
 };

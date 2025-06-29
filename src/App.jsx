@@ -19,9 +19,7 @@ import ToastContainer from './components/ToastContainer';
 const ProtectedRoute = ({ children }) => {
   const { user, isLoading } = useAuth();
   
-  console.log('ProtectedRoute - User:', user?.email, 'Loading:', isLoading);
-  
-  // Show loading spinner while checking auth state
+  // Show loading spinner while checking auth state - but make it fast
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
@@ -35,21 +33,17 @@ const ProtectedRoute = ({ children }) => {
   
   // Redirect to login if not authenticated
   if (!user) {
-    console.log('No user found, redirecting to login');
     return <Navigate to="/login" replace />;
   }
   
-  console.log('User authenticated, rendering protected content for:', user.email);
-  // Render protected content
+  // Render protected content immediately
   return children;
 };
 
 const PublicRoute = ({ children }) => {
   const { user, isLoading } = useAuth();
   
-  console.log('PublicRoute - User:', user?.email, 'Loading:', isLoading);
-  
-  // Show loading spinner while checking auth state
+  // Show loading spinner while checking auth state - but make it fast
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
@@ -63,7 +57,6 @@ const PublicRoute = ({ children }) => {
   
   // Redirect to dashboard if already authenticated
   if (user) {
-    console.log('User already authenticated, redirecting to dashboard');
     return <Navigate to="/dashboard" replace />;
   }
   
