@@ -28,10 +28,28 @@ export const useTransactions = () => {
         .eq('user_id', user.id)
         .order('date', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error fetching transactions:', error);
+        throw error;
+      }
       setTransactions(data || []);
     } catch (error) {
       console.error('Error fetching transactions:', error);
+      
+      // Check if it's a connection error
+      if (error.message?.includes('Failed to fetch') || error.name === 'TypeError') {
+        addNotification({
+          type: 'error',
+          title: 'Connection Error',
+          message: 'Unable to connect to the database. Please check your internet connection and try again.'
+        });
+      } else {
+        addNotification({
+          type: 'error',
+          title: 'Error Loading Transactions',
+          message: 'Failed to load transactions. Please try again.'
+        });
+      }
       setTransactions([]);
     } finally {
       setLoading(false);
@@ -59,6 +77,14 @@ export const useTransactions = () => {
       return data;
     } catch (error) {
       console.error('Error adding transaction:', error);
+      
+      if (error.message?.includes('Failed to fetch') || error.name === 'TypeError') {
+        addNotification({
+          type: 'error',
+          title: 'Connection Error',
+          message: 'Unable to save transaction. Please check your connection and try again.'
+        });
+      }
       throw error;
     }
   };
@@ -86,6 +112,14 @@ export const useTransactions = () => {
       return data;
     } catch (error) {
       console.error('Error updating transaction:', error);
+      
+      if (error.message?.includes('Failed to fetch') || error.name === 'TypeError') {
+        addNotification({
+          type: 'error',
+          title: 'Connection Error',
+          message: 'Unable to update transaction. Please check your connection and try again.'
+        });
+      }
       throw error;
     }
   };
@@ -112,6 +146,14 @@ export const useTransactions = () => {
       }
     } catch (error) {
       console.error('Error deleting transaction:', error);
+      
+      if (error.message?.includes('Failed to fetch') || error.name === 'TypeError') {
+        addNotification({
+          type: 'error',
+          title: 'Connection Error',
+          message: 'Unable to delete transaction. Please check your connection and try again.'
+        });
+      }
       throw error;
     }
   };
@@ -151,10 +193,28 @@ export const useGoals = () => {
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error fetching goals:', error);
+        throw error;
+      }
       setGoals(data || []);
     } catch (error) {
       console.error('Error fetching goals:', error);
+      
+      // Check if it's a connection error
+      if (error.message?.includes('Failed to fetch') || error.name === 'TypeError') {
+        addNotification({
+          type: 'error',
+          title: 'Connection Error',
+          message: 'Unable to connect to the database. Please check your Supabase connection and try again.'
+        });
+      } else {
+        addNotification({
+          type: 'error',
+          title: 'Error Loading Goals',
+          message: 'Failed to load goals. Please try again.'
+        });
+      }
       setGoals([]);
     } finally {
       setLoading(false);
@@ -182,6 +242,14 @@ export const useGoals = () => {
       return data;
     } catch (error) {
       console.error('Error adding goal:', error);
+      
+      if (error.message?.includes('Failed to fetch') || error.name === 'TypeError') {
+        addNotification({
+          type: 'error',
+          title: 'Connection Error',
+          message: 'Unable to save goal. Please check your connection and try again.'
+        });
+      }
       throw error;
     }
   };
@@ -223,6 +291,14 @@ export const useGoals = () => {
       return data;
     } catch (error) {
       console.error('Error updating goal:', error);
+      
+      if (error.message?.includes('Failed to fetch') || error.name === 'TypeError') {
+        addNotification({
+          type: 'error',
+          title: 'Connection Error',
+          message: 'Unable to update goal. Please check your connection and try again.'
+        });
+      }
       throw error;
     }
   };
@@ -249,6 +325,14 @@ export const useGoals = () => {
       }
     } catch (error) {
       console.error('Error deleting goal:', error);
+      
+      if (error.message?.includes('Failed to fetch') || error.name === 'TypeError') {
+        addNotification({
+          type: 'error',
+          title: 'Connection Error',
+          message: 'Unable to delete goal. Please check your connection and try again.'
+        });
+      }
       throw error;
     }
   };
@@ -287,7 +371,10 @@ export const useBudgetCategories = () => {
         .select('*')
         .eq('user_id', user.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error fetching budgets:', error);
+        throw error;
+      }
       
       // Convert array to object for easier access
       const budgetObj = {};
@@ -298,6 +385,21 @@ export const useBudgetCategories = () => {
       setBudgets(budgetObj);
     } catch (error) {
       console.error('Error fetching budgets:', error);
+      
+      // Check if it's a connection error
+      if (error.message?.includes('Failed to fetch') || error.name === 'TypeError') {
+        addNotification({
+          type: 'error',
+          title: 'Connection Error',
+          message: 'Unable to connect to the database. Please check your Supabase connection and try again.'
+        });
+      } else {
+        addNotification({
+          type: 'error',
+          title: 'Error Loading Budget',
+          message: 'Failed to load budget data. Please try again.'
+        });
+      }
       setBudgets({});
     } finally {
       setLoading(false);
@@ -334,6 +436,14 @@ export const useBudgetCategories = () => {
       });
     } catch (error) {
       console.error('Error updating budgets:', error);
+      
+      if (error.message?.includes('Failed to fetch') || error.name === 'TypeError') {
+        addNotification({
+          type: 'error',
+          title: 'Connection Error',
+          message: 'Unable to save budget. Please check your connection and try again.'
+        });
+      }
       throw error;
     }
   };
@@ -361,6 +471,14 @@ export const useBudgetCategories = () => {
       });
     } catch (error) {
       console.error('Error updating single budget:', error);
+      
+      if (error.message?.includes('Failed to fetch') || error.name === 'TypeError') {
+        addNotification({
+          type: 'error',
+          title: 'Connection Error',
+          message: 'Unable to update budget. Please check your connection and try again.'
+        });
+      }
       throw error;
     }
   };
