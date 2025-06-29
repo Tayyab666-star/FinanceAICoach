@@ -65,42 +65,49 @@ const SetupModal = ({ isOpen, onClose, onSave, userProfile }) => {
   return (
     <div className="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center z-50 p-4">
       <Card className="w-full max-w-md">
-        <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Welcome! Let's Set Up Your Account</h3>
-        <p className="text-gray-600 dark:text-gray-300 mb-6">
-          To get started with your financial dashboard, please enter your monthly income and budget.
-        </p>
-        
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <Input
-            label="Monthly Income"
-            type="number"
-            step="0.01"
-            value={formData.monthly_income}
-            onChange={(e) => setFormData({ ...formData, monthly_income: e.target.value })}
-            placeholder="Enter your monthly income"
-            required
-          />
-          
-          <Input
-            label="Monthly Budget"
-            type="number"
-            step="0.01"
-            value={formData.monthly_budget}
-            onChange={(e) => setFormData({ ...formData, monthly_budget: e.target.value })}
-            placeholder="Enter your monthly budget"
-            required
-          />
-          
-          <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
-            <p className="text-sm text-blue-800 dark:text-blue-200">
-              💡 <strong>Tip:</strong> Your budget should typically be 70-80% of your income to allow for savings and unexpected expenses.
+        <div className="p-6">
+          <div className="text-center mb-6">
+            <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
+              <DollarSign className="w-8 h-8 text-white" />
+            </div>
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Welcome! Let's Set Up Your Account</h3>
+            <p className="text-gray-600 dark:text-gray-300">
+              To get started with your financial dashboard, please enter your monthly income and budget.
             </p>
           </div>
           
-          <Button type="submit" className="w-full" loading={loading}>
-            Complete Setup & Continue
-          </Button>
-        </form>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <Input
+              label="Monthly Income"
+              type="number"
+              step="0.01"
+              value={formData.monthly_income}
+              onChange={(e) => setFormData({ ...formData, monthly_income: e.target.value })}
+              placeholder="Enter your monthly income"
+              required
+            />
+            
+            <Input
+              label="Monthly Budget"
+              type="number"
+              step="0.01"
+              value={formData.monthly_budget}
+              onChange={(e) => setFormData({ ...formData, monthly_budget: e.target.value })}
+              placeholder="Enter your monthly budget"
+              required
+            />
+            
+            <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+              <p className="text-sm text-blue-800 dark:text-blue-200">
+                💡 <strong>Tip:</strong> Your budget should typically be 70-80% of your income to allow for savings and unexpected expenses.
+              </p>
+            </div>
+            
+            <Button type="submit" className="w-full" loading={loading}>
+              Complete Setup & Continue
+            </Button>
+          </form>
+        </div>
       </Card>
     </div>
   );
@@ -423,15 +430,20 @@ const Dashboard = () => {
   const { budgets, loading: budgetsLoading } = useBudgetCategories();
   const [showSetupModal, setShowSetupModal] = useState(false);
 
-  // Show setup modal for new users who haven't completed setup
+  // Check if user needs setup - this is the key fix!
   const needsSetup = userProfile && !userProfile.setup_completed;
 
-  // Auto-show setup modal for new users
+  // Auto-show setup modal for new users - Enhanced logic
   React.useEffect(() => {
+    console.log('Dashboard useEffect - userProfile:', userProfile);
+    console.log('Setup completed:', userProfile?.setup_completed);
+    console.log('Needs setup:', needsSetup);
+    
     if (needsSetup) {
+      console.log('Showing setup modal for new user');
       setShowSetupModal(true);
     }
-  }, [needsSetup]);
+  }, [needsSetup, userProfile]);
 
   // Calculate metrics
   const totalIncome = useMemo(() => 
@@ -487,7 +499,14 @@ const Dashboard = () => {
   }, [transactions]);
 
   const handleSetupSave = async (setupData) => {
-    await updateUserProfile(setupData);
+    console.log('Saving setup data:', setupData);
+    try {
+      await updateUserProfile(setupData);
+      console.log('Setup data saved successfully');
+    } catch (error) {
+      console.error('Error saving setup data:', error);
+      throw error;
+    }
   };
 
   const handleEditFinancials = () => {
@@ -646,15 +665,13 @@ const Dashboard = () => {
       {/* AI Insights with navigation */}
       <AIInsights insights={insights} />
 
-      {/* Setup Modal - show for new users */}
-      {showSetupModal && (
-        <SetupModal
-          isOpen={showSetupModal}
-          onClose={() => setShowSetupModal(false)}
-          onSave={handleSetupSave}
-          userProfile={userProfile}
-        />
-      )}
+      {/* Setup Modal - Enhanced to always show for new users */}
+      <SetupModal
+        isOpen={showSetupModal}
+        onClose={() => setShowSetupModal(false)}
+        onSave={handleSetupSave}
+        userProfile={userProfile}
+      />
     </div>
   );
 };

@@ -137,7 +137,7 @@ export const AuthProvider = ({ children }) => {
         updated_at: new Date().toISOString()
       };
       
-      console.log('Setting new user profile:', newProfile);
+      console.log('Setting new user profile with setup_completed: false:', newProfile);
       setUserProfile(newProfile);
       
       // Save to localStorage immediately
@@ -340,6 +340,9 @@ export const AuthProvider = ({ children }) => {
         updatedProfile.name = capitalizeName(updates.name);
       }
       
+      console.log('Updating profile with:', updates);
+      console.log('Updated profile will be:', updatedProfile);
+      
       setUserProfile(updatedProfile);
       localStorage.setItem('financeapp_profile', JSON.stringify(updatedProfile));
       
@@ -366,6 +369,7 @@ export const AuthProvider = ({ children }) => {
       
       // Update with database response
       if (data) {
+        console.log('Profile updated successfully in database:', data);
         setUserProfile(data);
         localStorage.setItem('financeapp_profile', JSON.stringify(data));
       }
