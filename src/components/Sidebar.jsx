@@ -1,5 +1,5 @@
 import React from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { 
   LayoutDashboard, 
   CreditCard, 
@@ -26,6 +26,13 @@ const navItems = [
 
 // Responsive sidebar component
 const Sidebar = ({ isOpen, onClose }) => {
+  const navigate = useNavigate();
+
+  const handleLogoClick = () => {
+    navigate('/dashboard');
+    onClose(); // Close sidebar on mobile after navigation
+  };
+
   return (
     <>
       {/* Mobile overlay */}
@@ -44,7 +51,12 @@ const Sidebar = ({ isOpen, onClose }) => {
       `}>
         {/* Header */}
         <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200 dark:border-gray-700">
-          <h1 className="text-xl font-bold text-blue-600 dark:text-blue-400">FinanceApp</h1>
+          <button 
+            onClick={handleLogoClick}
+            className="text-xl font-bold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors cursor-pointer"
+          >
+            FinanceApp
+          </button>
           <button 
             onClick={onClose}
             className="lg:hidden p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
