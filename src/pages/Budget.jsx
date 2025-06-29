@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Plus, Edit, Trash2, Brain, CheckCircle, AlertTriangle, TrendingUp } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTransactions, useBudgetCategories } from '../hooks/useSupabaseData';
+import { useNotifications } from '../contexts/NotificationContext';
 import { calculateBudgetUsage } from '../utils/calculations';
 import Card from '../components/Card';
 import Button from '../components/Button';
@@ -71,8 +72,10 @@ const BudgetCard = ({ category, usage, onEdit }) => {
   );
 };
 
-// AI Budget suggestions component
+// AI Budget suggestions component with working Apply button
 const AISuggestions = ({ budgetUsage, monthlyIncome, onApply }) => {
+  const { addNotification } = useNotifications();
+  
   const suggestions = useMemo(() => {
     const suggestions = [];
     
@@ -100,6 +103,24 @@ const AISuggestions = ({ budgetUsage, monthlyIncome, onApply }) => {
 
     return suggestions.slice(0, 3);
   }, [budgetUsage]);
+
+  const handleApply = async (suggestion) => {
+    try {
+      await onApply(suggestion.category, suggestion.suggestedBudget);
+      addNotification({
+        type: 'success',
+        title: 'Budget Updated',
+        message: `${suggestion.category} budget updated to $${suggestion.suggestedBudget.toFixed(2)}`
+      });
+    } catch (error) {
+      console.error('Error applying suggestion:', error);
+      addNotification({
+        type: 'error',
+        title: 'Update Failed',
+        message: 'Failed to update budget. Please try again.'
+      });
+    }
+  };
 
   if (suggestions.length === 0) {
     return (
@@ -152,7 +173,7 @@ const AISuggestions = ({ budgetUsage, monthlyIncome, onApply }) => {
               <Button 
                 size="sm" 
                 variant="outline"
-                onClick={() => onApply(suggestion.category, suggestion.suggestedBudget)}
+                onClick={() => handleApply(suggestion)}
               >
                 Apply
               </Button>
@@ -252,10 +273,15 @@ const BudgetSetupModal = ({ isOpen, onClose, onSave, monthlyBudget }) => {
   );
 };
 
-// Edit category modal
+// Edit category modal with proper functionality
 const EditCategoryModal = ({ isOpen, onClose, category, currentBudget, onSave }) => {
   const [budget, setBudget] = useState(currentBudget || 0);
   const [loading, setLoading] = useState(false);
+  const { addNotification } = useNotifications();
+
+  React.useEffect(() => {
+    setBudget(currentBudget || 0);
+  }, [currentBudget]);
 
   if (!isOpen) return null;
 
@@ -265,10 +291,19 @@ const EditCategoryModal = ({ isOpen, onClose, category, currentBudget, onSave })
     
     try {
       await onSave(category, parseFloat(budget));
+      addNotification({
+        type: 'success',
+        title: 'Budget Updated',
+        message: `${category} budget updated to $${parseFloat(budget).toLocaleString()}`
+      });
       onClose();
     } catch (error) {
       console.error('Error updating budget:', error);
-      alert('Failed to update budget. Please try again.');
+      addNotification({
+        type: 'error',
+        title: 'Update Failed',
+        message: 'Failed to update budget. Please try again.'
+      });
     } finally {
       setLoading(false);
     }

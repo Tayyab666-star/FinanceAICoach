@@ -1,70 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Download, Calendar, FileText, TrendingUp, PieChart, BarChart3 } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
+import { useTransactions, useGoals, useBudgetCategories } from '../hooks/useSupabaseData';
+import { useNotifications } from '../contexts/NotificationContext';
+import { calculateBudgetUsage } from '../utils/calculations';
 import Card from '../components/Card';
 import Button from '../components/Button';
 
-// Report templates
-const reportTemplates = [
-  {
-    id: 'monthly-summary',
-    title: 'Monthly Financial Summary',
-    description: 'Complete overview of income, expenses, and savings for the month',
-    icon: FileText,
-    format: 'PDF',
-    preview: 'Income: $5,200 | Expenses: $3,850 | Savings: $1,350'
-  },
-  {
-    id: 'spending-analysis',
-    title: 'Spending Category Analysis',
-    description: 'Detailed breakdown of spending across all categories',
-    icon: PieChart,
-    format: 'PDF/CSV',
-    preview: 'Food: 28% | Transport: 19% | Shopping: 21% | Bills: 26%'
-  },
-  {
-    id: 'net-worth',
-    title: 'Net Worth Report',
-    description: 'Track your net worth changes over time',
-    icon: TrendingUp,
-    format: 'PDF',
-    preview: 'Current: $47,230 | YTD Change: +$8,420 (+21.7%)'
-  },
-  {
-    id: 'budget-performance',
-    title: 'Budget vs Actual',
-    description: 'Compare your budgeted amounts with actual spending',
-    icon: BarChart3,
-    format: 'PDF/CSV',
-    preview: 'Budget adherence: 87% | Over budget: 2 categories'
-  },
-  {
-    id: 'goals-progress',
-    title: 'Financial Goals Progress',
-    description: 'Status update on all your financial goals',
-    icon: Calendar,
-    format: 'PDF',
-    preview: '4 active goals | 2 on track | 1 ahead of schedule'
-  },
-  {
-    id: 'tax-summary',
-    title: 'Tax Preparation Summary',
-    description: 'Income and deduction summary for tax filing',
-    icon: FileText,
-    format: 'PDF/CSV',
-    preview: 'Total income: $62,400 | Deductions: $8,200'
-  }
-];
-
-// Mock data for quick stats
-const quickStats = [
-  { label: 'Reports Generated', value: '23', change: '+5 this month' },
-  { label: 'Data Points', value: '1,247', change: 'Across all accounts' },
-  { label: 'Export Formats', value: '3', change: 'PDF, CSV, Excel' },
-  { label: 'Time Saved', value: '8.5 hrs', change: 'This month' }
-];
-
-// Report generation modal
-const ReportModal = ({ isOpen, onClose, template }) => {
+// Report generation modal with real data
+const ReportModal = ({ isOpen, onClose, template, onGenerate }) => {
   const [dateRange, setDateRange] = useState('current-month');
   const [format, setFormat] = useState('pdf');
   const [includeCharts, setIncludeCharts] = useState(true);
@@ -75,21 +19,19 @@ const ReportModal = ({ isOpen, onClose, template }) => {
   const handleGenerate = async () => {
     setIsGenerating(true);
     
-    // Simulate report generation
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    // Create mock download
-    const mockData = `Financial Report - ${template?.title}\nGenerated: ${new Date().toLocaleDateString()}\n\nThis is a sample report that would contain your actual financial data.`;
-    const blob = new Blob([mockData], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${template?.id}-${dateRange}.${format}`;
-    a.click();
-    URL.revokeObjectURL(url);
-    
-    setIsGenerating(false);
-    onClose();
+    try {
+      await onGenerate({
+        template,
+        dateRange,
+        format,
+        includeCharts
+      });
+      onClose();
+    } catch (error) {
+      console.error('Error generating report:', error);
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   return (
@@ -190,14 +132,270 @@ const ReportModal = ({ isOpen, onClose, template }) => {
   );
 };
 
-// Main reports page component
+// Main reports page component with real data
 const Reports = () => {
+  const { userProfile } = useAuth();
+  const { transactions } = useTransactions();
+  const { goals } = useGoals();
+  const { budgets } = useBudgetCategories();
+  const { addNotification } = useNotifications();
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [recentReports, setRecentReports] = useState([]);
+
+  // Calculate real statistics
+  const stats = useMemo(() => {
+    const totalIncome = transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
+    const totalExpenses = transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + Math.abs(t.amount), 0);
+    const budgetUsage = calculateBudgetUsage(transactions, budgets);
+    
+    return {
+      reportsGenerated: recentReports.length,
+      dataPoints: transactions.length + goals.length + Object.keys(budgets).length,
+      totalIncome,
+      totalExpenses,
+      budgetCategories: Object.keys(budgets).length
+    };
+  }, [transactions, goals, budgets, recentReports]);
+
+  // Report templates with real data previews
+  const reportTemplates = [
+    {
+      id: 'monthly-summary',
+      title: 'Monthly Financial Summary',
+      description: 'Complete overview of income, expenses, and savings for the month',
+      icon: FileText,
+      format: 'PDF',
+      preview: `Income: $${stats.totalIncome.toLocaleString()} | Expenses: $${stats.totalExpenses.toLocaleString()} | Net: $${(stats.totalIncome - stats.totalExpenses).toLocaleString()}`
+    },
+    {
+      id: 'spending-analysis',
+      title: 'Spending Category Analysis',
+      description: 'Detailed breakdown of spending across all categories',
+      icon: PieChart,
+      format: 'PDF/CSV',
+      preview: `${stats.budgetCategories} categories tracked | ${transactions.filter(t => t.type === 'expense').length} expense transactions`
+    },
+    {
+      id: 'net-worth',
+      title: 'Net Worth Report',
+      description: 'Track your net worth changes over time',
+      icon: TrendingUp,
+      format: 'PDF',
+      preview: `Current: $${(stats.totalIncome - stats.totalExpenses).toLocaleString()} | Based on ${transactions.length} transactions`
+    },
+    {
+      id: 'budget-performance',
+      title: 'Budget vs Actual',
+      description: 'Compare your budgeted amounts with actual spending',
+      icon: BarChart3,
+      format: 'PDF/CSV',
+      preview: `${stats.budgetCategories} budget categories | Monthly budget: $${userProfile?.monthly_budget?.toLocaleString() || '0'}`
+    },
+    {
+      id: 'goals-progress',
+      title: 'Financial Goals Progress',
+      description: 'Status update on all your financial goals',
+      icon: Calendar,
+      format: 'PDF',
+      preview: `${goals.length} active goals | Total target: $${goals.reduce((sum, g) => sum + g.target_amount, 0).toLocaleString()}`
+    },
+    {
+      id: 'tax-summary',
+      title: 'Tax Preparation Summary',
+      description: 'Income and deduction summary for tax filing',
+      icon: FileText,
+      format: 'PDF/CSV',
+      preview: `Total income: $${stats.totalIncome.toLocaleString()} | Total expenses: $${stats.totalExpenses.toLocaleString()}`
+    }
+  ];
+
+  const generateRealReport = async (reportConfig) => {
+    const { template, dateRange, format, includeCharts } = reportConfig;
+    
+    // Filter transactions based on date range
+    const getDateRange = () => {
+      const now = new Date();
+      switch (dateRange) {
+        case 'current-month':
+          return { start: new Date(now.getFullYear(), now.getMonth(), 1), end: now };
+        case 'last-month':
+          return { 
+            start: new Date(now.getFullYear(), now.getMonth() - 1, 1), 
+            end: new Date(now.getFullYear(), now.getMonth(), 0) 
+          };
+        case 'last-3-months':
+          return { start: new Date(now.getFullYear(), now.getMonth() - 3, 1), end: now };
+        case 'last-6-months':
+          return { start: new Date(now.getFullYear(), now.getMonth() - 6, 1), end: now };
+        case 'year-to-date':
+          return { start: new Date(now.getFullYear(), 0, 1), end: now };
+        case 'last-year':
+          return { 
+            start: new Date(now.getFullYear() - 1, 0, 1), 
+            end: new Date(now.getFullYear() - 1, 11, 31) 
+          };
+        default:
+          return { start: new Date(now.getFullYear(), now.getMonth(), 1), end: now };
+      }
+    };
+
+    const { start, end } = getDateRange();
+    const filteredTransactions = transactions.filter(t => {
+      const transactionDate = new Date(t.date);
+      return transactionDate >= start && transactionDate <= end;
+    });
+
+    // Generate report content based on template
+    let reportContent = '';
+    const reportDate = new Date().toLocaleDateString();
+    
+    switch (template.id) {
+      case 'monthly-summary':
+        const income = filteredTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
+        const expenses = filteredTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + Math.abs(t.amount), 0);
+        reportContent = `Monthly Financial Summary - ${dateRange}
+Generated: ${reportDate}
+
+INCOME SUMMARY
+Total Income: $${income.toLocaleString()}
+Number of Income Transactions: ${filteredTransactions.filter(t => t.type === 'income').length}
+
+EXPENSE SUMMARY
+Total Expenses: $${expenses.toLocaleString()}
+Number of Expense Transactions: ${filteredTransactions.filter(t => t.type === 'expense').length}
+
+NET SUMMARY
+Net Amount: $${(income - expenses).toLocaleString()}
+Savings Rate: ${income > 0 ? ((income - expenses) / income * 100).toFixed(1) : 0}%
+
+RECENT TRANSACTIONS
+${filteredTransactions.slice(0, 10).map(t => 
+  `${t.date} | ${t.type.toUpperCase()} | ${t.category} | $${Math.abs(t.amount).toFixed(2)} | ${t.description}`
+).join('\n')}`;
+        break;
+
+      case 'spending-analysis':
+        const categoryTotals = {};
+        filteredTransactions.filter(t => t.type === 'expense').forEach(t => {
+          categoryTotals[t.category] = (categoryTotals[t.category] || 0) + Math.abs(t.amount);
+        });
+        reportContent = `Spending Category Analysis - ${dateRange}
+Generated: ${reportDate}
+
+CATEGORY BREAKDOWN
+${Object.entries(categoryTotals).map(([category, amount]) => 
+  `${category}: $${amount.toFixed(2)}`
+).join('\n')}
+
+DETAILED TRANSACTIONS BY CATEGORY
+${Object.keys(categoryTotals).map(category => {
+  const categoryTransactions = filteredTransactions.filter(t => t.type === 'expense' && t.category === category);
+  return `\n${category.toUpperCase()}:\n${categoryTransactions.map(t => 
+    `  ${t.date} | $${Math.abs(t.amount).toFixed(2)} | ${t.description}`
+  ).join('\n')}`;
+}).join('\n')}`;
+        break;
+
+      case 'budget-performance':
+        const budgetUsage = calculateBudgetUsage(filteredTransactions, budgets);
+        reportContent = `Budget Performance Report - ${dateRange}
+Generated: ${reportDate}
+
+BUDGET VS ACTUAL
+${Object.entries(budgetUsage).map(([category, usage]) => 
+  `${category}: Budgeted $${usage.budget.toFixed(2)} | Spent $${usage.spent.toFixed(2)} | ${usage.isOverBudget ? 'OVER' : 'UNDER'} by $${Math.abs(usage.remaining).toFixed(2)}`
+).join('\n')}
+
+SUMMARY
+Total Budgeted: $${Object.values(budgets).reduce((sum, amount) => sum + amount, 0).toLocaleString()}
+Total Spent: $${Object.values(budgetUsage).reduce((sum, usage) => sum + usage.spent, 0).toLocaleString()}
+Categories Over Budget: ${Object.values(budgetUsage).filter(usage => usage.isOverBudget).length}`;
+        break;
+
+      default:
+        reportContent = `${template.title} - ${dateRange}
+Generated: ${reportDate}
+
+This report contains your financial data for the selected period.
+Total Transactions: ${filteredTransactions.length}
+Income Transactions: ${filteredTransactions.filter(t => t.type === 'income').length}
+Expense Transactions: ${filteredTransactions.filter(t => t.type === 'expense').length}`;
+    }
+
+    // Create and download file
+    const blob = new Blob([reportContent], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${template.id}-${dateRange}-${reportDate.replace(/\//g, '-')}.${format}`;
+    a.click();
+    URL.revokeObjectURL(url);
+
+    // Add to recent reports
+    const newReport = {
+      id: Date.now(),
+      name: `${template.title} - ${dateRange}`,
+      date: reportDate,
+      size: `${Math.round(blob.size / 1024)} KB`,
+      format: format.toUpperCase(),
+      template: template.id
+    };
+
+    setRecentReports(prev => [newReport, ...prev.slice(0, 9)]); // Keep last 10 reports
+
+    addNotification({
+      type: 'success',
+      title: 'Report Generated',
+      message: `${template.title} has been generated and downloaded successfully.`
+    });
+  };
 
   const handleGenerateReport = (template) => {
     setSelectedTemplate(template);
     setShowModal(true);
+  };
+
+  const handleQuickExport = async (exportType) => {
+    let data = '';
+    let filename = '';
+    
+    switch (exportType) {
+      case 'transactions':
+        data = `Date,Type,Category,Amount,Description\n${transactions.map(t => 
+          `${t.date},${t.type},${t.category},${t.amount},"${t.description}"`
+        ).join('\n')}`;
+        filename = `transactions-${new Date().toISOString().split('T')[0]}.csv`;
+        break;
+        
+      case 'budget':
+        data = `Category,Allocated Amount\n${Object.entries(budgets).map(([category, amount]) => 
+          `${category},${amount}`
+        ).join('\n')}`;
+        filename = `budget-data-${new Date().toISOString().split('T')[0]}.csv`;
+        break;
+        
+      case 'goals':
+        data = `Title,Target Amount,Current Amount,Deadline,Category\n${goals.map(g => 
+          `"${g.title}",${g.target_amount},${g.current_amount},${g.deadline},${g.category}`
+        ).join('\n')}`;
+        filename = `goals-progress-${new Date().toISOString().split('T')[0]}.csv`;
+        break;
+    }
+
+    const blob = new Blob([data], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+
+    addNotification({
+      type: 'success',
+      title: 'Data Exported',
+      message: `${exportType.charAt(0).toUpperCase() + exportType.slice(1)} data has been exported successfully.`
+    });
   };
 
   return (
@@ -208,15 +406,28 @@ const Reports = () => {
         <p className="text-gray-600">Generate comprehensive financial reports and export your data</p>
       </div>
 
-      {/* Quick stats */}
+      {/* Quick stats with real data */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {quickStats.map((stat, index) => (
-          <Card key={index} className="p-4 text-center">
-            <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
-            <p className="text-sm font-medium text-gray-600">{stat.label}</p>
-            <p className="text-xs text-gray-500 mt-1">{stat.change}</p>
-          </Card>
-        ))}
+        <Card className="p-4 text-center">
+          <p className="text-2xl font-bold text-gray-900">{stats.reportsGenerated}</p>
+          <p className="text-sm font-medium text-gray-600">Reports Generated</p>
+          <p className="text-xs text-gray-500 mt-1">This session</p>
+        </Card>
+        <Card className="p-4 text-center">
+          <p className="text-2xl font-bold text-gray-900">{stats.dataPoints}</p>
+          <p className="text-sm font-medium text-gray-600">Data Points</p>
+          <p className="text-xs text-gray-500 mt-1">Across all accounts</p>
+        </Card>
+        <Card className="p-4 text-center">
+          <p className="text-2xl font-bold text-gray-900">3</p>
+          <p className="text-sm font-medium text-gray-600">Export Formats</p>
+          <p className="text-xs text-gray-500 mt-1">PDF, CSV, Excel</p>
+        </Card>
+        <Card className="p-4 text-center">
+          <p className="text-2xl font-bold text-gray-900">{transactions.length}</p>
+          <p className="text-sm font-medium text-gray-600">Total Transactions</p>
+          <p className="text-xs text-gray-500 mt-1">All time</p>
+        </Card>
       </div>
 
       {/* Report templates */}
@@ -266,33 +477,36 @@ const Reports = () => {
         <div className="p-6">
           <h3 className="text-lg font-semibold mb-4">Recent Reports</h3>
           
-          <div className="space-y-3">
-            {[
-              { name: 'Monthly Summary - December 2023', date: '2024-01-05', size: '247 KB', format: 'PDF' },
-              { name: 'Spending Analysis Q4 2023', date: '2024-01-03', size: '156 KB', format: 'CSV' },
-              { name: 'Net Worth Report - 2023', date: '2024-01-01', size: '189 KB', format: 'PDF' },
-              { name: 'Budget Performance - November', date: '2023-12-01', size: '134 KB', format: 'Excel' }
-            ].map((report, index) => (
-              <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <div className="flex items-center space-x-3">
-                  <FileText className="w-5 h-5 text-gray-600" />
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">{report.name}</p>
-                    <p className="text-xs text-gray-500">Generated {report.date} • {report.size}</p>
+          {recentReports.length > 0 ? (
+            <div className="space-y-3">
+              {recentReports.map((report) => (
+                <div key={report.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div className="flex items-center space-x-3">
+                    <FileText className="w-5 h-5 text-gray-600" />
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">{report.name}</p>
+                      <p className="text-xs text-gray-500">Generated {report.date} • {report.size}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center space-x-2">
+                    <span className="text-xs text-gray-500 bg-gray-200 px-2 py-1 rounded">
+                      {report.format}
+                    </span>
+                    <Button size="sm" variant="outline">
+                      <Download className="w-3 h-3" />
+                    </Button>
                   </div>
                 </div>
-                
-                <div className="flex items-center space-x-2">
-                  <span className="text-xs text-gray-500 bg-gray-200 px-2 py-1 rounded">
-                    {report.format}
-                  </span>
-                  <Button size="sm" variant="outline">
-                    <Download className="w-3 h-3" />
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8 text-gray-500">
+              <FileText className="w-12 h-12 text-gray-300 mx-auto mb-2" />
+              <p>No reports generated yet</p>
+              <p className="text-sm">Generate your first report to see it here</p>
+            </div>
+          )}
         </div>
       </Card>
 
@@ -302,19 +516,31 @@ const Reports = () => {
           <h3 className="text-lg font-semibold mb-4">Quick Export Options</h3>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Button variant="outline" className="flex items-center justify-center p-4">
+            <Button 
+              variant="outline" 
+              className="flex items-center justify-center p-4"
+              onClick={() => handleQuickExport('transactions')}
+            >
               <Download className="w-4 h-4 mr-2" />
-              Export All Transactions
+              Export All Transactions ({transactions.length})
             </Button>
             
-            <Button variant="outline" className="flex items-center justify-center p-4">
+            <Button 
+              variant="outline" 
+              className="flex items-center justify-center p-4"
+              onClick={() => handleQuickExport('budget')}
+            >
               <Download className="w-4 h-4 mr-2" />
-              Export Budget Data
+              Export Budget Data ({Object.keys(budgets).length} categories)
             </Button>
             
-            <Button variant="outline" className="flex items-center justify-center p-4">
+            <Button 
+              variant="outline" 
+              className="flex items-center justify-center p-4"
+              onClick={() => handleQuickExport('goals')}
+            >
               <Download className="w-4 h-4 mr-2" />
-              Export Goals Progress
+              Export Goals Progress ({goals.length} goals)
             </Button>
           </div>
         </div>
@@ -325,6 +551,7 @@ const Reports = () => {
         isOpen={showModal}
         onClose={() => setShowModal(false)}
         template={selectedTemplate}
+        onGenerate={generateRealReport}
       />
     </div>
   );

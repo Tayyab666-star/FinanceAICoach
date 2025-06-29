@@ -13,6 +13,7 @@ import {
   BarChart,
   Edit
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useTransactions, useGoals, useBudgetCategories } from '../hooks/useSupabaseData';
 import { calculateBudgetUsage, generateAIInsights } from '../utils/calculations';
@@ -105,7 +106,7 @@ const SetupModal = ({ isOpen, onClose, onSave, userProfile }) => {
   );
 };
 
-// Quick action card component
+// Quick action card component with navigation
 const QuickActionCard = ({ title, description, icon: Icon, onClick, color = 'blue' }) => (
   <Card className="p-4 hover:shadow-md transition-shadow cursor-pointer" onClick={onClick}>
     <div className="flex items-center space-x-3">
@@ -167,12 +168,22 @@ const MetricCard = ({ title, value, change, icon: Icon, trend, prefix = '$', onE
 
 // Recent transactions component
 const RecentTransactions = ({ transactions }) => {
+  const navigate = useNavigate();
   const recentTransactions = transactions.slice(0, 5);
 
   return (
     <Card>
       <div className="p-6">
-        <h3 className="text-lg font-semibold mb-4">Recent Transactions</h3>
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-semibold">Recent Transactions</h3>
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => navigate('/transactions')}
+          >
+            View All
+          </Button>
+        </div>
         
         {recentTransactions.length > 0 ? (
           <div className="space-y-3">
@@ -218,12 +229,22 @@ const RecentTransactions = ({ transactions }) => {
 
 // Budget overview component
 const BudgetOverview = ({ budgetUsage }) => {
+  const navigate = useNavigate();
   const categories = Object.entries(budgetUsage).slice(0, 4);
 
   return (
     <Card>
       <div className="p-6">
-        <h3 className="text-lg font-semibold mb-4">Budget Overview</h3>
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-semibold">Budget Overview</h3>
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => navigate('/budget')}
+          >
+            Manage Budget
+          </Button>
+        </div>
         
         {categories.length > 0 ? (
           <div className="space-y-4">
@@ -264,12 +285,22 @@ const BudgetOverview = ({ budgetUsage }) => {
 
 // Goals progress component
 const GoalsProgress = ({ goals }) => {
+  const navigate = useNavigate();
   const activeGoals = goals.slice(0, 3);
 
   return (
     <Card>
       <div className="p-6">
-        <h3 className="text-lg font-semibold mb-4">Goals Progress</h3>
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-semibold">Goals Progress</h3>
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => navigate('/goals')}
+          >
+            View All Goals
+          </Button>
+        </div>
         
         {activeGoals.length > 0 ? (
           <div className="space-y-4">
@@ -313,12 +344,22 @@ const GoalsProgress = ({ goals }) => {
 
 // AI Insights component
 const AIInsights = ({ insights }) => {
+  const navigate = useNavigate();
   const topInsights = insights.slice(0, 3);
 
   return (
     <Card>
       <div className="p-6">
-        <h3 className="text-lg font-semibold mb-4">AI Insights</h3>
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-semibold">AI Insights</h3>
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => navigate('/ai-coach')}
+          >
+            AI Coach
+          </Button>
+        </div>
         
         {topInsights.length > 0 ? (
           <div className="space-y-3">
@@ -361,6 +402,7 @@ const AIInsights = ({ insights }) => {
 
 // Main dashboard component
 const Dashboard = () => {
+  const navigate = useNavigate();
   const { user, userProfile, updateUserProfile, getUserDisplayName } = useAuth();
   const { transactions, loading: transactionsLoading } = useTransactions();
   const { goals, loading: goalsLoading } = useGoals();
@@ -438,6 +480,26 @@ const Dashboard = () => {
 
   const handleEditFinancials = () => {
     setShowSetupModal(true);
+  };
+
+  // Quick action handlers
+  const handleQuickAction = (action) => {
+    switch (action) {
+      case 'add-transaction':
+        navigate('/transactions');
+        break;
+      case 'set-budget':
+        navigate('/budget');
+        break;
+      case 'create-goal':
+        navigate('/goals');
+        break;
+      case 'view-reports':
+        navigate('/reports');
+        break;
+      default:
+        break;
+    }
   };
 
   if (transactionsLoading || goalsLoading || budgetsLoading) {
@@ -555,24 +617,28 @@ const Dashboard = () => {
               description="Record income or expense"
               icon={Plus}
               color="blue"
+              onClick={() => handleQuickAction('add-transaction')}
             />
             <QuickActionCard
               title="Set Budget"
               description="Plan your spending"
               icon={PieChart}
               color="green"
+              onClick={() => handleQuickAction('set-budget')}
             />
             <QuickActionCard
               title="Create Goal"
               description="Set financial target"
               icon={Target}
               color="purple"
+              onClick={() => handleQuickAction('create-goal')}
             />
             <QuickActionCard
               title="View Reports"
               description="Analyze your finances"
               icon={BarChart}
               color="blue"
+              onClick={() => handleQuickAction('view-reports')}
             />
           </div>
         </div>

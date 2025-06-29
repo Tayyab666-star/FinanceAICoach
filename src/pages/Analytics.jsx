@@ -15,16 +15,142 @@ import {
   Pie,
   Cell
 } from 'recharts';
-import { TrendingUp, TrendingDown, DollarSign, Target } from 'lucide-react';
+import { TrendingUp, TrendingDown, DollarSign, Target, X } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTransactions, useGoals, useBudgetCategories } from '../hooks/useSupabaseData';
 import { calculateBudgetUsage } from '../utils/calculations';
 import Card from '../components/Card';
 import Button from '../components/Button';
 import LoadingSpinner from '../components/LoadingSpinner';
+import ResponsiveModal from '../components/ResponsiveModal';
 
-// AI Insights component
+// Learn More Modal component
+const LearnMoreModal = ({ isOpen, onClose, insight }) => {
+  if (!insight) return null;
+
+  const getDetailedInfo = (insight) => {
+    switch (insight.type) {
+      case 'warning':
+        return {
+          title: 'Budget Alert Details',
+          content: `
+            Your current spending pattern indicates you're approaching or exceeding your budget limits. Here's what you can do:
+            
+            • Review your recent transactions to identify unnecessary expenses
+            • Consider adjusting your budget categories based on actual spending
+            • Set up spending alerts to get notified before reaching limits
+            • Look for subscription services you might not be using
+            
+            Remember, budgets are meant to be flexible guides, not rigid restrictions. Adjust them as your financial situation changes.
+          `,
+          tips: [
+            'Track daily expenses for a week to understand spending patterns',
+            'Use the 50/30/20 rule: 50% needs, 30% wants, 20% savings',
+            'Review and adjust budgets monthly based on actual spending'
+          ]
+        };
+      case 'success':
+        return {
+          title: 'Great Financial Habits',
+          content: `
+            Congratulations! Your financial discipline is paying off. Here's how to maintain this momentum:
+            
+            • Continue tracking your expenses regularly
+            • Consider increasing your savings rate gradually
+            • Look into investment opportunities for your surplus funds
+            • Set new, more ambitious financial goals
+            
+            Your current savings rate puts you ahead of most people. Keep up the excellent work!
+          `,
+          tips: [
+            'Consider automating your savings to maintain consistency',
+            'Explore high-yield savings accounts or investment options',
+            'Set stretch goals to challenge yourself further'
+          ]
+        };
+      default:
+        return {
+          title: 'Financial Insight Details',
+          content: `
+            This insight is based on your current financial data and spending patterns. Here are some general recommendations:
+            
+            • Regularly review your financial goals and progress
+            • Keep track of your spending across all categories
+            • Look for opportunities to optimize your budget
+            • Consider consulting with a financial advisor for personalized advice
+            
+            Remember, small consistent changes can lead to significant improvements over time.
+          `,
+          tips: [
+            'Set aside time weekly to review your finances',
+            'Use financial apps and tools to automate tracking',
+            'Educate yourself about personal finance through books and courses'
+          ]
+        };
+    }
+  };
+
+  const details = getDetailedInfo(insight);
+
+  return (
+    <ResponsiveModal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={details.title}
+      size="lg"
+    >
+      <div className="space-y-6">
+        <div className={`p-4 rounded-lg border-l-4 ${
+          insight.type === 'warning' ? 'bg-orange-50 border-orange-400' :
+          insight.type === 'success' ? 'bg-green-50 border-green-400' :
+          'bg-blue-50 border-blue-400'
+        }`}>
+          <h4 className="font-medium text-gray-900 mb-2">{insight.title}</h4>
+          <p className="text-sm text-gray-600">{insight.message}</p>
+        </div>
+
+        <div>
+          <h4 className="font-medium text-gray-900 mb-3">Detailed Analysis</h4>
+          <div className="prose prose-sm text-gray-600">
+            {details.content.split('\n').map((line, index) => (
+              <p key={index} className="mb-2">{line}</p>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <h4 className="font-medium text-gray-900 mb-3">Actionable Tips</h4>
+          <ul className="space-y-2">
+            {details.tips.map((tip, index) => (
+              <li key={index} className="flex items-start space-x-2">
+                <span className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></span>
+                <span className="text-sm text-gray-600">{tip}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div className="bg-gray-50 p-4 rounded-lg">
+          <h4 className="font-medium text-gray-900 mb-2">💡 Pro Tip</h4>
+          <p className="text-sm text-gray-600">
+            Use our AI Coach feature to get personalized financial advice and ask specific questions about your financial situation.
+          </p>
+        </div>
+      </div>
+    </ResponsiveModal>
+  );
+};
+
+// AI Insights component with Learn More functionality
 const AIInsights = ({ insights }) => {
+  const [selectedInsight, setSelectedInsight] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+
+  const handleLearnMore = (insight) => {
+    setSelectedInsight(insight);
+    setShowModal(true);
+  };
+
   if (!insights || insights.length === 0) {
     return (
       <Card>
@@ -37,27 +163,41 @@ const AIInsights = ({ insights }) => {
   }
 
   return (
-    <Card>
-      <h3 className="text-lg font-semibold mb-4">AI Financial Insights</h3>
-      <div className="space-y-4">
-        {insights.slice(0, 3).map((insight, index) => (
-          <div 
-            key={index}
-            className={`p-4 rounded-lg border-l-4 ${
-              insight.type === 'warning' 
-                ? 'bg-orange-50 border-orange-400' 
-                : insight.type === 'success'
-                ? 'bg-green-50 border-green-400'
-                : 'bg-blue-50 border-blue-400'
-            }`}
-          >
-            <h4 className="font-medium text-gray-900 mb-1">{insight.title}</h4>
-            <p className="text-sm text-gray-600 mb-3">{insight.message}</p>
-            <Button size="sm" variant="outline">Learn More</Button>
-          </div>
-        ))}
-      </div>
-    </Card>
+    <>
+      <Card>
+        <h3 className="text-lg font-semibold mb-4">AI Financial Insights</h3>
+        <div className="space-y-4">
+          {insights.slice(0, 3).map((insight, index) => (
+            <div 
+              key={index}
+              className={`p-4 rounded-lg border-l-4 ${
+                insight.type === 'warning' 
+                  ? 'bg-orange-50 border-orange-400' 
+                  : insight.type === 'success'
+                  ? 'bg-green-50 border-green-400'
+                  : 'bg-blue-50 border-blue-400'
+              }`}
+            >
+              <h4 className="font-medium text-gray-900 mb-1">{insight.title}</h4>
+              <p className="text-sm text-gray-600 mb-3">{insight.message}</p>
+              <Button 
+                size="sm" 
+                variant="outline"
+                onClick={() => handleLearnMore(insight)}
+              >
+                Learn More
+              </Button>
+            </div>
+          ))}
+        </div>
+      </Card>
+
+      <LearnMoreModal
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        insight={selectedInsight}
+      />
+    </>
   );
 };
 
