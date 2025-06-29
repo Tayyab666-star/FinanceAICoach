@@ -39,14 +39,15 @@ const settingSections = [
   { id: 'data', name: 'Data & Privacy', icon: Database }
 ];
 
-// Profile settings component with working name updates
+// Profile settings component with working name updates and new bio/about_work fields
 const ProfileSettings = () => {
   const { user, userProfile, updateUserProfile, getUserDisplayName, refreshUserProfile } = useAuth();
   const { addNotification } = useNotifications();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    timezone: 'UTC-05:00'
+    bio: '',
+    about_work: ''
   });
   const [loading, setLoading] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
@@ -57,7 +58,8 @@ const ProfileSettings = () => {
       setFormData({
         name: userProfile.name || getUserDisplayName(),
         email: userProfile.email || user?.email || '',
-        timezone: userProfile.timezone || 'UTC-05:00'
+        bio: userProfile.bio || '',
+        about_work: userProfile.about_work || ''
       });
     }
   }, [userProfile, user, getUserDisplayName]);
@@ -67,7 +69,8 @@ const ProfileSettings = () => {
     if (userProfile) {
       const hasChanged = 
         formData.name !== (userProfile.name || getUserDisplayName()) ||
-        formData.timezone !== (userProfile.timezone || 'UTC-05:00');
+        formData.bio !== (userProfile.bio || '') ||
+        formData.about_work !== (userProfile.about_work || '');
       setHasChanges(hasChanged);
     }
   }, [formData, userProfile, getUserDisplayName]);
@@ -77,7 +80,8 @@ const ProfileSettings = () => {
     try {
       await updateUserProfile({
         name: formData.name.trim(),
-        timezone: formData.timezone
+        bio: formData.bio.trim(),
+        about_work: formData.about_work.trim()
       });
       
       // Refresh the profile to ensure UI updates
@@ -86,7 +90,7 @@ const ProfileSettings = () => {
       addNotification({
         type: 'success',
         title: 'Profile Updated',
-        message: `Your name has been updated to "${formData.name.trim()}"`
+        message: `Your profile has been updated successfully`
       });
       
       setHasChanges(false);
@@ -137,17 +141,33 @@ const ProfileSettings = () => {
         <p className="text-xs text-gray-500 dark:text-gray-400 -mt-2">Email cannot be changed</p>
         
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Timezone</label>
-          <select
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-            value={formData.timezone}
-            onChange={(e) => handleInputChange('timezone', e.target.value)}
-          >
-            <option value="UTC-08:00">Pacific Time (UTC-8)</option>
-            <option value="UTC-07:00">Mountain Time (UTC-7)</option>
-            <option value="UTC-06:00">Central Time (UTC-6)</option>
-            <option value="UTC-05:00">Eastern Time (UTC-5)</option>
-          </select>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Bio</label>
+          <textarea
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white resize-none"
+            rows="3"
+            value={formData.bio}
+            onChange={(e) => handleInputChange('bio', e.target.value)}
+            placeholder="Tell us a bit about yourself..."
+            maxLength="500"
+          />
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            {formData.bio.length}/500 characters
+          </p>
+        </div>
+        
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">About Your Work</label>
+          <textarea
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white resize-none"
+            rows="3"
+            value={formData.about_work}
+            onChange={(e) => handleInputChange('about_work', e.target.value)}
+            placeholder="Describe your profession, role, or career..."
+            maxLength="500"
+          />
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            {formData.about_work.length}/500 characters
+          </p>
         </div>
         
         <Button 
@@ -749,6 +769,8 @@ Monthly Income:         $${(userProfile?.monthly_income || 0).toLocaleString()}
 Monthly Budget:         $${(userProfile?.monthly_budget || 0).toLocaleString()}
 Setup Completed:        ${userProfile?.setup_completed ? 'Yes' : 'No'}
 Account Created:        ${userProfile?.created_at ? new Date(userProfile.created_at).toLocaleDateString() : 'N/A'}
+Bio:                    ${userProfile?.bio || 'Not provided'}
+About Work:             ${userProfile?.about_work || 'Not provided'}
 
 INCOME BREAKDOWN
 ═══════════════════════════════════════════════════════════════════
