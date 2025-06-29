@@ -78,6 +78,12 @@ const ProfileSettings = () => {
   const handleSave = async () => {
     setLoading(true);
     try {
+      console.log('Saving profile data:', {
+        name: formData.name.trim(),
+        bio: formData.bio.trim(),
+        about_work: formData.about_work.trim()
+      });
+
       await updateUserProfile({
         name: formData.name.trim(),
         bio: formData.bio.trim(),
@@ -1097,8 +1103,6 @@ const Settings = () => {
         return <ConnectedAccounts />;
       case 'data':
         return <DataPrivacySettings />;
-      case 'advanced':
-        return <AdvancedSettings />;
       default:
         return <ProfileSettings />;
     }
