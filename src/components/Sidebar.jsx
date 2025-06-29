@@ -53,12 +53,12 @@ const Sidebar = ({ isOpen, onClose }) => {
         <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200 dark:border-gray-700">
           <button 
             onClick={handleLogoClick}
-            className="flex items-center space-x-3 hover:opacity-80 transition-opacity cursor-pointer"
+            className="flex items-center hover:opacity-80 transition-opacity cursor-pointer"
           >
             <img 
-              src="/Finance AI coach.png" 
+              src="/WhatsApp Image 2025-06-29 at 14.00.10_f73cb93b.jpg" 
               alt="Finance AI Coach" 
-              className="w-8 h-8 object-contain"
+              className="h-10 w-auto object-contain"
               onError={(e) => {
                 // Fallback to a gradient icon if image fails to load
                 e.target.style.display = 'none';
@@ -66,11 +66,10 @@ const Sidebar = ({ isOpen, onClose }) => {
               }}
             />
             <div 
-              className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center hidden"
+              className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center hidden"
             >
               <span className="text-white font-bold text-sm">F</span>
             </div>
-            <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Finance AI Coach</span>
           </button>
           <button 
             onClick={onClose}

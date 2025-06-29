@@ -185,9 +185,9 @@ const Login = () => {
         <div className="text-center mb-8">
           <div className="flex justify-center mb-4">
             <img 
-              src="/Finance AI coach.png" 
+              src="/WhatsApp Image 2025-06-29 at 14.00.10_f73cb93b.jpg" 
               alt="Finance AI Coach" 
-              className="w-16 h-16 object-contain"
+              className="h-16 w-auto object-contain"
               onError={(e) => {
                 // Fallback to gradient icon if image fails to load
                 e.target.style.display = 'none';
