@@ -1,12 +1,11 @@
 import React, { useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { useNotifications } from '../contexts/NotificationContext';
 import Card from '../components/Card';
 import Input from '../components/Input';
 import Button from '../components/Button';
-import { Eye, EyeOff, Mail, Lock, User } from 'lucide-react';
 
+// Signup page component
 const Signup = () => {
   const [formData, setFormData] = useState({
     name: '',
@@ -14,273 +13,116 @@ const Signup = () => {
     password: '',
     confirmPassword: ''
   });
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errors, setErrors] = useState({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [emailSent, setEmailSent] = useState(false);
-  const { user, signUp, isLoading } = useAuth();
-  const { addNotification } = useNotifications();
+  const { user, signup, isLoading } = useAuth();
 
   // Redirect if already logged in
-  if (user) return <Navigate to="/dashboard" replace />;
+  if (user) return <Navigate to="/dashboard" />;
 
+  // Handle form input changes
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-    
-    // Clear error when user starts typing
-    if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: '' }));
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+    if (errors[e.target.name]) {
+      setErrors({ ...errors, [e.target.name]: '' });
     }
   };
 
-  const validateForm = () => {
-    const newErrors = {};
-    
-    if (!formData.name.trim()) {
-      newErrors.name = 'Name is required';
-    } else if (formData.name.trim().length < 2) {
-      newErrors.name = 'Name must be at least 2 characters';
-    }
-    
-    if (!formData.email) {
-      newErrors.email = 'Email is required';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Please enter a valid email address';
-    }
-    
-    if (!formData.password) {
-      newErrors.password = 'Password is required';
-    } else if (formData.password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
-    }
-    
-    if (!formData.confirmPassword) {
-      newErrors.confirmPassword = 'Please confirm your password';
-    } else if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = 'Passwords do not match';
-    }
-    
-    return newErrors;
-  };
-
+  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    const validationErrors = validateForm();
-    if (Object.keys(validationErrors).length > 0) {
-      setErrors(validationErrors);
+    // Validation
+    const newErrors = {};
+    if (!formData.name) newErrors.name = 'Name is required';
+    if (!formData.email) newErrors.email = 'Email is required';
+    if (!formData.password) newErrors.password = 'Password is required';
+    if (formData.password !== formData.confirmPassword) {
+      newErrors.confirmPassword = 'Passwords do not match';
+    }
+    
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
       return;
     }
 
-    setIsSubmitting(true);
-    setErrors({});
-
     try {
-      const result = await signUp(formData.email, formData.password, formData.name);
-      
-      if (result.needsEmailConfirmation) {
-        setEmailSent(true);
-        addNotification({
-          type: 'info',
-          title: 'Check Your Email',
-          message: 'We sent you a confirmation link. Please check your email to complete registration.'
-        });
-      } else {
-        addNotification({
-          type: 'success',
-          title: 'Account Created!',
-          message: 'Welcome to FinanceApp! Your account has been created successfully.'
-        });
-      }
+      await signup(formData.email, formData.password, formData.name);
     } catch (error) {
-      console.error('Signup error:', error);
-      
-      if (error.message.includes('already exists')) {
-        setErrors({ 
-          email: 'An account with this email already exists. Please try logging in instead.' 
-        });
-      } else if (error.message.includes('Password should be')) {
-        setErrors({ 
-          password: 'Password should be at least 6 characters long' 
-        });
-      } else {
-        setErrors({ 
-          general: error.message || 'Failed to create account. Please try again.' 
-        });
-      }
-    } finally {
-      setIsSubmitting(false);
+      setErrors({ submit: 'Failed to create account' });
     }
   };
 
-  // Show loading state while auth is being checked
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
-        <div className="text-center">
-          <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600 dark:text-gray-300">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Show email confirmation message
-  if (emailSent) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 px-4">
-        <div className="max-w-md w-full">
-          <Card className="shadow-xl border-0 backdrop-blur-sm bg-white/90 dark:bg-gray-800/90 text-center">
-            <div className="w-16 h-16 bg-green-100 dark:bg-green-900/50 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Mail className="w-8 h-8 text-green-600 dark:text-green-400" />
-            </div>
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Check Your Email</h2>
-            <p className="text-gray-600 dark:text-gray-300 mb-6">
-              We've sent a confirmation link to <strong>{formData.email}</strong>. 
-              Please check your email and click the link to complete your registration.
-            </p>
-            <div className="space-y-3">
-              <Link to="/login">
-                <Button className="w-full">
-                  Back to Login
-                </Button>
-              </Link>
-              <button
-                onClick={() => setEmailSent(false)}
-                className="text-sm text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300"
-              >
-                Didn't receive the email? Try again
-              </button>
-            </div>
-          </Card>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
       <div className="max-w-md w-full">
-        {/* Header */}
         <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-            <span className="text-2xl font-bold text-white">F</span>
-          </div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Create Account</h1>
-          <p className="text-gray-600 dark:text-gray-300 mt-2">Join FinanceApp to manage your finances</p>
+          <h1 className="text-3xl font-bold text-gray-900">Create Account</h1>
+          <p className="text-gray-600 mt-2">Join us to manage your finances</p>
         </div>
         
-        <Card className="shadow-xl border-0 backdrop-blur-sm bg-white/90 dark:bg-gray-800/90">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Name Input */}
-            <div className="relative">
-              <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <Input
-                label="Full Name"
-                type="text"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                placeholder="Enter your full name"
-                className="pl-12"
-                error={errors.name}
-                disabled={isSubmitting}
-              />
-            </div>
+        <Card>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <Input
+              label="Full Name"
+              type="text"
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
+              error={errors.name}
+              placeholder="Enter your full name"
+            />
             
-            {/* Email Input */}
-            <div className="relative">
-              <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <Input
-                label="Email Address"
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                placeholder="Enter your email"
-                className="pl-12"
-                error={errors.email}
-                disabled={isSubmitting}
-              />
-            </div>
+            <Input
+              label="Email Address"
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              error={errors.email}
+              placeholder="Enter your email"
+            />
             
-            {/* Password Input */}
-            <div className="relative">
-              <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <Input
-                label="Password"
-                type={showPassword ? 'text' : 'password'}
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
-                placeholder="Create a password"
-                className="pl-12 pr-12"
-                error={errors.password}
-                disabled={isSubmitting}
-              />
-              <button
-                type="button"
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                onClick={() => setShowPassword(!showPassword)}
-              >
-                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-              </button>
-            </div>
+            <Input
+              label="Password"
+              type="password"
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              error={errors.password}
+              placeholder="Create a password"
+            />
             
-            {/* Confirm Password Input */}
-            <div className="relative">
-              <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <Input
-                label="Confirm Password"
-                type={showConfirmPassword ? 'text' : 'password'}
-                name="confirmPassword"
-                value={formData.confirmPassword}
-                onChange={handleChange}
-                placeholder="Confirm your password"
-                className="pl-12 pr-12"
-                error={errors.confirmPassword}
-                disabled={isSubmitting}
-              />
-              <button
-                type="button"
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-              >
-                {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-              </button>
-            </div>
+            <Input
+              label="Confirm Password"
+              type="password"
+              name="confirmPassword"
+              value={formData.confirmPassword}
+              onChange={handleChange}
+              error={errors.confirmPassword}
+              placeholder="Confirm your password"
+            />
             
-            {/* General Error */}
-            {errors.general && (
-              <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg">
-                <p className="text-sm text-red-600 dark:text-red-400">{errors.general}</p>
-              </div>
+            {errors.submit && (
+              <p className="text-sm text-red-600">{errors.submit}</p>
             )}
             
-            {/* Submit Button */}
             <Button
               type="submit"
-              loading={isSubmitting}
-              disabled={isSubmitting}
-              className="w-full text-lg py-3"
+              loading={isLoading}
+              className="w-full"
             >
-              {isSubmitting ? 'Creating Account...' : 'Create Account'}
+              Create Account
             </Button>
           </form>
           
-          {/* Login Link */}
-          <div className="mt-6 text-center">
-            <p className="text-sm text-gray-600 dark:text-gray-300">
-              Already have an account?{' '}
-              <Link 
-                to="/login" 
-                className="text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300 font-medium"
-              >
-                Sign in here
-              </Link>
-            </p>
+          <div className="mt-6 text-center text-sm text-gray-600">
+            Already have an account?{' '}
+            <Link 
+              to="/login" 
+              className="text-blue-600 hover:text-blue-500 font-medium"
+            >
+              Sign in
+            </Link>
           </div>
         </Card>
       </div>
