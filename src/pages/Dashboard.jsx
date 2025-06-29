@@ -18,6 +18,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useTransactions, useGoals, useBudgetCategories } from '../hooks/useSupabaseData';
+import { useConnectedAccounts } from '../hooks/useConnectedAccounts';
 import { calculateBudgetUsage, generateAIInsights } from '../utils/calculations';
 import Card from '../components/Card';
 import Button from '../components/Button';
@@ -122,7 +123,7 @@ const QuickActionCard = ({ title, description, icon: Icon, color = 'blue', path,
 
   const colorClasses = {
     blue: {
-      bg: 'bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/30',
+      bg:  'bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/30',
       icon: 'bg-blue-500 text-white',
       hover: 'hover:from-blue-100 hover:to-blue-200 dark:hover:from-blue-800/40 dark:hover:to-blue-700/40',
       border: 'border-blue-200 dark:border-blue-700'
@@ -347,6 +348,61 @@ const BudgetOverview = ({ budgetUsage }) => {
   );
 };
 
+// Connected Accounts Overview component
+const ConnectedAccountsOverview = ({ accounts }) => {
+  const navigate = useNavigate();
+  const activeAccounts = accounts.filter(acc => acc.is_active).slice(0, 3);
+
+  return (
+    <Card>
+      <div className="p-6">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Connected Accounts</h3>
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => navigate('/settings')}
+          >
+            Manage Accounts
+          </Button>
+        </div>
+        
+        {activeAccounts.length > 0 ? (
+          <div className="space-y-3">
+            {activeAccounts.map((account) => (
+              <div key={account.id} className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/50 rounded-full flex items-center justify-center">
+                    <CreditCard className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-900 dark:text-white text-sm">{account.account_name}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">{account.bank_name}</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="font-semibold text-sm text-gray-900 dark:text-white">
+                    ${parseFloat(account.balance).toFixed(2)}
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    {account.account_type.replace('_', ' ')}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+            <CreditCard className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-2" />
+            <p>No accounts connected</p>
+            <p className="text-sm">Connect your bank accounts and cards!</p>
+          </div>
+        )}
+      </div>
+    </Card>
+  );
+};
+
 // Goals progress component with navigation
 const GoalsProgress = ({ goals }) => {
   const navigate = useNavigate();
@@ -471,6 +527,7 @@ const Dashboard = () => {
   const { transactions, loading: transactionsLoading } = useTransactions();
   const { goals, loading: goalsLoading } = useGoals();
   const { budgets, loading: budgetsLoading } = useBudgetCategories();
+  const { accounts, loading: accountsLoading, getTotalBalance } = useConnectedAccounts();
   const [showSetupModal, setShowSetupModal] = useState(false);
 
   // Show setup modal for new users who haven't completed setup
@@ -494,7 +551,12 @@ const Dashboard = () => {
     [transactions]
   );
 
-  const netWorth = totalIncome - totalExpenses;
+  const netWorth = useMemo(() => {
+    const transactionsBalance = totalIncome - totalExpenses;
+    const accountsBalance = getTotalBalance();
+    return transactionsBalance + accountsBalance;
+  }, [totalIncome, totalExpenses, getTotalBalance]);
+
   const savingsRate = totalIncome > 0 ? ((totalIncome - totalExpenses) / totalIncome) * 100 : 0;
 
   // Calculate budget usage
@@ -544,7 +606,7 @@ const Dashboard = () => {
     setShowSetupModal(true);
   };
 
-  if (transactionsLoading || goalsLoading || budgetsLoading) {
+  if (transactionsLoading || goalsLoading || budgetsLoading || accountsLoading) {
     return <LoadingSpinner />;
   }
 
@@ -718,7 +780,11 @@ const Dashboard = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <RecentTransactions transactions={transactions} />
         <BudgetOverview budgetUsage={budgetUsage} />
-        <GoalsProgress goals={goals} />
+        {accounts.length > 0 ? (
+          <ConnectedAccountsOverview accounts={accounts} />
+        ) : (
+          <GoalsProgress goals={goals} />
+        )}
       </div>
 
       {/* AI Insights with navigation */}

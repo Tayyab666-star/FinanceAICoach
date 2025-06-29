@@ -21,16 +21,21 @@ import {
   Download,
   Trash2,
   Moon,
-  Sun
+  Sun,
+  Edit,
+  Wifi,
+  WifiOff
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotifications } from '../contexts/NotificationContext';
 import { useDarkMode } from '../contexts/DarkModeContext';
 import { useTransactions, useGoals, useBudgetCategories } from '../hooks/useSupabaseData';
+import { useConnectedAccounts } from '../hooks/useConnectedAccounts';
 import { supabase } from '../lib/supabase';
 import Card from '../components/Card';
 import Button from '../components/Button';
 import Input from '../components/Input';
+import ResponsiveModal from '../components/ResponsiveModal';
 
 // Settings sections
 const settingSections = [
@@ -200,6 +205,7 @@ const ProfileSettings = () => {
 const FinancialSettings = () => {
   const { userProfile, updateUserProfile, refreshUserProfile } = useAuth();
   const { addNotification } = useNotifications();
+  const { distributeIncome } = useConnectedAccounts();
   const [formData, setFormData] = useState({
     monthly_income: 0,
     monthly_budget: 0
@@ -230,10 +236,19 @@ const FinancialSettings = () => {
   const handleUpdateFinancials = async () => {
     setLoading(true);
     try {
+      const newIncome = parseFloat(formData.monthly_income);
+      const oldIncome = userProfile?.monthly_income || 0;
+      
       await updateUserProfile({
-        monthly_income: parseFloat(formData.monthly_income),
+        monthly_income: newIncome,
         monthly_budget: parseFloat(formData.monthly_budget)
       });
+      
+      // If income increased, distribute the difference across connected accounts
+      if (newIncome > oldIncome) {
+        const incomeIncrease = newIncome - oldIncome;
+        await distributeIncome(incomeIncrease);
+      }
       
       // Refresh the profile to ensure UI updates
       await refreshUserProfile();
@@ -241,7 +256,7 @@ const FinancialSettings = () => {
       addNotification({
         type: 'success',
         title: 'Financial Settings Updated',
-        message: `Monthly income: $${parseFloat(formData.monthly_income).toLocaleString()}, Budget: $${parseFloat(formData.monthly_budget).toLocaleString()}`
+        message: `Monthly income: $${newIncome.toLocaleString()}, Budget: $${parseFloat(formData.monthly_budget).toLocaleString()}`
       });
       
       setHasChanges(false);
@@ -665,49 +680,208 @@ const NotificationSettings = () => {
   );
 };
 
-// Connected accounts component with working refresh
+// Add Account Modal Component
+const AddAccountModal = ({ isOpen, onClose, onSave }) => {
+  const [formData, setFormData] = useState({
+    account_type: 'credit_card',
+    account_name: '',
+    bank_name: '',
+    account_number: '',
+    card_number: '',
+    card_type: 'visa',
+    expiry_month: '',
+    expiry_year: '',
+    balance: ''
+  });
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    
+    try {
+      await onSave(formData);
+      setFormData({
+        account_type: 'credit_card',
+        account_name: '',
+        bank_name: '',
+        account_number: '',
+        card_number: '',
+        card_type: 'visa',
+        expiry_month: '',
+        expiry_year: '',
+        balance: ''
+      });
+      onClose();
+    } catch (error) {
+      console.error('Error adding account:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const supportedBanks = [
+    'Chase', 'Wells Fargo', 'Bank of America', 'Citibank', 'Capital One',
+    'US Bank', 'PNC Bank', 'TD Bank', 'Truist', 'Fifth Third'
+  ];
+
+  const currentYear = new Date().getFullYear();
+  const years = Array.from({ length: 20 }, (_, i) => currentYear + i);
+  const months = Array.from({ length: 12 }, (_, i) => i + 1);
+
+  return (
+    <ResponsiveModal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Connect New Account"
+      size="lg"
+    >
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Account Type</label>
+          <select
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            value={formData.account_type}
+            onChange={(e) => setFormData({ ...formData, account_type: e.target.value })}
+          >
+            <option value="credit_card">Credit Card</option>
+            <option value="debit_card">Debit Card</option>
+            <option value="bank">Bank Account</option>
+          </select>
+        </div>
+
+        <Input
+          label="Account Name"
+          value={formData.account_name}
+          onChange={(e) => setFormData({ ...formData, account_name: e.target.value })}
+          placeholder="e.g., My Chase Card"
+          required
+        />
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Bank/Institution</label>
+          <select
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            value={formData.bank_name}
+            onChange={(e) => setFormData({ ...formData, bank_name: e.target.value })}
+            required
+          >
+            <option value="">Select Bank</option>
+            {supportedBanks.map(bank => (
+              <option key={bank} value={bank}>{bank}</option>
+            ))}
+          </select>
+        </div>
+
+        {formData.account_type === 'bank' ? (
+          <Input
+            label="Account Number"
+            value={formData.account_number}
+            onChange={(e) => setFormData({ ...formData, account_number: e.target.value })}
+            placeholder="Enter account number"
+            required
+          />
+        ) : (
+          <>
+            <Input
+              label="Card Number"
+              value={formData.card_number}
+              onChange={(e) => setFormData({ ...formData, card_number: e.target.value.replace(/\D/g, '') })}
+              placeholder="1234 5678 9012 3456"
+              maxLength={19}
+              required
+            />
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Card Type</label>
+              <select
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                value={formData.card_type}
+                onChange={(e) => setFormData({ ...formData, card_type: e.target.value })}
+              >
+                <option value="visa">Visa</option>
+                <option value="mastercard">Mastercard</option>
+                <option value="amex">American Express</option>
+                <option value="discover">Discover</option>
+              </select>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Expiry Month</label>
+                <select
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  value={formData.expiry_month}
+                  onChange={(e) => setFormData({ ...formData, expiry_month: e.target.value })}
+                  required
+                >
+                  <option value="">Month</option>
+                  {months.map(month => (
+                    <option key={month} value={month}>{month.toString().padStart(2, '0')}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Expiry Year</label>
+                <select
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  value={formData.expiry_year}
+                  onChange={(e) => setFormData({ ...formData, expiry_year: e.target.value })}
+                  required
+                >
+                  <option value="">Year</option>
+                  {years.map(year => (
+                    <option key={year} value={year}>{year}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </>
+        )}
+
+        <Input
+          label="Current Balance"
+          type="number"
+          step="0.01"
+          value={formData.balance}
+          onChange={(e) => setFormData({ ...formData, balance: e.target.value })}
+          placeholder="0.00"
+          required
+        />
+
+        <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg">
+          <p className="text-sm text-yellow-800 dark:text-yellow-200">
+            <strong>Security Note:</strong> Your card details are encrypted and stored securely. Only the last 4 digits will be visible.
+          </p>
+        </div>
+
+        <div className="flex space-x-3">
+          <Button type="submit" className="flex-1" loading={loading}>
+            Connect Account
+          </Button>
+          <Button type="button" variant="secondary" onClick={onClose} disabled={loading}>
+            Cancel
+          </Button>
+        </div>
+      </form>
+    </ResponsiveModal>
+  );
+};
+
+// Enhanced Connected accounts component with real functionality
 const ConnectedAccounts = () => {
   const { addNotification } = useNotifications();
-  const [accounts, setAccounts] = useState([
-    { id: 1, name: 'Chase Checking', type: 'Bank Account', status: 'Connected', balance: '$12,450', lastSync: new Date() },
-    { id: 2, name: 'Wells Fargo Savings', type: 'Savings Account', status: 'Connected', balance: '$8,200', lastSync: new Date() },
-    { id: 3, name: 'Chase Freedom', type: 'Credit Card', status: 'Connected', balance: '-$1,250', lastSync: new Date() },
-    { id: 4, name: 'Vanguard 401k', type: 'Investment', status: 'Disconnected', balance: '$45,600', lastSync: null }
-  ]);
+  const { accounts, loading, addAccount, updateAccount, deleteAccount, refreshAccount, getTotalBalance } = useConnectedAccounts();
   const [refreshingAccounts, setRefreshingAccounts] = useState(new Set());
+  const [showAddModal, setShowAddModal] = useState(false);
 
   const handleRefreshAccount = async (accountId) => {
     setRefreshingAccounts(prev => new Set([...prev, accountId]));
     
     try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Update account with new data
-      setAccounts(prev => prev.map(account => 
-        account.id === accountId 
-          ? { 
-              ...account, 
-              lastSync: new Date(),
-              balance: account.type === 'Credit Card' 
-                ? `-$${(Math.random() * 2000 + 500).toFixed(2)}`
-                : `$${(Math.random() * 10000 + 5000).toFixed(2)}`
-            }
-          : account
-      ));
-      
-      const account = accounts.find(acc => acc.id === accountId);
-      addNotification({
-        type: 'success',
-        title: 'Account Refreshed',
-        message: `${account?.name} has been successfully updated`
-      });
+      await refreshAccount(accountId);
     } catch (error) {
-      addNotification({
-        type: 'error',
-        title: 'Refresh Failed',
-        message: 'Failed to refresh account. Please try again.'
-      });
+      console.error('Error refreshing account:', error);
     } finally {
       setRefreshingAccounts(prev => {
         const newSet = new Set(prev);
@@ -717,62 +891,103 @@ const ConnectedAccounts = () => {
     }
   };
 
-  const handleConnectAccount = (accountId) => {
-    setAccounts(prev => prev.map(account => 
-      account.id === accountId 
-        ? { ...account, status: 'Connected', lastSync: new Date() }
-        : account
-    ));
-    
-    const account = accounts.find(acc => acc.id === accountId);
-    addNotification({
-      type: 'success',
-      title: 'Account Connected',
-      message: `${account?.name} has been successfully connected`
-    });
+  const handleDeleteAccount = async (accountId) => {
+    if (confirm('Are you sure you want to disconnect this account?')) {
+      try {
+        await deleteAccount(accountId);
+      } catch (error) {
+        console.error('Error deleting account:', error);
+      }
+    }
   };
 
-  const handleAddAccount = () => {
-    addNotification({
-      type: 'info',
-      title: 'Add Account',
-      message: 'Account linking feature will be available soon'
-    });
+  const handleToggleAccount = async (accountId, currentStatus) => {
+    try {
+      await updateAccount(accountId, { is_active: !currentStatus });
+    } catch (error) {
+      console.error('Error toggling account:', error);
+    }
   };
+
+  const getCardIcon = (cardType) => {
+    switch (cardType?.toLowerCase()) {
+      case 'visa': return '💳';
+      case 'mastercard': return '💳';
+      case 'amex': return '💳';
+      case 'discover': return '💳';
+      default: return '🏦';
+    }
+  };
+
+  if (loading) {
+    return (
+      <Card>
+        <div className="flex items-center justify-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        </div>
+      </Card>
+    );
+  }
 
   return (
-    <Card>
-      <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Connected Accounts</h3>
-      
-      <div className="space-y-3">
-        {accounts.map((account) => (
-          <div key={account.id} className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-600 rounded-lg">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/50 rounded-lg flex items-center justify-center">
-                <CreditCard className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-              </div>
-              <div>
-                <p className="font-medium text-gray-900 dark:text-white">{account.name}</p>
-                <p className="text-sm text-gray-600 dark:text-gray-300">{account.type}</p>
-                {account.lastSync && (
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    Last synced: {account.lastSync.toLocaleString()}
+    <div className="space-y-6">
+      <Card>
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Connected Accounts</h3>
+          <Button onClick={() => setShowAddModal(true)}>
+            <Plus className="w-4 h-4 mr-2" />
+            Add Account
+          </Button>
+        </div>
+
+        {/* Total Balance Summary */}
+        {accounts.length > 0 && (
+          <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 p-4 rounded-lg mb-6">
+            <h4 className="font-medium text-gray-900 dark:text-white mb-2">Total Balance Across All Accounts</h4>
+            <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+              ${getTotalBalance().toLocaleString()}
+            </p>
+            <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
+              Across {accounts.filter(acc => acc.is_active).length} active accounts
+            </p>
+          </div>
+        )}
+        
+        <div className="space-y-3">
+          {accounts.map((account) => (
+            <div key={account.id} className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-600 rounded-lg">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/50 rounded-lg flex items-center justify-center">
+                  <span className="text-lg">{getCardIcon(account.card_type)}</span>
+                </div>
+                <div>
+                  <div className="flex items-center space-x-2">
+                    <p className="font-medium text-gray-900 dark:text-white">{account.account_name}</p>
+                    {account.is_active ? (
+                      <Wifi className="w-4 h-4 text-green-500" title="Connected" />
+                    ) : (
+                      <WifiOff className="w-4 h-4 text-gray-400" title="Disconnected" />
+                    )}
+                  </div>
+                  <p className="text-sm text-gray-600 dark:text-gray-300">
+                    {account.bank_name} • {account.account_type.replace('_', ' ')}
                   </p>
-                )}
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    {account.card_number || account.account_number}
+                  </p>
+                  {account.last_synced && (
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      Last synced: {new Date(account.last_synced).toLocaleString()}
+                    </p>
+                  )}
+                </div>
               </div>
-            </div>
-            
-            <div className="text-right">
-              <p className="font-medium text-gray-900 dark:text-white">{account.balance}</p>
-              <div className="flex items-center space-x-2">
-                <span className={`text-xs px-2 py-1 rounded-full ${
-                  account.status === 'Connected' 
-                    ? 'bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-300' 
-                    : 'bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-300'
-                }`}>
-                  {account.status}
-                </span>
-                {account.status === 'Connected' ? (
+              
+              <div className="text-right">
+                <p className="font-medium text-gray-900 dark:text-white">
+                  ${parseFloat(account.balance || 0).toFixed(2)}
+                </p>
+                <div className="flex items-center space-x-2 mt-2">
                   <Button 
                     size="sm" 
                     variant="outline"
@@ -783,28 +998,41 @@ const ConnectedAccounts = () => {
                     <RefreshCw className="w-3 h-3 mr-1" />
                     Refresh
                   </Button>
-                ) : (
                   <Button 
                     size="sm" 
                     variant="outline"
-                    onClick={() => handleConnectAccount(account.id)}
+                    onClick={() => handleToggleAccount(account.id, account.is_active)}
                   >
-                    Connect
+                    {account.is_active ? 'Disconnect' : 'Connect'}
                   </Button>
-                )}
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={() => handleDeleteAccount(account.id)}
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </Button>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
-      </div>
-      
-      <div className="mt-4">
-        <Button variant="outline" className="w-full" onClick={handleAddAccount}>
-          <Plus className="w-4 h-4 mr-2" />
-          Add New Account
-        </Button>
-      </div>
-    </Card>
+          ))}
+          
+          {accounts.length === 0 && (
+            <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+              <CreditCard className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-2" />
+              <p>No accounts connected yet</p>
+              <p className="text-sm">Connect your bank accounts and cards to track your finances</p>
+            </div>
+          )}
+        </div>
+      </Card>
+
+      <AddAccountModal
+        isOpen={showAddModal}
+        onClose={() => setShowAddModal(false)}
+        onSave={addAccount}
+      />
+    </div>
   );
 };
 
@@ -955,6 +1183,10 @@ For questions or support, contact: support@financeapp.com
       
       if (userId) {
         // Delete in order to respect foreign key constraints
+        await supabase.from('account_transactions').delete().eq('user_id', userId);
+        await supabase.from('connected_accounts').delete().eq('user_id', userId);
+        await supabase.from('receipts').delete().eq('user_id', userId);
+        await supabase.from('notifications').delete().eq('user_id', userId);
         await supabase.from('transactions').delete().eq('user_id', userId);
         await supabase.from('goals').delete().eq('user_id', userId);
         await supabase.from('budgets').delete().eq('user_id', userId);
