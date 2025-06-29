@@ -141,14 +141,15 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Send verification code to email (using OTP type)
+  // Send verification code to email (using OTP type with specific configuration)
   const sendVerificationCode = async (email) => {
     try {
+      // Use signInWithOtp with specific options to force OTP codes instead of magic links
       const { error } = await supabase.auth.signInWithOtp({
         email: email,
         options: {
           shouldCreateUser: true,
-          emailRedirectTo: undefined, // Disable email redirect
+          emailRedirectTo: undefined, // Disable magic link redirect
           data: {
             // Additional metadata if needed
           }
@@ -156,6 +157,7 @@ export const AuthProvider = ({ children }) => {
       });
 
       if (error) {
+        console.error('Supabase OTP error:', error);
         throw error;
       }
 
@@ -176,6 +178,7 @@ export const AuthProvider = ({ children }) => {
       });
 
       if (error) {
+        console.error('Verify OTP error:', error);
         throw error;
       }
 

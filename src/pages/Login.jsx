@@ -5,7 +5,7 @@ import { useNotifications } from '../contexts/NotificationContext';
 import Card from '../components/Card';
 import Input from '../components/Input';
 import Button from '../components/Button';
-import { Mail, Shield, ArrowRight, CheckCircle, AlertCircle } from 'lucide-react';
+import { Mail, Shield, ArrowRight, CheckCircle, AlertCircle, ExternalLink } from 'lucide-react';
 
 const Login = () => {
   const [step, setStep] = useState('email'); // 'email' or 'verification'
@@ -51,7 +51,7 @@ const Login = () => {
         addNotification({
           type: 'success',
           title: 'Verification Code Sent',
-          message: `We've sent a 6-digit code to ${email}`
+          message: `We've sent a verification code to ${email}`
         });
       }
     } catch (error) {
@@ -156,7 +156,7 @@ const Login = () => {
           <p className="text-gray-600 dark:text-gray-300 mt-2">
             {step === 'email' 
               ? 'Enter your email to get started - no password required!' 
-              : `Enter the 6-digit code sent to ${email}`
+              : `Enter the verification code sent to ${email}`
             }
           </p>
         </div>
@@ -203,7 +203,7 @@ const Login = () => {
                   <span className="text-sm font-medium">Secure & Passwordless</span>
                 </div>
                 <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
-                  We'll send a secure 6-digit code to your email. No passwords to remember!
+                  We'll send a secure verification code to your email. No passwords to remember!
                 </p>
               </div>
             </form>
@@ -242,11 +242,23 @@ const Login = () => {
                   <AlertCircle className="w-5 h-5 text-yellow-600 dark:text-yellow-400 mr-2 mt-0.5 flex-shrink-0" />
                   <div>
                     <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
-                      Check your email for the verification code
+                      Check your email for the verification
                     </p>
-                    <p className="text-xs text-yellow-700 dark:text-yellow-300 mt-1">
-                      If you received a "Magic Link" email instead of a code, please click the link in the email to complete your login. The system will automatically redirect you to the dashboard.
-                    </p>
+                    <div className="text-xs text-yellow-700 dark:text-yellow-300 mt-1 space-y-1">
+                      <p><strong>If you received a 6-digit code:</strong> Enter it below</p>
+                      <p><strong>If you received a "Magic Link":</strong> Click the link in your email to login automatically</p>
+                    </div>
+                    <div className="mt-2">
+                      <a 
+                        href={`https://mail.google.com`} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center text-xs text-yellow-700 dark:text-yellow-300 hover:text-yellow-900 dark:hover:text-yellow-100 underline"
+                      >
+                        Open Gmail
+                        <ExternalLink className="w-3 h-3 ml-1" />
+                      </a>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -289,7 +301,7 @@ const Login = () => {
                   disabled={isSubmitting}
                   className="text-sm text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300 font-medium"
                 >
-                  Didn't receive the code? Resend
+                  Didn't receive anything? Resend
                 </button>
                 <button
                   type="button"
