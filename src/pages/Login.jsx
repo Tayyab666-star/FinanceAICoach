@@ -5,7 +5,7 @@ import { useNotifications } from '../contexts/NotificationContext';
 import Card from '../components/Card';
 import Input from '../components/Input';
 import Button from '../components/Button';
-import { Mail, Shield, ArrowRight, CheckCircle, AlertCircle, ExternalLink } from 'lucide-react';
+import { Mail, Shield, ArrowRight, CheckCircle, AlertCircle, ExternalLink, RefreshCw } from 'lucide-react';
 
 const Login = () => {
   const [step, setStep] = useState('email'); // 'email' or 'verification'
@@ -14,11 +14,25 @@ const Login = () => {
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isReturningUser, setIsReturningUser] = useState(false);
+  const [lastCodeSentAt, setLastCodeSentAt] = useState(null);
   const { user, sendVerificationCode, verifyCode, checkUserExists, isLoading } = useAuth();
   const { addNotification } = useNotifications();
 
   // Redirect if already logged in
   if (user) return <Navigate to="/dashboard" replace />;
+
+  const canResendCode = () => {
+    if (!lastCodeSentAt) return true;
+    const timeSinceLastSent = Date.now() - lastCodeSentAt;
+    return timeSinceLastSent > 30000; // 30 seconds cooldown
+  };
+
+  const getResendCooldown = () => {
+    if (!lastCodeSentAt) return 0;
+    const timeSinceLastSent = Date.now() - lastCodeSentAt;
+    const cooldownRemaining = 30000 - timeSinceLastSent;
+    return Math.max(0, Math.ceil(cooldownRemaining / 1000));
+  };
 
   const handleEmailSubmit = async (e) => {
     e.preventDefault();
@@ -48,17 +62,22 @@ const Login = () => {
       
       if (result.success) {
         setStep('verification');
+        setLastCodeSentAt(Date.now());
         addNotification({
           type: 'success',
           title: 'Verification Code Sent',
-          message: `We've sent a verification code to ${email}`
+          message: `We've sent a 6-digit verification code to ${email}`
         });
       }
     } catch (error) {
       console.error('Email submission error:', error);
       
-      if (error.message?.includes('Email address') && error.message?.includes('invalid')) {
+      if (error.message?.includes('rate limit')) {
+        setError('Too many requests. Please wait a moment before trying again.');
+      } else if (error.message?.includes('Email address') && error.message?.includes('invalid')) {
         setError('This email domain is not allowed. Please contact support or try a different email.');
+      } else if (error.message?.includes('Signup is disabled')) {
+        setError('New account creation is currently disabled. Please contact support.');
       } else {
         setError('Failed to send verification code. Please try again.');
       }
@@ -71,7 +90,7 @@ const Login = () => {
     e.preventDefault();
     
     if (!verificationCode || verificationCode.length !== 6) {
-      setError('Please enter the 6-digit verification code');
+      setError('Please enter the complete 6-digit verification code');
       return;
     }
 
@@ -92,8 +111,12 @@ const Login = () => {
     } catch (error) {
       console.error('Code verification error:', error);
       
-      if (error.message?.includes('Invalid') || error.message?.includes('expired')) {
-        setError('Invalid or expired verification code. Please try again.');
+      if (error.message?.includes('expired')) {
+        setError('Verification code has expired. Please request a new one.');
+      } else if (error.message?.includes('Invalid')) {
+        setError('Invalid verification code. Please check and try again.');
+      } else if (error.message?.includes('Token has expired')) {
+        setError('Verification code has expired. Please request a new one.');
       } else {
         setError('Failed to verify code. Please try again.');
       }
@@ -103,6 +126,11 @@ const Login = () => {
   };
 
   const handleResendCode = async () => {
+    if (!canResendCode()) {
+      setError(`Please wait ${getResendCooldown()} seconds before requesting a new code.`);
+      return;
+    }
+
     setIsSubmitting(true);
     setError('');
     
@@ -110,14 +138,21 @@ const Login = () => {
       const result = await sendVerificationCode(email);
       
       if (result.success) {
+        setLastCodeSentAt(Date.now());
+        setVerificationCode(''); // Clear the input
         addNotification({
           type: 'success',
-          title: 'Code Resent',
+          title: 'New Code Sent',
           message: 'A new verification code has been sent to your email'
         });
       }
     } catch (error) {
-      setError('Failed to resend code. Please try again.');
+      console.error('Resend error:', error);
+      if (error.message?.includes('rate limit')) {
+        setError('Too many requests. Please wait before requesting another code.');
+      } else {
+        setError('Failed to resend code. Please try again.');
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -128,6 +163,7 @@ const Login = () => {
     setVerificationCode('');
     setError('');
     setIsReturningUser(false);
+    setLastCodeSentAt(null);
   };
 
   // Show loading state while auth is being checked
@@ -151,12 +187,12 @@ const Login = () => {
             <span className="text-2xl font-bold text-white">F</span>
           </div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-            {step === 'email' ? 'Welcome to FinanceApp' : 'Verify Your Email'}
+            {step === 'email' ? 'Welcome to FinanceApp' : 'Check Your Email'}
           </h1>
           <p className="text-gray-600 dark:text-gray-300 mt-2">
             {step === 'email' 
               ? 'Enter your email to get started - no password required!' 
-              : `Enter the verification code sent to ${email}`
+              : `We sent a 6-digit code to ${email}`
             }
           </p>
         </div>
@@ -203,7 +239,7 @@ const Login = () => {
                   <span className="text-sm font-medium">Secure & Passwordless</span>
                 </div>
                 <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
-                  We'll send a secure verification code to your email. No passwords to remember!
+                  We'll send a secure 6-digit verification code to your email. No passwords to remember!
                 </p>
               </div>
             </form>
@@ -236,17 +272,38 @@ const Login = () => {
                 </p>
               </div>
 
-              {/* Important note about email type */}
+              {/* Code input */}
+              <div className="relative">
+                <Input
+                  label="6-Digit Verification Code"
+                  type="text"
+                  value={verificationCode}
+                  onChange={(e) => {
+                    // Only allow numbers and limit to 6 digits
+                    const value = e.target.value.replace(/\D/g, '').slice(0, 6);
+                    setVerificationCode(value);
+                    setError('');
+                  }}
+                  placeholder="000000"
+                  className="text-center text-2xl tracking-widest font-mono"
+                  disabled={isSubmitting}
+                  error={error}
+                  maxLength={6}
+                />
+              </div>
+
+              {/* Email check reminder */}
               <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg border border-yellow-200 dark:border-yellow-700">
                 <div className="flex items-start">
                   <AlertCircle className="w-5 h-5 text-yellow-600 dark:text-yellow-400 mr-2 mt-0.5 flex-shrink-0" />
                   <div>
                     <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
-                      Check your email for the verification
+                      Check your email for the 6-digit code
                     </p>
                     <div className="text-xs text-yellow-700 dark:text-yellow-300 mt-1 space-y-1">
-                      <p><strong>If you received a 6-digit code:</strong> Enter it below</p>
-                      <p><strong>If you received a "Magic Link":</strong> Click the link in your email to login automatically</p>
+                      <p>• Check your spam/junk folder if you don't see it</p>
+                      <p>• The code expires in 10 minutes</p>
+                      <p>• Make sure to enter all 6 digits</p>
                     </div>
                     <div className="mt-2">
                       <a 
@@ -262,25 +319,6 @@ const Login = () => {
                   </div>
                 </div>
               </div>
-
-              <div className="relative">
-                <Input
-                  label="Verification Code (if received)"
-                  type="text"
-                  value={verificationCode}
-                  onChange={(e) => {
-                    // Only allow numbers and limit to 6 digits
-                    const value = e.target.value.replace(/\D/g, '').slice(0, 6);
-                    setVerificationCode(value);
-                    setError('');
-                  }}
-                  placeholder="Enter 6-digit code"
-                  className="text-center text-2xl tracking-widest font-mono"
-                  disabled={isSubmitting}
-                  error={error}
-                  maxLength={6}
-                />
-              </div>
               
               <div className="flex space-x-3">
                 <Button
@@ -294,23 +332,33 @@ const Login = () => {
               </div>
               
               {/* Resend and back options */}
-              <div className="flex flex-col space-y-2 text-center">
-                <button
-                  type="button"
-                  onClick={handleResendCode}
-                  disabled={isSubmitting}
-                  className="text-sm text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300 font-medium"
-                >
-                  Didn't receive anything? Resend
-                </button>
-                <button
-                  type="button"
-                  onClick={handleBackToEmail}
-                  disabled={isSubmitting}
-                  className="text-sm text-gray-600 hover:text-gray-500 dark:text-gray-400 dark:hover:text-gray-300"
-                >
-                  Use a different email address
-                </button>
+              <div className="flex flex-col space-y-3 text-center">
+                <div className="flex items-center justify-center space-x-4">
+                  <button
+                    type="button"
+                    onClick={handleResendCode}
+                    disabled={isSubmitting || !canResendCode()}
+                    className={`text-sm font-medium inline-flex items-center ${
+                      canResendCode() 
+                        ? 'text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300' 
+                        : 'text-gray-400 dark:text-gray-500 cursor-not-allowed'
+                    }`}
+                  >
+                    <RefreshCw className="w-4 h-4 mr-1" />
+                    {canResendCode() ? 'Resend Code' : `Resend in ${getResendCooldown()}s`}
+                  </button>
+                  
+                  <span className="text-gray-300 dark:text-gray-600">|</span>
+                  
+                  <button
+                    type="button"
+                    onClick={handleBackToEmail}
+                    disabled={isSubmitting}
+                    className="text-sm text-gray-600 hover:text-gray-500 dark:text-gray-400 dark:hover:text-gray-300"
+                  >
+                    Use Different Email
+                  </button>
+                </div>
               </div>
             </form>
           )}
@@ -321,7 +369,7 @@ const Login = () => {
           <p className="text-sm text-gray-500 dark:text-gray-400">
             {step === 'email' 
               ? 'New users will automatically get an account created upon email verification.'
-              : 'Check your spam folder if you don\'t see the email within a few minutes.'
+              : 'Having trouble? Make sure to check your spam folder and that you entered the correct email address.'
             }
           </p>
         </div>

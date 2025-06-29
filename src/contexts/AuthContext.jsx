@@ -141,26 +141,40 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Send verification code to email (using OTP type with specific configuration)
+  // Send verification code to email (FORCE OTP, disable magic links)
   const sendVerificationCode = async (email) => {
     try {
-      // Use signInWithOtp with specific options to force OTP codes instead of magic links
-      const { error } = await supabase.auth.signInWithOtp({
+      console.log('Sending OTP to:', email);
+      
+      // Use signInWithOtp with explicit options to force OTP codes
+      const { data, error } = await supabase.auth.signInWithOtp({
         email: email,
         options: {
           shouldCreateUser: true,
-          emailRedirectTo: undefined, // Disable magic link redirect
+          emailRedirectTo: null, // Explicitly disable redirect
           data: {
-            // Additional metadata if needed
+            // Force OTP mode
+            otp_type: 'email'
           }
         }
       });
 
       if (error) {
         console.error('Supabase OTP error:', error);
+        
+        // Handle specific error cases
+        if (error.message?.includes('Email rate limit exceeded')) {
+          throw new Error('Too many requests. Please wait a moment before trying again.');
+        } else if (error.message?.includes('Invalid email')) {
+          throw new Error('Please enter a valid email address.');
+        } else if (error.message?.includes('Signup is disabled')) {
+          throw new Error('New account creation is currently disabled. Please contact support.');
+        }
+        
         throw error;
       }
 
+      console.log('OTP sent successfully:', data);
       return { success: true, message: 'Verification code sent to your email!' };
     } catch (error) {
       console.error('Send verification code error:', error);
@@ -171,17 +185,30 @@ export const AuthProvider = ({ children }) => {
   // Verify the code entered by user
   const verifyCode = async (email, token) => {
     try {
+      console.log('Verifying OTP for:', email, 'Token length:', token.length);
+      
       const { data, error } = await supabase.auth.verifyOtp({
         email: email,
         token: token,
-        type: 'email'
+        type: 'email' // Explicitly specify email OTP type
       });
 
       if (error) {
         console.error('Verify OTP error:', error);
+        
+        // Handle specific error cases
+        if (error.message?.includes('Token has expired')) {
+          throw new Error('Verification code has expired. Please request a new one.');
+        } else if (error.message?.includes('Invalid token')) {
+          throw new Error('Invalid verification code. Please check and try again.');
+        } else if (error.message?.includes('Email not confirmed')) {
+          throw new Error('Email verification failed. Please try again.');
+        }
+        
         throw error;
       }
 
+      console.log('OTP verified successfully:', data);
       // The auth state change will be handled by the listener
       return { success: true, user: data.user };
     } catch (error) {
