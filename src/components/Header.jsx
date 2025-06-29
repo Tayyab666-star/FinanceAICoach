@@ -128,17 +128,10 @@ const NotificationDropdown = ({ isOpen, onClose }) => {
 
 // Top header component with user info and mobile menu
 const Header = ({ onMenuClick }) => {
-  const { user, userProfile, logout, getUserDisplayName, refreshUserProfile } = useAuth();
+  const { user, userProfile, logout, getUserDisplayName } = useAuth();
   const { unreadCount } = useNotifications();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
-
-  // Refresh user profile when component mounts or user changes
-  useEffect(() => {
-    if (user?.id && refreshUserProfile) {
-      refreshUserProfile();
-    }
-  }, [user?.id, refreshUserProfile]);
 
   const handleLogout = async () => {
     try {
@@ -148,6 +141,9 @@ const Header = ({ onMenuClick }) => {
       console.error('Logout error:', error);
     }
   };
+
+  // Get display name - use memoization to prevent unnecessary re-renders
+  const displayName = React.useMemo(() => getUserDisplayName(), [userProfile, user]);
 
   return (
     <header className="bg-white shadow-sm border-b border-gray-200 px-4 py-3">
@@ -163,7 +159,7 @@ const Header = ({ onMenuClick }) => {
         {/* Page title - hidden on mobile */}
         <div className="hidden lg:block">
           <h2 className="text-lg font-semibold text-gray-900">
-            Welcome back, {getUserDisplayName()}!
+            Welcome back, {displayName}!
           </h2>
         </div>
         
@@ -199,7 +195,7 @@ const Header = ({ onMenuClick }) => {
                 <User className="w-4 h-4 text-white" />
               </div>
               <span className="hidden md:block text-sm font-medium text-gray-700">
-                {getUserDisplayName()}
+                {displayName}
               </span>
             </button>
             
@@ -207,7 +203,7 @@ const Header = ({ onMenuClick }) => {
             {showUserMenu && (
               <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
                 <div className="p-3 border-b border-gray-100">
-                  <p className="text-sm font-medium text-gray-900">{getUserDisplayName()}</p>
+                  <p className="text-sm font-medium text-gray-900">{displayName}</p>
                   <p className="text-xs text-gray-500">{user?.email}</p>
                 </div>
                 <button

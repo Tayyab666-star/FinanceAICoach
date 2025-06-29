@@ -8,10 +8,11 @@ import Button from '../components/Button';
 const Login = () => {
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { user, login, isLoading } = useAuth();
 
   // Redirect if already logged in
-  if (user) return <Navigate to="/dashboard" />;
+  if (user) return <Navigate to="/dashboard" replace />;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -28,14 +29,29 @@ const Login = () => {
       return;
     }
 
+    setIsSubmitting(true);
     try {
       setError('');
       await login(email);
     } catch (error) {
       setError('Failed to access account. Please try again.');
       console.error('Login error:', error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
+
+  // Show loading state while auth is being checked
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
+        <div className="text-center">
+          <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 px-4">
@@ -57,6 +73,7 @@ const Login = () => {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Enter your email (e.g., 382ahmadraza@gmail.com)"
               className="text-lg"
+              disabled={isSubmitting}
             />
             
             {error && (
@@ -65,10 +82,11 @@ const Login = () => {
             
             <Button
               type="submit"
-              loading={isLoading}
+              loading={isSubmitting}
+              disabled={isSubmitting}
               className="w-full text-lg py-3"
             >
-              {isLoading ? 'Accessing Account...' : 'Access Dashboard'}
+              {isSubmitting ? 'Accessing Account...' : 'Access Dashboard'}
             </Button>
           </form>
           

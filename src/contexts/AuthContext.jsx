@@ -8,7 +8,29 @@ export const useAuth = () => useContext(AuthContext);
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [userProfile, setUserProfile] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true); // Start with true
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  // Initialize auth state on mount
+  useEffect(() => {
+    // Check if user data exists in localStorage
+    const savedUser = localStorage.getItem('financeapp_user');
+    const savedProfile = localStorage.getItem('financeapp_profile');
+    
+    if (savedUser && savedProfile) {
+      try {
+        setUser(JSON.parse(savedUser));
+        setUserProfile(JSON.parse(savedProfile));
+      } catch (error) {
+        console.error('Error parsing saved user data:', error);
+        localStorage.removeItem('financeapp_user');
+        localStorage.removeItem('financeapp_profile');
+      }
+    }
+    
+    setIsLoading(false);
+    setIsInitialized(true);
+  }, []);
 
   // Create or get user profile
   const createOrGetUserProfile = async (email) => {
@@ -62,8 +84,15 @@ export const AuthProvider = ({ children }) => {
     setIsLoading(true);
     try {
       const profile = await createOrGetUserProfile(email);
-      setUser({ id: profile.id, email: profile.email, name: profile.name });
+      const userData = { id: profile.id, email: profile.email, name: profile.name };
+      
+      setUser(userData);
       setUserProfile(profile);
+      
+      // Save to localStorage for persistence
+      localStorage.setItem('financeapp_user', JSON.stringify(userData));
+      localStorage.setItem('financeapp_profile', JSON.stringify(profile));
+      
       return profile;
     } catch (error) {
       console.error('Login error:', error);
@@ -76,11 +105,18 @@ export const AuthProvider = ({ children }) => {
   const logout = async () => {
     setUser(null);
     setUserProfile(null);
+    
+    // Clear localStorage
+    localStorage.removeItem('financeapp_user');
+    localStorage.removeItem('financeapp_profile');
+    
     // Navigate to login page
     window.location.href = '/login';
   };
 
   const updateUserProfile = async (updates) => {
+    if (!user?.id) return;
+    
     try {
       setIsLoading(true);
       
@@ -97,12 +133,18 @@ export const AuthProvider = ({ children }) => {
       if (error) throw error;
       
       // Update both user and userProfile states
+      const updatedUser = {
+        ...user,
+        name: data.name || user.name,
+        email: data.email || user.email
+      };
+      
       setUserProfile(data);
-      setUser(prev => ({
-        ...prev,
-        name: data.name || prev.name,
-        email: data.email || prev.email
-      }));
+      setUser(updatedUser);
+      
+      // Update localStorage
+      localStorage.setItem('financeapp_user', JSON.stringify(updatedUser));
+      localStorage.setItem('financeapp_profile', JSON.stringify(data));
       
       return data;
     } catch (error) {
@@ -111,17 +153,6 @@ export const AuthProvider = ({ children }) => {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  // Get user display name with fallback logic
-  const getUserDisplayName = () => {
-    if (userProfile?.name) return userProfile.name;
-    if (user?.name) return user.name;
-    if (user?.email) {
-      const emailPart = user.email.split('@')[0];
-      return emailPart.charAt(0).toUpperCase() + emailPart.slice(1);
-    }
-    return 'User';
   };
 
   // Refresh user profile from database
@@ -137,16 +168,45 @@ export const AuthProvider = ({ children }) => {
 
       if (error) throw error;
       
+      const updatedUser = {
+        ...user,
+        name: data.name || user.name,
+        email: data.email || user.email
+      };
+      
       setUserProfile(data);
-      setUser(prev => ({
-        ...prev,
-        name: data.name || prev.name,
-        email: data.email || prev.email
-      }));
+      setUser(updatedUser);
+      
+      // Update localStorage
+      localStorage.setItem('financeapp_user', JSON.stringify(updatedUser));
+      localStorage.setItem('financeapp_profile', JSON.stringify(data));
     } catch (error) {
       console.error('Error refreshing user profile:', error);
     }
   };
+
+  // Get user display name with fallback logic
+  const getUserDisplayName = () => {
+    if (userProfile?.name) return userProfile.name;
+    if (user?.name) return user.name;
+    if (user?.email) {
+      const emailPart = user.email.split('@')[0];
+      return emailPart.charAt(0).toUpperCase() + emailPart.slice(1);
+    }
+    return 'User';
+  };
+
+  // Don't render children until auth is initialized
+  if (!isInitialized) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Initializing...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <AuthContext.Provider value={{ 
