@@ -116,8 +116,8 @@ function App() {
                   <Route path="settings" element={<Settings />} />
                 </Route>
                 
-                {/* Default route - redirect based on auth status */}
-                <Route path="*" element={<Navigate to="/login" replace />} />
+                {/* Catch-all route - redirect based on auth status */}
+                <Route path="*" element={<Navigate to="/dashboard" replace />} />
               </Routes>
               <ToastContainer />
             </div>

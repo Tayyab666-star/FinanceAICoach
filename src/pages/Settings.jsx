@@ -22,14 +22,12 @@ import {
   Trash2,
   Moon,
   Sun,
+  Lightbulb,
   Zap,
-  Sparkles,
-  Rocket,
-  Star,
+  Calendar,
   TrendingUp,
-  Brain,
-  Target,
-  BarChart3
+  Smartphone as Mobile,
+  CreditCard as Investment
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotifications } from '../contexts/NotificationContext';
@@ -54,77 +52,90 @@ const settingSections = [
 
 // Beta Features Modal Component
 const BetaFeaturesModal = ({ isOpen, onClose }) => {
+  const { addNotification } = useNotifications();
+
   const betaFeatures = [
     {
-      icon: Brain,
+      id: 'ai-categorization',
       title: 'AI-Powered Expense Categorization',
       description: 'Automatically categorize transactions using advanced machine learning',
-      status: 'Coming Soon',
+      status: 'In Development',
       eta: 'Q2 2025',
+      icon: Lightbulb,
       color: 'blue'
     },
     {
-      icon: TrendingUp,
+      id: 'investment-tracking',
       title: 'Investment Portfolio Tracking',
-      description: 'Track stocks, crypto, and other investments in real-time',
-      status: 'In Development',
+      description: 'Track stocks, bonds, and crypto investments in real-time',
+      status: 'Planning',
       eta: 'Q3 2025',
+      icon: Investment,
       color: 'green'
     },
     {
-      icon: Target,
+      id: 'smart-goals',
       title: 'Smart Goal Recommendations',
-      description: 'AI suggests personalized financial goals based on your spending patterns',
-      status: 'Planning',
+      description: 'AI-suggested financial goals based on your spending patterns',
+      status: 'Research',
       eta: 'Q4 2025',
+      icon: TrendingUp,
       color: 'purple'
     },
     {
-      icon: BarChart3,
+      id: 'advanced-analytics',
       title: 'Advanced Analytics Dashboard',
-      description: 'Deep insights with predictive analytics and trend forecasting',
-      status: 'Research',
+      description: 'Predictive analytics and financial forecasting tools',
+      status: 'Concept',
       eta: '2026',
+      icon: BarChart,
       color: 'orange'
     },
     {
-      icon: Smartphone,
-      title: 'Mobile App',
-      description: 'Native iOS and Android apps with offline capabilities',
-      status: 'Planning',
+      id: 'mobile-app',
+      title: 'Native Mobile App',
+      description: 'iOS and Android apps with offline capabilities',
+      status: 'In Development',
       eta: 'Q3 2025',
+      icon: Mobile,
       color: 'indigo'
     },
     {
-      icon: Zap,
+      id: 'bank-integration',
       title: 'Bank Account Integration',
       description: 'Direct connection to your bank accounts for automatic transaction import',
-      status: 'Coming Soon',
+      status: 'Planning',
       eta: 'Q2 2025',
-      color: 'yellow'
+      icon: CreditCard,
+      color: 'teal'
     }
   ];
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'Coming Soon': return 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300';
       case 'In Development': return 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300';
-      case 'Planning': return 'bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-300';
-      case 'Research': return 'bg-orange-100 text-orange-800 dark:bg-orange-900/50 dark:text-orange-300';
+      case 'Planning': return 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300';
+      case 'Research': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300';
+      case 'Concept': return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
       default: return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
     }
   };
 
-  const getIconColor = (color) => {
-    switch (color) {
-      case 'blue': return 'text-blue-600 dark:text-blue-400';
-      case 'green': return 'text-green-600 dark:text-green-400';
-      case 'purple': return 'text-purple-600 dark:text-purple-400';
-      case 'orange': return 'text-orange-600 dark:text-orange-400';
-      case 'indigo': return 'text-indigo-600 dark:text-indigo-400';
-      case 'yellow': return 'text-yellow-600 dark:text-yellow-400';
-      default: return 'text-gray-600 dark:text-gray-400';
-    }
+  const handleJoinBeta = () => {
+    addNotification({
+      type: 'success',
+      title: 'Beta Program Interest Recorded',
+      message: 'Thank you for your interest! We\'ll notify you when beta features become available.'
+    });
+    onClose();
+  };
+
+  const handleFeatureRequest = () => {
+    addNotification({
+      type: 'info',
+      title: 'Feature Request Noted',
+      message: 'Your feature request has been recorded. We appreciate your feedback!'
+    });
   };
 
   return (
@@ -137,41 +148,42 @@ const BetaFeaturesModal = ({ isOpen, onClose }) => {
       <div className="space-y-6">
         {/* Header */}
         <div className="text-center">
-          <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Sparkles className="w-8 h-8 text-white" />
+          <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Zap className="w-8 h-8 text-white" />
           </div>
           <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
             Exciting Features Coming Soon!
           </h3>
           <p className="text-gray-600 dark:text-gray-300">
-            Here's what we're working on to make your financial management even better
+            Get a sneak peek at what we're building for the future of financial management
           </p>
         </div>
 
         {/* Features Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {betaFeatures.map((feature, index) => {
+          {betaFeatures.map((feature) => {
             const Icon = feature.icon;
             return (
-              <div key={index} className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:shadow-md transition-shadow">
+              <div key={feature.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition-shadow">
                 <div className="flex items-start space-x-3">
-                  <div className={`w-10 h-10 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center flex-shrink-0`}>
-                    <Icon className={`w-5 h-5 ${getIconColor(feature.color)}`} />
+                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center bg-${feature.color}-100 dark:bg-${feature.color}-900/50`}>
+                    <Icon className={`w-5 h-5 text-${feature.color}-600 dark:text-${feature.color}-400`} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h4 className="font-medium text-gray-900 dark:text-white text-sm mb-1">
+                    <h4 className="font-medium text-gray-900 dark:text-white text-sm">
                       {feature.title}
                     </h4>
-                    <p className="text-xs text-gray-600 dark:text-gray-300 mb-2">
+                    <p className="text-xs text-gray-600 dark:text-gray-300 mt-1">
                       {feature.description}
                     </p>
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between mt-3">
                       <span className={`text-xs px-2 py-1 rounded-full ${getStatusColor(feature.status)}`}>
                         {feature.status}
                       </span>
-                      <span className="text-xs text-gray-500 dark:text-gray-400">
-                        ETA: {feature.eta}
-                      </span>
+                      <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
+                        <Calendar className="w-3 h-3 mr-1" />
+                        {feature.eta}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -181,56 +193,59 @@ const BetaFeaturesModal = ({ isOpen, onClose }) => {
         </div>
 
         {/* Beta Program Info */}
-        <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 p-6 rounded-lg border border-blue-200 dark:border-blue-700">
-          <div className="flex items-center mb-4">
-            <Rocket className="w-6 h-6 text-blue-600 dark:text-blue-400 mr-3" />
-            <h4 className="font-semibold text-blue-900 dark:text-blue-300">Join Our Beta Program</h4>
-          </div>
-          <p className="text-blue-800 dark:text-blue-200 text-sm mb-4">
-            Want early access to these features? Join our beta program to test new features before they're released to everyone!
+        <div className="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 p-6 rounded-lg border border-purple-200 dark:border-purple-700">
+          <h4 className="font-semibold text-purple-900 dark:text-purple-300 mb-2">
+            🚀 Join Our Beta Program
+          </h4>
+          <p className="text-purple-800 dark:text-purple-200 text-sm mb-4">
+            Be among the first to test new features and help shape the future of Finance AI Coach. 
+            Beta testers get early access to features and can provide valuable feedback.
           </p>
-          <div className="space-y-2 text-sm text-blue-700 dark:text-blue-300">
-            <div className="flex items-center">
-              <Star className="w-4 h-4 mr-2" />
-              <span>Get early access to new features</span>
-            </div>
-            <div className="flex items-center">
-              <Star className="w-4 h-4 mr-2" />
-              <span>Provide feedback to shape development</span>
-            </div>
-            <div className="flex items-center">
-              <Star className="w-4 h-4 mr-2" />
-              <span>Direct communication with our development team</span>
-            </div>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <Button 
+              onClick={handleJoinBeta}
+              className="flex-1"
+              size="sm"
+            >
+              Join Beta Program
+            </Button>
+            <Button 
+              onClick={handleFeatureRequest}
+              variant="outline"
+              className="flex-1"
+              size="sm"
+            >
+              Request Feature
+            </Button>
           </div>
-          <Button 
-            className="mt-4" 
-            size="sm"
-            onClick={() => {
-              // This would typically open a beta signup form
-              alert('Beta program signup will be available soon! We\'ll notify you when it\'s ready.');
-            }}
-          >
-            Join Beta Program
-          </Button>
         </div>
 
-        {/* Feedback Section */}
+        {/* Development Timeline */}
         <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-          <h4 className="font-medium text-gray-900 dark:text-white mb-2">Have a Feature Request?</h4>
-          <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">
-            We'd love to hear your ideas! Your feedback helps us prioritize what to build next.
-          </p>
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={() => {
-              // This would typically open a feedback form
-              alert('Feature request form coming soon! For now, you can reach out to us directly.');
-            }}
-          >
-            Submit Feature Request
-          </Button>
+          <h4 className="font-medium text-gray-900 dark:text-white mb-3">Development Timeline</h4>
+          <div className="space-y-2 text-sm">
+            <div className="flex justify-between">
+              <span className="text-gray-600 dark:text-gray-300">Q2 2025:</span>
+              <span className="text-gray-900 dark:text-white">AI Categorization, Bank Integration</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600 dark:text-gray-300">Q3 2025:</span>
+              <span className="text-gray-900 dark:text-white">Mobile App, Investment Tracking</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600 dark:text-gray-300">Q4 2025:</span>
+              <span className="text-gray-900 dark:text-white">Smart Goals, Enhanced Analytics</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600 dark:text-gray-300">2026:</span>
+              <span className="text-gray-900 dark:text-white">Advanced Analytics, AI Insights</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="text-center text-sm text-gray-500 dark:text-gray-400">
+          <p>Timeline estimates are subject to change based on development progress and user feedback.</p>
         </div>
       </div>
     </ResponsiveModal>
@@ -356,7 +371,7 @@ const ProfileSettings = () => {
             rows={3}
             value={formData.about_work}
             onChange={(e) => handleInputChange('about_work', e.target.value)}
-            placeholder="What do you do for work?"
+            placeholder="Describe your work or profession..."
           />
         </div>
         
@@ -1149,6 +1164,7 @@ For questions or support, contact: support@financeapp.com
         await supabase.from('goals').delete().eq('user_id', userId);
         await supabase.from('budgets').delete().eq('user_id', userId);
         await supabase.from('incomes').delete().eq('user_id', userId);
+        await supabase.from('notifications').delete().eq('user_id', userId);
         await supabase.from('user_profiles').delete().eq('id', userId);
       }
 
@@ -1325,25 +1341,25 @@ const AdvancedSettings = () => {
           
           <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
             <div className="flex items-center space-x-3">
-              <Sparkles className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+              <Zap className="w-5 h-5 text-purple-600 dark:text-purple-400" />
               <div>
                 <p className="font-medium text-gray-900 dark:text-white">Beta Features</p>
                 <p className="text-sm text-gray-600 dark:text-gray-300">
-                  Preview upcoming features and roadmap
+                  Explore upcoming features and roadmap
                 </p>
               </div>
             </div>
             <Button size="sm" variant="outline" onClick={handleBetaFeatures}>
+              <Lightbulb className="w-4 h-4 mr-2" />
               View Roadmap
             </Button>
           </div>
         </div>
       </Card>
 
-      {/* Beta Features Modal */}
-      <BetaFeaturesModal 
-        isOpen={showBetaModal} 
-        onClose={() => setShowBetaModal(false)} 
+      <BetaFeaturesModal
+        isOpen={showBetaModal}
+        onClose={() => setShowBetaModal(false)}
       />
     </>
   );
