@@ -124,6 +124,30 @@ export const AuthProvider = ({ children }) => {
     return 'User';
   };
 
+  // Refresh user profile from database
+  const refreshUserProfile = async () => {
+    if (!user?.id) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+
+      if (error) throw error;
+      
+      setUserProfile(data);
+      setUser(prev => ({
+        ...prev,
+        name: data.name || prev.name,
+        email: data.email || prev.email
+      }));
+    } catch (error) {
+      console.error('Error refreshing user profile:', error);
+    }
+  };
+
   return (
     <AuthContext.Provider value={{ 
       user, 
@@ -132,7 +156,8 @@ export const AuthProvider = ({ children }) => {
       login, 
       logout,
       updateUserProfile,
-      getUserDisplayName
+      getUserDisplayName,
+      refreshUserProfile
     }}>
       {children}
     </AuthContext.Provider>

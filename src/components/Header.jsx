@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Menu, Bell, User, LogOut, X, Check, Trash2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotifications } from '../contexts/NotificationContext';
@@ -128,10 +128,17 @@ const NotificationDropdown = ({ isOpen, onClose }) => {
 
 // Top header component with user info and mobile menu
 const Header = ({ onMenuClick }) => {
-  const { user, userProfile, logout, getUserDisplayName } = useAuth();
+  const { user, userProfile, logout, getUserDisplayName, refreshUserProfile } = useAuth();
   const { unreadCount } = useNotifications();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+
+  // Refresh user profile when component mounts or user changes
+  useEffect(() => {
+    if (user?.id && refreshUserProfile) {
+      refreshUserProfile();
+    }
+  }, [user?.id, refreshUserProfile]);
 
   const handleLogout = async () => {
     try {
