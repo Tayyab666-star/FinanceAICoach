@@ -13,7 +13,8 @@ import {
   ChevronDown,
   Eye,
   FileImage,
-  Loader
+  Loader,
+  Brain
 } from 'lucide-react';
 import { useTransactions } from '../hooks/useSupabaseData';
 import { uploadReceipt, processReceiptOCR, storeReceiptData } from '../lib/supabase';
@@ -145,7 +146,7 @@ const TransactionModal = ({ isOpen, onClose, onSave, transaction = null }) => {
           <select
             id="category-select"
             name="category"
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             value={formData.category}
             onChange={(e) => setFormData({ ...formData, category: e.target.value })}
           >
@@ -182,7 +183,7 @@ const TransactionModal = ({ isOpen, onClose, onSave, transaction = null }) => {
   );
 };
 
-// Enhanced Receipt upload modal with real OCR processing
+// Enhanced Receipt upload modal with improved OCR processing
 const ReceiptUploadModal = ({ isOpen, onClose, onAdd }) => {
   const { user } = useAuth();
   const { addNotification } = useNotifications();
@@ -193,6 +194,7 @@ const ReceiptUploadModal = ({ isOpen, onClose, onAdd }) => {
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
   const [extractedText, setExtractedText] = useState('');
+  const [processingStep, setProcessingStep] = useState('');
 
   const handleFileSelect = (e) => {
     const file = e.target.files[0];
@@ -226,9 +228,17 @@ const ReceiptUploadModal = ({ isOpen, onClose, onAdd }) => {
   };
 
   const handleProcessReceipt = async () => {
-    if (!selectedFile) return;
+    if (!selectedFile || !user?.id) {
+      addNotification({
+        type: 'error',
+        title: 'Error',
+        message: 'Please select a file and ensure you are logged in'
+      });
+      return;
+    }
 
     setUploading(true);
+    setProcessingStep('Uploading image...');
     
     try {
       // Upload image to Supabase Storage
@@ -237,15 +247,25 @@ const ReceiptUploadModal = ({ isOpen, onClose, onAdd }) => {
       setUploading(false);
       setProcessing(true);
       setConfidence(0);
+      setProcessingStep('Analyzing receipt...');
       
-      // Process OCR
+      // Process OCR with progress tracking
       const ocrData = await processReceiptOCR(selectedFile, (progress) => {
         setConfidence(progress);
+        if (progress < 30) {
+          setProcessingStep('Reading text from image...');
+        } else if (progress < 70) {
+          setProcessingStep('Extracting merchant information...');
+        } else if (progress < 90) {
+          setProcessingStep('Finding total amount...');
+        } else {
+          setProcessingStep('Predicting category...');
+        }
       });
       
       setExtractedText(ocrData.extracted_text || '');
       
-      // Create result object
+      // Create result object with enhanced data
       const result = {
         description: ocrData.description,
         amount: ocrData.amount,
@@ -258,6 +278,7 @@ const ReceiptUploadModal = ({ isOpen, onClose, onAdd }) => {
       
       setOcrResult(result);
       setProcessing(false);
+      setProcessingStep('');
       
       // Store receipt data in database
       await storeReceiptData({
@@ -269,19 +290,20 @@ const ReceiptUploadModal = ({ isOpen, onClose, onAdd }) => {
       
       addNotification({
         type: 'success',
-        title: 'Receipt Processed',
-        message: `Receipt processed with ${ocrData.confidence}% confidence`
+        title: 'Receipt Processed Successfully',
+        message: `Receipt analyzed with ${ocrData.confidence}% confidence. Category: ${ocrData.category}`
       });
       
     } catch (error) {
       console.error('Error processing receipt:', error);
       setUploading(false);
       setProcessing(false);
+      setProcessingStep('');
       
       addNotification({
         type: 'error',
         title: 'Processing Failed',
-        message: 'Failed to process receipt. Please try again or enter manually.'
+        message: 'Failed to process receipt. Please try again or enter transaction manually.'
       });
     }
   };
@@ -295,7 +317,7 @@ const ReceiptUploadModal = ({ isOpen, onClose, onAdd }) => {
       addNotification({
         type: 'success',
         title: 'Transaction Added',
-        message: 'Receipt transaction has been added successfully'
+        message: `Receipt transaction added: ${ocrResult.description} - $${ocrResult.amount} (${ocrResult.category})`
       });
     } catch (error) {
       console.error('Error adding transaction:', error);
@@ -315,6 +337,7 @@ const ReceiptUploadModal = ({ isOpen, onClose, onAdd }) => {
     setSelectedFile(null);
     setPreviewUrl(null);
     setExtractedText('');
+    setProcessingStep('');
     
     // Clean up preview URL
     if (previewUrl) {
@@ -331,16 +354,17 @@ const ReceiptUploadModal = ({ isOpen, onClose, onAdd }) => {
     <ResponsiveModal
       isOpen={isOpen}
       onClose={handleClose}
-      title="Upload Receipt"
+      title="Smart Receipt Scanner"
       size="lg"
     >
       <div className="space-y-6">
         {/* File Upload Section */}
         {!selectedFile && !ocrResult && (
           <div className="space-y-4">
-            <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 p-8 text-center">
+            <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-8 text-center">
               <Camera className="w-12 h-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
-              <p className="text-gray-600 dark:text-gray-300 mb-4">Upload receipt image for automatic processing</p>
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Upload Receipt for Smart Analysis</h3>
+              <p className="text-gray-600 dark:text-gray-300 mb-4">Our AI will automatically extract the total amount, merchant name, and predict the category</p>
               <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Supports JPG, PNG, WebP (max 10MB)</p>
               <input
                 type="file"
@@ -352,9 +376,22 @@ const ReceiptUploadModal = ({ isOpen, onClose, onAdd }) => {
               <label htmlFor="receipt-upload">
                 <Button as="span" variant="outline">
                   <Upload className="w-4 h-4 mr-2" />
-                  Choose File
+                  Choose Receipt Image
                 </Button>
               </label>
+            </div>
+            
+            <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+              <h4 className="font-medium text-blue-900 dark:text-blue-300 mb-2 flex items-center">
+                <Brain className="w-4 h-4 mr-2" />
+                Smart Features
+              </h4>
+              <ul className="text-sm text-blue-800 dark:text-blue-200 space-y-1">
+                <li>• Automatically detects merchant name and category</li>
+                <li>• Extracts total amount (not individual items)</li>
+                <li>• Predicts spending category based on store type</li>
+                <li>• Stores receipt image for future reference</li>
+              </ul>
             </div>
           </div>
         )}
@@ -367,7 +404,7 @@ const ReceiptUploadModal = ({ isOpen, onClose, onAdd }) => {
                 <img 
                   src={previewUrl} 
                   alt="Receipt preview" 
-                  className="w-20 h-20 object-cover border border-gray-200 dark:border-gray-600"
+                  className="w-20 h-20 object-cover rounded-lg border border-gray-200 dark:border-gray-600"
                 />
               </div>
               <div className="flex-1">
@@ -381,8 +418,8 @@ const ReceiptUploadModal = ({ isOpen, onClose, onAdd }) => {
             {!processing && !uploading && (
               <div className="flex space-x-3">
                 <Button onClick={handleProcessReceipt} className="flex-1">
-                  <FileImage className="w-4 h-4 mr-2" />
-                  Process Receipt
+                  <Brain className="w-4 h-4 mr-2" />
+                  Analyze Receipt with AI
                 </Button>
                 <Button variant="outline" onClick={resetModal}>
                   Choose Different File
@@ -395,19 +432,19 @@ const ReceiptUploadModal = ({ isOpen, onClose, onAdd }) => {
                 <div className="flex items-center justify-center mb-4">
                   <Loader className="w-8 h-8 animate-spin text-blue-600 dark:text-blue-400" />
                 </div>
-                <p className="text-gray-600 dark:text-gray-300 mb-2">
-                  {uploading ? 'Uploading image...' : 'Processing receipt...'}
+                <p className="text-gray-600 dark:text-gray-300 mb-2 font-medium">
+                  {processingStep}
                 </p>
                 {processing && (
                   <>
-                    <div className="w-full bg-gray-200 dark:bg-gray-700 h-2 mb-2">
+                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 mb-2">
                       <div 
-                        className="bg-blue-600 h-2 transition-all duration-300"
+                        className="bg-gradient-to-r from-blue-500 to-purple-600 h-3 rounded-full transition-all duration-300"
                         style={{ width: `${confidence}%` }}
                       ></div>
                     </div>
                     <p className="text-sm text-gray-500 dark:text-gray-400">
-                      OCR Progress: {confidence}%
+                      Analysis Progress: {confidence}%
                     </p>
                   </>
                 )}
@@ -421,15 +458,15 @@ const ReceiptUploadModal = ({ isOpen, onClose, onAdd }) => {
           <div className="space-y-4">
             <div className="flex items-center text-green-600 dark:text-green-400 mb-4">
               <CheckCircle className="w-5 h-5 mr-2" />
-              <span>Receipt processed successfully! (Confidence: {ocrResult.confidence}%)</span>
+              <span className="font-medium">Receipt analyzed successfully! (Confidence: {ocrResult.confidence}%)</span>
             </div>
 
             {/* Receipt Preview */}
-            <div className="flex items-center space-x-4 p-3 bg-gray-50 dark:bg-gray-700">
+            <div className="flex items-center space-x-4 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
               <img 
                 src={previewUrl} 
                 alt="Receipt" 
-                className="w-16 h-16 object-cover border border-gray-200 dark:border-gray-600"
+                className="w-16 h-16 object-cover rounded-lg border border-gray-200 dark:border-gray-600"
               />
               <div className="flex-1">
                 <p className="font-medium text-gray-900 dark:text-white">Receipt Image</p>
@@ -447,8 +484,36 @@ const ReceiptUploadModal = ({ isOpen, onClose, onAdd }) => {
               </Button>
             </div>
 
+            {/* AI Analysis Results */}
+            <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg border border-green-200 dark:border-green-700">
+              <h4 className="font-medium text-green-900 dark:text-green-300 mb-3 flex items-center">
+                <Brain className="w-4 h-4 mr-2" />
+                AI Analysis Results
+              </h4>
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <span className="text-green-700 dark:text-green-400">Merchant:</span>
+                  <span className="font-medium text-green-900 dark:text-green-200 ml-2">{ocrResult.description}</span>
+                </div>
+                <div>
+                  <span className="text-green-700 dark:text-green-400">Category:</span>
+                  <span className="font-medium text-green-900 dark:text-green-200 ml-2">{ocrResult.category}</span>
+                </div>
+                <div>
+                  <span className="text-green-700 dark:text-green-400">Total Amount:</span>
+                  <span className="font-medium text-green-900 dark:text-green-200 ml-2">${ocrResult.amount}</span>
+                </div>
+                <div>
+                  <span className="text-green-700 dark:text-green-400">Date:</span>
+                  <span className="font-medium text-green-900 dark:text-green-200 ml-2">{new Date(ocrResult.date).toLocaleDateString()}</span>
+                </div>
+              </div>
+            </div>
+
             {/* Editable Transaction Data */}
             <div className="space-y-3">
+              <h4 className="font-medium text-gray-900 dark:text-white">Review & Edit Transaction Details</h4>
+              
               <Input
                 label="Description"
                 value={ocrResult.description}
@@ -468,7 +533,7 @@ const ReceiptUploadModal = ({ isOpen, onClose, onAdd }) => {
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Category</label>
                 <select
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   value={ocrResult.category}
                   onChange={(e) => setOcrResult({ ...ocrResult, category: e.target.value })}
                 >
@@ -497,7 +562,7 @@ const ReceiptUploadModal = ({ isOpen, onClose, onAdd }) => {
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Extracted Text (for reference)
                 </label>
-                <div className="p-3 bg-gray-50 dark:bg-gray-700 text-xs text-gray-600 dark:text-gray-300 max-h-32 overflow-y-auto">
+                <div className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg text-xs text-gray-600 dark:text-gray-300 max-h-32 overflow-y-auto">
                   {extractedText}
                 </div>
               </div>
@@ -525,7 +590,7 @@ const FilterDropdown = ({ filterType, filterCategory, onTypeChange, onCategoryCh
     <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
       <ResponsiveDropdown
         trigger={
-          <button className="flex items-center justify-between px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 min-w-[120px]">
+          <button className="flex items-center justify-between px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 min-w-[120px]">
             <span className="text-sm text-gray-900 dark:text-white">{filterType === 'all' ? 'All Types' : filterType === 'income' ? 'Income' : 'Expenses'}</span>
             <ChevronDown className="w-4 h-4 ml-2 text-gray-600 dark:text-gray-300" />
           </button>
@@ -554,7 +619,7 @@ const FilterDropdown = ({ filterType, filterCategory, onTypeChange, onCategoryCh
 
       <ResponsiveDropdown
         trigger={
-          <button className="flex items-center justify-between px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 min-w-[140px]">
+          <button className="flex items-center justify-between px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 min-w-[140px]">
             <span className="text-sm truncate text-gray-900 dark:text-white">
               {filterCategory === 'all' ? 'All Categories' : filterCategory}
             </span>
@@ -646,7 +711,7 @@ const Transactions = () => {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Transactions</h1>
-          <p className="text-gray-600 dark:text-gray-300">Manage your financial transactions</p>
+          <p className="text-gray-600 dark:text-gray-300">Manage your financial transactions with smart receipt scanning</p>
         </div>
         
         <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3 w-full sm:w-auto">
@@ -655,8 +720,8 @@ const Transactions = () => {
             onClick={() => setShowReceiptModal(true)}
             className="flex items-center justify-center"
           >
-            <Camera className="w-4 h-4 mr-2" />
-            Upload Receipt
+            <Brain className="w-4 h-4 mr-2" />
+            Smart Receipt Scanner
           </Button>
           <Button 
             onClick={() => setShowAddModal(true)}
@@ -698,7 +763,7 @@ const Transactions = () => {
                 type="text"
                 name="search"
                 placeholder="Search transactions..."
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -723,7 +788,7 @@ const Transactions = () => {
               className="flex items-center justify-between p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
             >
               <div className="flex items-center space-x-4 flex-1 min-w-0">
-                <div className={`w-10 h-10 flex items-center justify-center flex-shrink-0 ${
+                <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
                   transaction.type === 'income' ? 'bg-green-100 dark:bg-green-900/50' : 'bg-red-100 dark:bg-red-900/50'
                 }`}>
                   {transaction.type === 'income' ? (
@@ -738,7 +803,9 @@ const Transactions = () => {
                   <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-gray-500 dark:text-gray-400">
                     <span>{new Date(transaction.date).toLocaleDateString()}</span>
                     <span>•</span>
-                    <span>{transaction.category}</span>
+                    <span className="px-2 py-1 bg-gray-100 dark:bg-gray-600 rounded-full text-xs">
+                      {transaction.category}
+                    </span>
                     <span>•</span>
                     <span className="capitalize">{transaction.type}</span>
                     {transaction.receipt_url && (
@@ -767,14 +834,14 @@ const Transactions = () => {
                 <div className="flex space-x-1">
                   <button
                     onClick={() => handleEditTransaction(transaction)}
-                    className="p-1 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+                    className="p-1 hover:bg-gray-100 dark:hover:bg-gray-600 rounded transition-colors"
                     aria-label="Edit transaction"
                   >
                     <Edit className="w-4 h-4 text-gray-600 dark:text-gray-300" />
                   </button>
                   <button
                     onClick={() => handleDeleteTransaction(transaction.id)}
-                    className="p-1 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+                    className="p-1 hover:bg-gray-100 dark:hover:bg-gray-600 rounded transition-colors"
                     aria-label="Delete transaction"
                   >
                     <Trash2 className="w-4 h-4 text-gray-600 dark:text-gray-300" />
@@ -787,7 +854,7 @@ const Transactions = () => {
           {filteredTransactions.length === 0 && (
             <div className="text-center py-12 text-gray-500 dark:text-gray-400">
               {transactions.length === 0 
-                ? "No transactions yet. Add your first transaction to get started!"
+                ? "No transactions yet. Add your first transaction or scan a receipt to get started!"
                 : "No transactions found matching your criteria."
               }
             </div>
