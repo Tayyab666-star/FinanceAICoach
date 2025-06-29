@@ -346,6 +346,8 @@ export const useBudgetCategories = () => {
           user_id: user.id,
           category,
           allocated_amount: amount
+        }, {
+          onConflict: 'user_id,category'
         });
 
       if (error) throw error;
