@@ -56,25 +56,25 @@ const Sidebar = ({ isOpen, onClose }) => {
             className="flex items-center space-x-3 hover:opacity-80 transition-opacity cursor-pointer"
           >
             <img 
-              src="https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=40&h=40&fit=crop&crop=center&auto=format&q=80" 
-              alt="FinanceApp Logo" 
-              className="w-8 h-8 object-cover"
+              src="/Finance AI coach.png" 
+              alt="Finance AI Coach" 
+              className="w-8 h-8 object-contain"
               onError={(e) => {
-                // Fallback to a different financial icon if image fails to load
+                // Fallback to a gradient icon if image fails to load
                 e.target.style.display = 'none';
                 e.target.nextSibling.style.display = 'flex';
               }}
             />
             <div 
-              className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center hidden"
+              className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center hidden"
             >
               <span className="text-white font-bold text-sm">F</span>
             </div>
-            <span className="text-xl font-bold text-blue-600 dark:text-blue-400">FinanceApp</span>
+            <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Finance AI Coach</span>
           </button>
           <button 
             onClick={onClose}
-            className="lg:hidden p-2 hover:bg-gray-100 dark:hover:bg-gray-700"
+            className="lg:hidden p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
           >
             <X className="w-5 h-5 text-gray-600 dark:text-gray-300" />
           </button>
@@ -88,9 +88,9 @@ const Sidebar = ({ isOpen, onClose }) => {
               to={to}
               onClick={onClose}
               className={({ isActive }) => `
-                flex items-center px-3 py-2 mb-1 text-sm font-medium transition-colors
+                flex items-center px-3 py-2 mb-1 text-sm font-medium rounded-lg transition-colors
                 ${isActive 
-                  ? 'bg-blue-50 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 border-r-2 border-blue-700 dark:border-blue-400' 
+                  ? 'bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/50 dark:to-purple-900/50 text-blue-700 dark:text-blue-300 border-r-2 border-blue-700 dark:border-blue-400' 
                   : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white'
                 }
               `}

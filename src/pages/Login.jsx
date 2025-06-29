@@ -183,15 +183,29 @@ const Login = () => {
       <div className="max-w-md w-full">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-            <span className="text-2xl font-bold text-white">F</span>
+          <div className="flex justify-center mb-4">
+            <img 
+              src="/Finance AI coach.png" 
+              alt="Finance AI Coach" 
+              className="w-16 h-16 object-contain"
+              onError={(e) => {
+                // Fallback to gradient icon if image fails to load
+                e.target.style.display = 'none';
+                e.target.nextSibling.style.display = 'flex';
+              }}
+            />
+            <div 
+              className="w-16 h-16 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg hidden"
+            >
+              <span className="text-2xl font-bold text-white">F</span>
+            </div>
           </div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-            {step === 'email' ? 'Welcome to FinanceApp' : 'Check Your Email'}
+            {step === 'email' ? 'Welcome to Finance AI Coach' : 'Check Your Email'}
           </h1>
           <p className="text-gray-600 dark:text-gray-300 mt-2">
             {step === 'email' 
-              ? 'Enter your email to get started - no password required!' 
+              ? 'Your intelligent financial companion - no password required!' 
               : `We sent a 6-digit code to ${email}`
             }
           </p>
