@@ -170,7 +170,7 @@ const TransactionModal = ({ isOpen, onClose, onSave, transaction = null }) => {
           required
         />
         
-        <div className="flex space-x-3 pt-4">
+        <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3 pt-4">
           <Button type="submit" className="flex-1" loading={loading}>
             {transaction ? 'Update' : 'Add'} Transaction
           </Button>
@@ -377,11 +377,11 @@ const ReceiptUploadModal = ({ isOpen, onClose, onAdd }) => {
         {/* File Upload Section */}
         {!selectedFile && !ocrResult && (
           <div className="space-y-4">
-            <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-8 text-center">
-              <Camera className="w-12 h-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Upload Receipt for Smart Analysis</h3>
-              <p className="text-gray-600 dark:text-gray-300 mb-4">Our AI will automatically extract the total amount, merchant name, and predict the category</p>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Supports JPG, PNG, WebP (max 10MB)</p>
+            <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6 sm:p-8 text-center">
+              <Camera className="w-10 h-10 sm:w-12 sm:h-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
+              <h3 className="text-base sm:text-lg font-medium text-gray-900 dark:text-white mb-2">Upload Receipt for Smart Analysis</h3>
+              <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300 mb-4">Our AI will automatically extract the total amount, merchant name, and predict the category</p>
+              <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mb-4">Supports JPG, PNG, WebP (max 10MB)</p>
               <input
                 type="file"
                 accept="image/*"
@@ -397,12 +397,12 @@ const ReceiptUploadModal = ({ isOpen, onClose, onAdd }) => {
               </label>
             </div>
             
-            <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+            <div className="bg-blue-50 dark:bg-blue-900/20 p-3 sm:p-4 rounded-lg">
               <h4 className="font-medium text-blue-900 dark:text-blue-300 mb-2 flex items-center">
                 <Brain className="w-4 h-4 mr-2" />
                 Smart Features
               </h4>
-              <ul className="text-sm text-blue-800 dark:text-blue-200 space-y-1">
+              <ul className="text-xs sm:text-sm text-blue-800 dark:text-blue-200 space-y-1">
                 <li>• Automatically detects merchant name and category</li>
                 <li>• Extracts total amount (not individual items)</li>
                 <li>• Predicts spending category based on store type</li>
@@ -415,7 +415,7 @@ const ReceiptUploadModal = ({ isOpen, onClose, onAdd }) => {
         {/* File Preview and Processing */}
         {selectedFile && !ocrResult && (
           <div className="space-y-4">
-            <div className="flex items-center space-x-4">
+            <div className="flex flex-col sm:flex-row items-center sm:items-start space-y-4 sm:space-y-0 sm:space-x-4">
               <div className="flex-shrink-0">
                 <img 
                   src={previewUrl} 
@@ -423,7 +423,7 @@ const ReceiptUploadModal = ({ isOpen, onClose, onAdd }) => {
                   className="w-20 h-20 object-cover rounded-lg border border-gray-200 dark:border-gray-600"
                 />
               </div>
-              <div className="flex-1">
+              <div className="flex-1 text-center sm:text-left">
                 <p className="font-medium text-gray-900 dark:text-white">{selectedFile.name}</p>
                 <p className="text-sm text-gray-500 dark:text-gray-400">
                   {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
@@ -432,7 +432,7 @@ const ReceiptUploadModal = ({ isOpen, onClose, onAdd }) => {
             </div>
 
             {!processing && !uploading && (
-              <div className="flex space-x-3">
+              <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3">
                 <Button onClick={handleProcessReceipt} className="flex-1">
                   <Brain className="w-4 h-4 mr-2" />
                   Analyze Receipt with AI
@@ -478,13 +478,13 @@ const ReceiptUploadModal = ({ isOpen, onClose, onAdd }) => {
             </div>
 
             {/* Receipt Preview */}
-            <div className="flex items-center space-x-4 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+            <div className="flex flex-col sm:flex-row items-center sm:items-start space-y-3 sm:space-y-0 sm:space-x-4 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
               <img 
                 src={previewUrl} 
                 alt="Receipt" 
                 className="w-16 h-16 object-cover rounded-lg border border-gray-200 dark:border-gray-600"
               />
-              <div className="flex-1">
+              <div className="flex-1 text-center sm:text-left">
                 <p className="font-medium text-gray-900 dark:text-white">Receipt Image</p>
                 <p className="text-sm text-gray-500 dark:text-gray-400">
                   Stored securely in your account
@@ -506,7 +506,7 @@ const ReceiptUploadModal = ({ isOpen, onClose, onAdd }) => {
                 <Brain className="w-4 h-4 mr-2" />
                 AI Analysis Results
               </h4>
-              <div className="grid grid-cols-2 gap-4 text-sm">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                 <div>
                   <span className="text-green-700 dark:text-green-400">Merchant:</span>
                   <span className="font-medium text-green-900 dark:text-green-200 ml-2">{ocrResult.description}</span>
@@ -584,7 +584,7 @@ const ReceiptUploadModal = ({ isOpen, onClose, onAdd }) => {
               </div>
             )}
             
-            <div className="flex space-x-3 pt-4">
+            <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3 pt-4">
               <Button onClick={handleConfirm} className="flex-1">
                 <CheckCircle className="w-4 h-4 mr-2" />
                 Add Transaction
@@ -722,12 +722,12 @@ const Transactions = () => {
   const totalExpenses = transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + Math.abs(t.amount), 0);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Transactions</h1>
-          <p className="text-gray-600 dark:text-gray-300">Manage your financial transactions with smart receipt scanning</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">Transactions</h1>
+          <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300">Manage your financial transactions with smart receipt scanning</p>
         </div>
         
         <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3 w-full sm:w-auto">
@@ -750,20 +750,20 @@ const Transactions = () => {
       </div>
 
       {/* Summary cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
         <Card className="p-4 text-center">
           <h3 className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">Total Income</h3>
-          <p className="text-2xl font-bold text-green-600 dark:text-green-400">${totalIncome.toLocaleString()}</p>
+          <p className="text-xl sm:text-2xl font-bold text-green-600 dark:text-green-400">${totalIncome.toLocaleString()}</p>
         </Card>
         
         <Card className="p-4 text-center">
           <h3 className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">Total Expenses</h3>
-          <p className="text-2xl font-bold text-red-600 dark:text-red-400">${totalExpenses.toLocaleString()}</p>
+          <p className="text-xl sm:text-2xl font-bold text-red-600 dark:text-red-400">${totalExpenses.toLocaleString()}</p>
         </Card>
         
         <Card className="p-4 text-center">
           <h3 className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">Net Amount</h3>
-          <p className={`text-2xl font-bold ${totalIncome - totalExpenses >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+          <p className={`text-xl sm:text-2xl font-bold ${totalIncome - totalExpenses >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
             ${(totalIncome - totalExpenses).toLocaleString()}
           </p>
         </Card>
@@ -803,20 +803,20 @@ const Transactions = () => {
               key={transaction.id} 
               className="flex items-center justify-between p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
             >
-              <div className="flex items-center space-x-4 flex-1 min-w-0">
-                <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
+              <div className="flex items-center space-x-3 sm:space-x-4 flex-1 min-w-0">
+                <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
                   transaction.type === 'income' ? 'bg-green-100 dark:bg-green-900/50' : 'bg-red-100 dark:bg-red-900/50'
                 }`}>
                   {transaction.type === 'income' ? (
-                    <Plus className="w-5 h-5 text-green-600 dark:text-green-400" />
+                    <Plus className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 dark:text-green-400" />
                   ) : (
-                    <X className="w-5 h-5 text-red-600 dark:text-red-400" />
+                    <X className="w-4 h-4 sm:w-5 sm:h-5 text-red-600 dark:text-red-400" />
                   )}
                 </div>
                 
                 <div className="min-w-0 flex-1">
-                  <p className="font-medium text-gray-900 dark:text-white truncate">{transaction.description}</p>
-                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-gray-500 dark:text-gray-400">
+                  <p className="font-medium text-gray-900 dark:text-white truncate text-sm sm:text-base">{transaction.description}</p>
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs sm:text-sm text-gray-500 dark:text-gray-400">
                     <span>{new Date(transaction.date).toLocaleDateString()}</span>
                     <span>•</span>
                     <span className="px-2 py-1 bg-gray-100 dark:bg-gray-600 rounded-full text-xs">
@@ -840,8 +840,8 @@ const Transactions = () => {
                 </div>
               </div>
               
-              <div className="flex items-center space-x-3 flex-shrink-0">
-                <p className={`font-semibold ${
+              <div className="flex items-center space-x-2 sm:space-x-3 flex-shrink-0">
+                <p className={`font-semibold text-sm sm:text-base ${
                   transaction.type === 'income' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
                 }`}>
                   {transaction.type === 'income' ? '+' : '-'}${Math.abs(transaction.amount).toFixed(2)}
@@ -868,7 +868,7 @@ const Transactions = () => {
           ))}
           
           {filteredTransactions.length === 0 && (
-            <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+            <div className="text-center py-8 sm:py-12 text-gray-500 dark:text-gray-400">
               {transactions.length === 0 
                 ? "No transactions yet. Add your first transaction or scan a receipt to get started!"
                 : "No transactions found matching your criteria."

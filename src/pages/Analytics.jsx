@@ -203,22 +203,26 @@ const AIInsights = ({ insights }) => {
 
 // Metric card component
 const MetricCard = ({ title, value, change, icon: Icon, trend }) => (
-  <Card className="p-4">
+  <Card className="p-4 sm:p-6">
     <div className="flex items-center justify-between">
       <div>
         <p className="text-sm font-medium text-gray-600 dark:text-gray-300">{title}</p>
-        <p className="text-2xl font-bold text-gray-900 dark:text-white">{value}</p>
+        <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
+          {typeof value === 'number' ? `$${value.toLocaleString()}` : value}
+        </p>
         {change && (
           <div className={`flex items-center mt-1 text-sm ${
-            trend === 'up' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
+            trend === 'up' ? 'text-green-600 dark:text-green-400' : 
+            trend === 'down' ? 'text-red-600 dark:text-red-400' : 'text-gray-600 dark:text-gray-300'
           }`}>
-            {trend === 'up' ? <TrendingUp className="w-4 h-4 mr-1" /> : <TrendingDown className="w-4 h-4 mr-1" />}
-            <span className="text-gray-900 dark:text-white">{change}</span>
+            {trend === 'up' && <TrendingUp className="w-4 h-4 mr-1" />}
+            {trend === 'down' && <TrendingDown className="w-4 h-4 mr-1" />}
+            {change}
           </div>
         )}
       </div>
-      <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/50 rounded-lg flex items-center justify-center">
-        <Icon className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+      <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 dark:bg-blue-900/50 rounded-lg flex items-center justify-center">
+        <Icon className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600 dark:text-blue-400" />
       </div>
     </div>
   </Card>
@@ -387,53 +391,53 @@ const Analytics = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Financial Analytics</h1>
-          <p className="text-gray-600 dark:text-gray-300">Deep insights into your financial patterns</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">Financial Analytics</h1>
+          <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300">Deep insights into your financial patterns</p>
         </div>
         
         {/* Time range selector */}
-        <div className="flex bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+        <div className="flex bg-gray-100 dark:bg-gray-700 rounded-lg p-1 w-full sm:w-auto">
           {['1m', '3m', '6m', '1y'].map((range) => (
             <button
               key={range}
               onClick={() => setTimeRange(range)}
-              className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+              className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-md transition-colors ${
                 timeRange === range
                   ? 'bg-white dark:bg-gray-600 text-blue-600 dark:text-blue-400 shadow-sm'
                   : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
               }`}
             >
-              {range === '1m' ? '1 Month' : 
-               range === '3m' ? '3 Months' : 
-               range === '6m' ? '6 Months' : '1 Year'}
+              {range === '1m' ? '1M' : 
+               range === '3m' ? '3M' : 
+               range === '6m' ? '6M' : '1Y'}
             </button>
           ))}
         </div>
       </div>
 
       {/* Key metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
         <MetricCard
           title="Net Worth"
-          value={`$${metrics.netWorth.toLocaleString()}`}
+          value={metrics.netWorth}
           change={metrics.netWorth >= 0 ? "+12.5%" : "-8.2%"}
           icon={DollarSign}
           trend={metrics.netWorth >= 0 ? 'up' : 'down'}
         />
         <MetricCard
           title="Monthly Income"
-          value={`$${userProfile?.monthly_income?.toLocaleString() || '0'}`}
+          value={userProfile?.monthly_income || 0}
           change="+5.2%"
           icon={TrendingUp}
           trend="up"
         />
         <MetricCard
           title="Total Expenses"
-          value={`$${metrics.totalExpenses.toLocaleString()}`}
+          value={metrics.totalExpenses}
           change="-3.1%"
           icon={TrendingDown}
           trend="down"
@@ -448,37 +452,39 @@ const Analytics = () => {
       </div>
 
       {/* Charts grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         {/* Income vs Expenses */}
         <Card>
           <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Income vs Expenses</h3>
           {monthlyData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={300}>
-              <AreaChart data={monthlyData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
-                <YAxis />
-                <Tooltip />
-                <Area 
-                  type="monotone" 
-                  dataKey="income" 
-                  stackId="1"
-                  stroke="#10B981" 
-                  fill="#10B981"
-                  fillOpacity={0.6}
-                />
-                <Area 
-                  type="monotone" 
-                  dataKey="expenses" 
-                  stackId="2"
-                  stroke="#EF4444" 
-                  fill="#EF4444"
-                  fillOpacity={0.6}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
+            <div className="h-64 sm:h-80">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={monthlyData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="month" />
+                  <YAxis />
+                  <Tooltip />
+                  <Area 
+                    type="monotone" 
+                    dataKey="income" 
+                    stackId="1"
+                    stroke="#10B981" 
+                    fill="#10B981"
+                    fillOpacity={0.6}
+                  />
+                  <Area 
+                    type="monotone" 
+                    dataKey="expenses" 
+                    stackId="2"
+                    stroke="#EF4444" 
+                    fill="#EF4444"
+                    fillOpacity={0.6}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
           ) : (
-            <div className="h-[300px] flex items-center justify-center text-gray-500 dark:text-gray-400">
+            <div className="h-64 sm:h-80 flex items-center justify-center text-gray-500 dark:text-gray-400">
               <div className="text-center">
                 <p>No transaction data available</p>
                 <p className="text-sm">Add transactions to see your income vs expenses chart</p>
@@ -491,26 +497,28 @@ const Analytics = () => {
         <Card>
           <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Spending by Category</h3>
           {categorySpending.length > 0 ? (
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={categorySpending}
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="amount"
-                  label={({ name, percentage }) => `${name} ${percentage}%`}
-                >
-                  {categorySpending.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip formatter={(value) => [`$${value}`, 'Amount']} />
-              </PieChart>
-            </ResponsiveContainer>
+            <div className="h-64 sm:h-80">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={categorySpending}
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={80}
+                    fill="#8884d8"
+                    dataKey="amount"
+                    label={({ name, percentage }) => `${name} ${percentage}%`}
+                  >
+                    {categorySpending.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip formatter={(value) => [`$${value}`, 'Amount']} />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
           ) : (
-            <div className="h-[300px] flex items-center justify-center text-gray-500 dark:text-gray-400">
+            <div className="h-64 sm:h-80 flex items-center justify-center text-gray-500 dark:text-gray-400">
               <div className="text-center">
                 <p>No expense data available</p>
                 <p className="text-sm">Add expense transactions to see category breakdown</p>
@@ -523,17 +531,19 @@ const Analytics = () => {
         <Card>
           <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Daily Spending Pattern</h3>
           {dailySpending.some(d => d.amount > 0) ? (
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={dailySpending}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="day" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="amount" fill="#3B82F6" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+            <div className="h-64 sm:h-80">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={dailySpending}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="day" />
+                  <YAxis />
+                  <Tooltip />
+                  <Bar dataKey="amount" fill="#3B82F6" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           ) : (
-            <div className="h-[300px] flex items-center justify-center text-gray-500 dark:text-gray-400">
+            <div className="h-64 sm:h-80 flex items-center justify-center text-gray-500 dark:text-gray-400">
               <div className="text-center">
                 <p>No spending pattern data</p>
                 <p className="text-sm">Add more transactions to see daily spending patterns</p>
@@ -546,23 +556,25 @@ const Analytics = () => {
         <Card>
           <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Savings Trend</h3>
           {monthlyData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={monthlyData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
-                <YAxis />
-                <Tooltip />
-                <Line 
-                  type="monotone" 
-                  dataKey="savings" 
-                  stroke="#10B981" 
-                  strokeWidth={3}
-                  dot={{ fill: '#10B981', strokeWidth: 2, r: 4 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
+            <div className="h-64 sm:h-80">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={monthlyData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="month" />
+                  <YAxis />
+                  <Tooltip />
+                  <Line 
+                    type="monotone" 
+                    dataKey="savings" 
+                    stroke="#10B981" 
+                    strokeWidth={3}
+                    dot={{ fill: '#10B981', strokeWidth: 2, r: 4 }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
           ) : (
-            <div className="h-[300px] flex items-center justify-center text-gray-500 dark:text-gray-400">
+            <div className="h-64 sm:h-80 flex items-center justify-center text-gray-500 dark:text-gray-400">
               <div className="text-center">
                 <p>No savings data available</p>
                 <p className="text-sm">Add income and expense transactions to track savings</p>

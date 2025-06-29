@@ -83,7 +83,7 @@ const Sidebar = ({ isOpen, onClose }) => {
         </div>
         
         {/* Navigation */}
-        <nav className="mt-6 px-3">
+        <nav className="mt-6 px-3 pb-4 overflow-y-auto h-full">
           {navItems.map(({ to, icon: Icon, label }) => (
             <NavLink
               key={to}

@@ -1,3 +1,129 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Ensure proper scrolling on mobile devices */
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+  
+  body {
+    @apply antialiased;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  
+  /* Prevent horizontal scroll on mobile */
+  * {
+    box-sizing: border-box;
+  }
+  
+  /* Improve touch targets on mobile */
+  button, 
+  [role="button"], 
+  input[type="submit"], 
+  input[type="button"] {
+    touch-action: manipulation;
+  }
+  
+  /* Ensure proper viewport handling */
+  .min-h-screen {
+    min-height: 100vh;
+    min-height: 100dvh; /* Dynamic viewport height for mobile browsers */
+  }
+  
+  /* Improve focus visibility */
+  :focus-visible {
+    outline: 2px solid theme('colors.blue.500');
+    outline-offset: 2px;
+  }
+  
+  /* Smooth transitions for dark mode */
+  * {
+    transition-property: color, background-color, border-color;
+    transition-duration: 200ms;
+    transition-timing-function: ease-in-out;
+  }
+}
+
+/* Custom scrollbar styles */
+@layer utilities {
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: theme('colors.gray.400') theme('colors.gray.100');
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: theme('colors.gray.100');
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: theme('colors.gray.400');
+    border-radius: 3px;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: theme('colors.gray.500');
+  }
+  
+  /* Dark mode scrollbar */
+  .dark .scrollbar-thin {
+    scrollbar-color: theme('colors.gray.600') theme('colors.gray.800');
+  }
+  
+  .dark .scrollbar-thin::-webkit-scrollbar-track {
+    background: theme('colors.gray.800');
+  }
+  
+  .dark .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: theme('colors.gray.600');
+  }
+  
+  .dark .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: theme('colors.gray.500');
+  }
+}
+
+/* Responsive text utilities */
+@layer utilities {
+  .text-responsive {
+    @apply text-sm sm:text-base;
+  }
+  
+  .text-responsive-lg {
+    @apply text-base sm:text-lg;
+  }
+  
+  .text-responsive-xl {
+    @apply text-lg sm:text-xl;
+  }
+  
+  .text-responsive-2xl {
+    @apply text-xl sm:text-2xl;
+  }
+}
+
+/* Safe area insets for mobile devices */
+@supports (padding: max(0px)) {
+  .safe-area-inset-top {
+    padding-top: max(1rem, env(safe-area-inset-top));
+  }
+  
+  .safe-area-inset-bottom {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+  
+  .safe-area-inset-left {
+    padding-left: max(1rem, env(safe-area-inset-left));
+  }
+  
+  .safe-area-inset-right {
+    padding-right: max(1rem, env(safe-area-inset-right));
+  }
+}

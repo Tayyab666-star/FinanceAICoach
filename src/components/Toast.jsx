@@ -55,7 +55,7 @@ const Toast = ({ notification, onRemove }) => {
     }
   };
 
-  // Truncate long messages
+  // Truncate long messages for mobile
   const truncateMessage = (message, maxLength = 80) => {
     if (message.length <= maxLength) return message;
     return message.substring(0, maxLength) + '...';
@@ -65,12 +65,12 @@ const Toast = ({ notification, onRemove }) => {
     <div
       className={`
         w-full max-w-sm bg-white dark:bg-gray-800 shadow-lg pointer-events-auto 
-        border border-gray-200 dark:border-gray-700 border-l-4 ${getBorderColor()}
+        border border-gray-200 dark:border-gray-700 border-l-4 ${getBorderColor()} rounded-lg
         transform transition-all duration-300 ease-in-out
         ${isVisible && !isExiting ? 'translate-x-0 opacity-100 scale-100' : 'translate-x-full opacity-0 scale-95'}
       `}
     >
-      <div className="p-3">
+      <div className="p-3 sm:p-4">
         <div className="flex items-start space-x-3">
           {/* Icon */}
           <div className="mt-0.5">
@@ -82,18 +82,19 @@ const Toast = ({ notification, onRemove }) => {
             <p className="text-sm font-semibold text-gray-900 dark:text-white leading-tight">
               {notification.title}
             </p>
-            <p className="mt-1 text-xs text-gray-600 dark:text-gray-300 leading-relaxed break-words">
-              {truncateMessage(notification.message)}
+            <p className="mt-1 text-xs sm:text-sm text-gray-600 dark:text-gray-300 leading-relaxed break-words">
+              <span className="sm:hidden">{truncateMessage(notification.message, 60)}</span>
+              <span className="hidden sm:inline">{notification.message}</span>
             </p>
           </div>
           
           {/* Close button */}
           <button
-            className="flex-shrink-0 p-1 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            className="flex-shrink-0 p-1 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
             onClick={handleRemove}
             aria-label="Close notification"
           >
-            <X className="h-3 w-3" />
+            <X className="h-3 w-3 sm:h-4 sm:w-4" />
           </button>
         </div>
       </div>
