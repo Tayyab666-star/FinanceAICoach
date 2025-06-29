@@ -12,10 +12,13 @@ export const NotificationProvider = ({ children }) => {
       id: Date.now() + Math.random(),
       timestamp: new Date(),
       read: false,
-      ...notification
+      ...notification,
+      // Ensure title and message are strings and not too long
+      title: String(notification.title || 'Notification').substring(0, 50),
+      message: String(notification.message || '').substring(0, 120)
     };
     
-    setNotifications(prev => [newNotification, ...prev]);
+    setNotifications(prev => [newNotification, ...prev.slice(0, 9)]); // Keep max 10 notifications
   };
 
   const markAsRead = (id) => {

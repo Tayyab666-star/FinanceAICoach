@@ -30,63 +30,71 @@ const Toast = ({ notification, onRemove }) => {
   const getIcon = () => {
     switch (notification.type) {
       case 'success':
-        return <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" />;
+        return <CheckCircle className="w-4 h-4 text-green-600 dark:text-green-400 flex-shrink-0" />;
       case 'error':
-        return <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400" />;
+        return <AlertCircle className="w-4 h-4 text-red-600 dark:text-red-400 flex-shrink-0" />;
       case 'warning':
-        return <AlertTriangle className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />;
+        return <AlertTriangle className="w-4 h-4 text-yellow-600 dark:text-yellow-400 flex-shrink-0" />;
       case 'info':
       default:
-        return <Info className="w-5 h-5 text-blue-600 dark:text-blue-400" />;
+        return <Info className="w-4 h-4 text-blue-600 dark:text-blue-400 flex-shrink-0" />;
     }
   };
 
-  const getBackgroundColor = () => {
+  const getBorderColor = () => {
     switch (notification.type) {
       case 'success':
-        return 'bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-700';
+        return 'border-l-green-500';
       case 'error':
-        return 'bg-red-50 border-red-200 dark:bg-red-900/20 dark:border-red-700';
+        return 'border-l-red-500';
       case 'warning':
-        return 'bg-yellow-50 border-yellow-200 dark:bg-yellow-900/20 dark:border-yellow-700';
+        return 'border-l-yellow-500';
       case 'info':
       default:
-        return 'bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-700';
+        return 'border-l-blue-500';
     }
+  };
+
+  // Truncate long messages
+  const truncateMessage = (message, maxLength = 80) => {
+    if (message.length <= maxLength) return message;
+    return message.substring(0, maxLength) + '...';
   };
 
   return (
     <div
       className={`
-        w-full max-w-sm bg-white dark:bg-gray-800 shadow-lg rounded-lg pointer-events-auto border
+        w-full max-w-sm bg-white dark:bg-gray-800 shadow-lg rounded-lg pointer-events-auto 
+        border border-gray-200 dark:border-gray-700 border-l-4 ${getBorderColor()}
         transform transition-all duration-300 ease-in-out
-        ${isVisible && !isExiting ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'}
-        ${getBackgroundColor()}
-        mx-4 sm:mx-0
+        ${isVisible && !isExiting ? 'translate-x-0 opacity-100 scale-100' : 'translate-x-full opacity-0 scale-95'}
       `}
     >
-      <div className="p-4">
-        <div className="flex items-start">
-          <div className="flex-shrink-0">
+      <div className="p-3">
+        <div className="flex items-start space-x-3">
+          {/* Icon */}
+          <div className="mt-0.5">
             {getIcon()}
           </div>
-          <div className="ml-3 w-0 flex-1">
-            <p className="text-sm font-medium text-gray-900 dark:text-white">
+          
+          {/* Content */}
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-gray-900 dark:text-white leading-tight">
               {notification.title}
             </p>
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-300">
-              {notification.message}
+            <p className="mt-1 text-xs text-gray-600 dark:text-gray-300 leading-relaxed break-words">
+              {truncateMessage(notification.message)}
             </p>
           </div>
-          <div className="ml-4 flex-shrink-0 flex">
-            <button
-              className="bg-white dark:bg-gray-700 rounded-md inline-flex text-gray-400 dark:text-gray-300 hover:text-gray-500 dark:hover:text-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800"
-              onClick={handleRemove}
-            >
-              <span className="sr-only">Close</span>
-              <X className="h-5 w-5" />
-            </button>
-          </div>
+          
+          {/* Close button */}
+          <button
+            className="flex-shrink-0 p-1 rounded-md text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            onClick={handleRemove}
+            aria-label="Close notification"
+          >
+            <X className="h-3 w-3" />
+          </button>
         </div>
       </div>
     </div>
