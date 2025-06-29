@@ -53,9 +53,24 @@ const Sidebar = ({ isOpen, onClose }) => {
         <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200 dark:border-gray-700">
           <button 
             onClick={handleLogoClick}
-            className="text-xl font-bold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors cursor-pointer"
+            className="flex items-center space-x-3 hover:opacity-80 transition-opacity cursor-pointer"
           >
-            FinanceApp
+            <img 
+              src="https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=40&h=40&fit=crop&crop=center&auto=format&q=80" 
+              alt="FinanceApp Logo" 
+              className="w-8 h-8 rounded-lg object-cover"
+              onError={(e) => {
+                // Fallback to a different financial icon if image fails to load
+                e.target.style.display = 'none';
+                e.target.nextSibling.style.display = 'flex';
+              }}
+            />
+            <div 
+              className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center hidden"
+            >
+              <span className="text-white font-bold text-sm">F</span>
+            </div>
+            <span className="text-xl font-bold text-blue-600 dark:text-blue-400">FinanceApp</span>
           </button>
           <button 
             onClick={onClose}
