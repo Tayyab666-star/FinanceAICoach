@@ -90,10 +90,19 @@ export const AuthProvider = ({ children }) => {
       console.log('Setting user data:', userData);
       setUser(userData);
       
-      // Try to get/create profile, but don't block if it fails
+      // Try to get/create profile with timeout and fallback
       try {
-        const profile = await createOrGetUserProfile(authUser.id, authUser.email);
-        console.log('Profile created/retrieved:', profile);
+        console.log('Creating/getting profile for user:', authUser.id, authUser.email);
+        
+        // Set a timeout for profile creation
+        const profilePromise = createOrGetUserProfile(authUser.id, authUser.email);
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Profile creation timeout')), 10000)
+        );
+        
+        const profile = await Promise.race([profilePromise, timeoutPromise]);
+        
+        console.log('Profile created/retrieved successfully:', profile);
         setUserProfile(profile);
         
         // Update user with profile name if available
@@ -107,7 +116,8 @@ export const AuthProvider = ({ children }) => {
           localStorage.setItem('financeapp_profile', JSON.stringify(profile));
         }
       } catch (profileError) {
-        console.error('Profile creation failed, but continuing with basic user:', profileError);
+        console.error('Profile creation failed, using fallback:', profileError);
+        
         // Create a basic profile object as fallback
         const fallbackProfile = {
           id: authUser.id,
@@ -115,10 +125,24 @@ export const AuthProvider = ({ children }) => {
           name: capitalizeName(authUser.email.split('@')[0]),
           monthly_income: 0,
           monthly_budget: 0,
-          setup_completed: false
+          setup_completed: false,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
         };
+        
+        console.log('Using fallback profile:', fallbackProfile);
         setUserProfile(fallbackProfile);
         localStorage.setItem('financeapp_profile', JSON.stringify(fallbackProfile));
+        
+        // Try to create profile in background without blocking
+        setTimeout(async () => {
+          try {
+            await createOrGetUserProfile(authUser.id, authUser.email);
+            console.log('Background profile creation successful');
+          } catch (bgError) {
+            console.warn('Background profile creation failed:', bgError);
+          }
+        }, 1000);
       }
       
       // Save basic user data to localStorage
@@ -143,20 +167,20 @@ export const AuthProvider = ({ children }) => {
       console.log('Creating/getting profile for user:', authUserId, email);
       
       // First, try to get existing profile using auth user ID
-      const { data: existingProfiles, error: fetchError } = await supabase
+      const { data: existingProfile, error: fetchError } = await supabase
         .from('user_profiles')
         .select('*')
         .eq('id', authUserId)
-        .limit(1);
+        .maybeSingle(); // Use maybeSingle instead of single to avoid errors when no rows
 
       if (fetchError) {
         console.error('Error fetching user profile:', fetchError);
         // Continue with profile creation
       }
 
-      if (existingProfiles && existingProfiles.length > 0) {
-        console.log('Found existing profile:', existingProfiles[0]);
-        return existingProfiles[0];
+      if (existingProfile) {
+        console.log('Found existing profile:', existingProfile);
+        return existingProfile;
       }
 
       // If no profile exists, create a new one using auth user ID
@@ -165,24 +189,39 @@ export const AuthProvider = ({ children }) => {
       
       console.log('Creating new profile for:', email);
       
-      // Use upsert to handle potential race conditions
+      // Create new profile
       const { data: newProfile, error: insertError } = await supabase
         .from('user_profiles')
-        .upsert([{
+        .insert([{
           id: authUserId,
           email: email,
           name: capitalizedName,
           monthly_income: 0,
           monthly_budget: 0,
           setup_completed: false
-        }], {
-          onConflict: 'id'
-        })
+        }])
         .select()
         .single();
 
       if (insertError) {
         console.error('Error creating user profile:', insertError);
+        
+        // If insert fails due to conflict, try to fetch again
+        if (insertError.code === '23505') { // Unique constraint violation
+          console.log('Profile already exists, fetching it...');
+          const { data: conflictProfile, error: conflictError } = await supabase
+            .from('user_profiles')
+            .select('*')
+            .eq('id', authUserId)
+            .single();
+            
+          if (conflictError) {
+            throw conflictError;
+          }
+          
+          return conflictProfile;
+        }
+        
         throw insertError;
       }
 
