@@ -165,14 +165,20 @@ export const useConnectedAccounts = () => {
       const account = accounts.find(acc => acc.id === id);
       if (!account) return;
 
-      // Simulate account refresh with realistic balance changes
-      const balanceChange = (Math.random() - 0.5) * 1000; // Random change between -500 and +500
-      const newBalance = Math.max(0, account.balance + balanceChange);
+      // Get the current balance from the database (this reflects any transaction updates)
+      const { data: currentAccount, error: fetchError } = await supabase
+        .from('connected_accounts')
+        .select('balance')
+        .eq('id', id)
+        .eq('user_id', user.id)
+        .single();
 
+      if (fetchError) throw fetchError;
+
+      // Update the last_synced timestamp to show it was refreshed
       const { data, error } = await supabase
         .from('connected_accounts')
         .update({
-          balance: newBalance,
           last_synced: new Date().toISOString(),
           updated_at: new Date().toISOString()
         })
@@ -188,7 +194,7 @@ export const useConnectedAccounts = () => {
       addNotification({
         type: 'success',
         title: 'Account Refreshed',
-        message: `${account.account_name} balance updated to $${newBalance.toFixed(2)}`
+        message: `${account.account_name} has been refreshed. Current balance: $${parseFloat(data.balance).toFixed(2)}`
       });
       
       return data;
@@ -277,12 +283,12 @@ const validateCardDetails = (cardData) => {
 
   // Validate card number (basic Luhn algorithm)
   if (!card_number || !isValidCardNumber(card_number)) {
-    return { valid: false, error: 'Invalid card number' };
+    return { valid: false, error: 'Invalid card number. Please enter a valid Visa or Mastercard number.' };
   }
 
   // Validate expiry date
   if (!expiry_month || !expiry_year || expiry_month < 1 || expiry_month > 12) {
-    return { valid: false, error: 'Invalid expiry date' };
+    return { valid: false, error: 'Invalid expiry date. Please enter a valid month (1-12) and year.' };
   }
 
   const currentDate = new Date();
@@ -290,12 +296,12 @@ const validateCardDetails = (cardData) => {
   const currentMonth = currentDate.getMonth() + 1;
 
   if (expiry_year < currentYear || (expiry_year === currentYear && expiry_month < currentMonth)) {
-    return { valid: false, error: 'Card has expired' };
+    return { valid: false, error: 'Card has expired. Please use a valid card.' };
   }
 
   // Validate card type
   if (!card_type || !['visa', 'mastercard', 'amex', 'discover'].includes(card_type.toLowerCase())) {
-    return { valid: false, error: 'Unsupported card type' };
+    return { valid: false, error: 'Unsupported card type. We support Visa, Mastercard, American Express, and Discover.' };
   }
 
   return { valid: true };

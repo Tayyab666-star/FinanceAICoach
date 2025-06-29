@@ -56,6 +56,70 @@ export const useTransactions = () => {
     }
   };
 
+  // Helper function to update connected account balances
+  const updateConnectedAccountBalances = async (transaction) => {
+    try {
+      // Get user's connected accounts
+      const { data: accounts, error: accountsError } = await supabase
+        .from('connected_accounts')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('is_active', true);
+
+      if (accountsError || !accounts || accounts.length === 0) {
+        console.log('No connected accounts found or error fetching accounts');
+        return;
+      }
+
+      const amount = parseFloat(transaction.amount);
+      
+      if (transaction.type === 'income') {
+        // Distribute income across all active accounts proportionally
+        const totalBalance = accounts.reduce((sum, acc) => sum + (parseFloat(acc.balance) || 0), 0);
+        
+        for (const account of accounts) {
+          const proportion = totalBalance > 0 
+            ? (parseFloat(account.balance) || 0) / totalBalance 
+            : 1 / accounts.length; // Equal distribution if all balances are 0
+          
+          const distributedAmount = amount * proportion;
+          const newBalance = (parseFloat(account.balance) || 0) + distributedAmount;
+
+          await supabase
+            .from('connected_accounts')
+            .update({
+              balance: newBalance,
+              last_synced: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', account.id)
+            .eq('user_id', user.id);
+        }
+      } else if (transaction.type === 'expense') {
+        // Deduct expense from the account with the highest balance
+        const accountWithHighestBalance = accounts.reduce((prev, current) => 
+          (parseFloat(current.balance) || 0) > (parseFloat(prev.balance) || 0) ? current : prev
+        );
+
+        const currentBalance = parseFloat(accountWithHighestBalance.balance) || 0;
+        const newBalance = Math.max(0, currentBalance - amount); // Don't allow negative balances
+
+        await supabase
+          .from('connected_accounts')
+          .update({
+            balance: newBalance,
+            last_synced: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', accountWithHighestBalance.id)
+          .eq('user_id', user.id);
+      }
+    } catch (error) {
+      console.error('Error updating connected account balances:', error);
+      // Don't throw error here as it shouldn't block transaction creation
+    }
+  };
+
   const addTransaction = async (transaction) => {
     try {
       const { data, error } = await supabase
@@ -66,6 +130,9 @@ export const useTransactions = () => {
 
       if (error) throw error;
       setTransactions(prev => [data, ...prev]);
+      
+      // Update connected account balances
+      await updateConnectedAccountBalances(data);
       
       // Add notification for user action
       addNotification({
@@ -91,6 +158,9 @@ export const useTransactions = () => {
 
   const updateTransaction = async (id, updates) => {
     try {
+      // Get the original transaction to calculate balance difference
+      const originalTransaction = transactions.find(t => t.id === id);
+      
       const { data, error } = await supabase
         .from('transactions')
         .update(updates)
@@ -101,6 +171,22 @@ export const useTransactions = () => {
 
       if (error) throw error;
       setTransactions(prev => prev.map(t => t.id === id ? data : t));
+      
+      // If amount or type changed, update connected account balances
+      if (originalTransaction && (
+        parseFloat(updates.amount) !== parseFloat(originalTransaction.amount) ||
+        updates.type !== originalTransaction.type
+      )) {
+        // Reverse the original transaction effect
+        const reverseTransaction = {
+          ...originalTransaction,
+          type: originalTransaction.type === 'income' ? 'expense' : 'income'
+        };
+        await updateConnectedAccountBalances(reverseTransaction);
+        
+        // Apply the new transaction effect
+        await updateConnectedAccountBalances(data);
+      }
       
       // Add notification for user action
       addNotification({
@@ -127,6 +213,7 @@ export const useTransactions = () => {
   const deleteTransaction = async (id) => {
     try {
       const transaction = transactions.find(t => t.id === id);
+      
       const { error } = await supabase
         .from('transactions')
         .delete()
@@ -136,8 +223,15 @@ export const useTransactions = () => {
       if (error) throw error;
       setTransactions(prev => prev.filter(t => t.id !== id));
       
-      // Add notification for user action
+      // Reverse the transaction effect on connected accounts
       if (transaction) {
+        const reverseTransaction = {
+          ...transaction,
+          type: transaction.type === 'income' ? 'expense' : 'income'
+        };
+        await updateConnectedAccountBalances(reverseTransaction);
+        
+        // Add notification for user action
         addNotification({
           type: 'success',
           title: 'Transaction Deleted',
