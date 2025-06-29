@@ -5,7 +5,7 @@ import { useNotifications } from '../contexts/NotificationContext';
 import Card from '../components/Card';
 import Input from '../components/Input';
 import Button from '../components/Button';
-import { Mail, Shield, ArrowRight, CheckCircle, AlertCircle, ExternalLink, RefreshCw } from 'lucide-react';
+import { Mail, Shield, ArrowRight, CheckCircle, AlertCircle, ExternalLink, RefreshCw, LogIn } from 'lucide-react';
 
 const Login = () => {
   const [step, setStep] = useState('email'); // 'email' or 'verification'
@@ -156,10 +156,10 @@ const Login = () => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 px-4">
         <div className="text-center">
-          <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 animate-spin mx-auto mb-4"></div>
+          <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-gray-600 dark:text-gray-300">Loading...</p>
           {authError && (
-            <div className="mt-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 max-w-md mx-auto">
+            <div className="mt-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg max-w-md mx-auto">
               <p className="text-red-800 dark:text-red-200 text-sm">{authError}</p>
             </div>
           )}
@@ -186,7 +186,7 @@ const Login = () => {
               }}
             />
             <div 
-              className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-r from-blue-600 to-indigo-600 flex items-center justify-center shadow-lg hidden"
+              className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg hidden"
             >
               <span className="text-xl sm:text-2xl font-bold text-white">F</span>
             </div>
@@ -212,7 +212,7 @@ const Login = () => {
 
         {/* Global Error Display */}
         {(error || authError) && (
-          <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700">
+          <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg">
             <div className="flex items-center">
               <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 mr-2 flex-shrink-0" />
               <p className="text-red-800 dark:text-red-200 text-sm">{error || authError}</p>
@@ -222,7 +222,7 @@ const Login = () => {
         
         <Card className="shadow-xl border-0 backdrop-blur-sm bg-white/90 dark:bg-gray-800/90 p-4 sm:p-6">
           {step === 'email' ? (
-            // Email Step - Fixed input alignment
+            // Email Step
             <form onSubmit={handleEmailSubmit} className="space-y-4 sm:space-y-6">
               <Input
                 label="Email Address"
@@ -253,7 +253,7 @@ const Login = () => {
               </Button>
               
               {/* Security note */}
-              <div className="bg-blue-50 dark:bg-blue-900/20 p-3 sm:p-4">
+              <div className="bg-blue-50 dark:bg-blue-900/20 p-3 sm:p-4 rounded-lg">
                 <div className="flex items-center text-blue-800 dark:text-blue-200">
                   <Shield className="w-4 h-4 mr-2 flex-shrink-0" />
                   <span className="text-sm font-medium">Secure & Passwordless</span>
@@ -267,7 +267,7 @@ const Login = () => {
             // Verification Step
             <form onSubmit={handleCodeSubmit} className="space-y-4 sm:space-y-6">
               {/* Status indicator */}
-              <div className={`p-3 sm:p-4 border-l-4 ${
+              <div className={`p-3 sm:p-4 rounded-lg border-l-4 ${
                 isReturningUser 
                   ? 'bg-green-50 dark:bg-green-900/20 border-green-400' 
                   : 'bg-blue-50 dark:bg-blue-900/20 border-blue-400'
@@ -310,7 +310,7 @@ const Login = () => {
               />
 
               {/* Email check reminder */}
-              <div className="bg-yellow-50 dark:bg-yellow-900/20 p-3 sm:p-4 border border-yellow-200 dark:border-yellow-700">
+              <div className="bg-yellow-50 dark:bg-yellow-900/20 p-3 sm:p-4 rounded-lg border border-yellow-200 dark:border-yellow-700">
                 <div className="flex items-start">
                   <AlertCircle className="w-5 h-5 text-yellow-600 dark:text-yellow-400 mr-2 mt-0.5 flex-shrink-0" />
                   <div className="min-w-0 flex-1">
@@ -344,7 +344,12 @@ const Login = () => {
                   disabled={isSubmitting || verificationCode.length !== 6}
                   className="flex-1 text-base sm:text-lg py-3"
                 >
-                  {isSubmitting ? 'Verifying...' : 'Continue to Dashboard'}
+                  {isSubmitting ? 'Verifying...' : (
+                    <>
+                      {isReturningUser ? 'Go to Dashboard' : 'Complete Setup'}
+                      <LogIn className="w-4 h-4 ml-2" />
+                    </>
+                  )}
                 </Button>
               </div>
               

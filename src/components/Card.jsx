@@ -1,6 +1,6 @@
 import React from 'react';
 
-// Reusable card component with sharp edges and consistent styling
+// Reusable card component with rounded corners and consistent styling
 const Card = ({ 
   children, 
   className = '', 
@@ -9,7 +9,7 @@ const Card = ({
 }) => {
   return (
     <div className={`
-      bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm
+      bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm rounded-xl
       ${hover ? 'hover:shadow-md transition-shadow duration-200' : ''}
       ${padding}
       ${className}

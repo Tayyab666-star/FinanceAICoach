@@ -15,7 +15,10 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   Wallet,
-  Receipt
+  Receipt,
+  Activity,
+  Users,
+  Zap
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -71,19 +74,19 @@ const SetupModal = ({ isOpen, onClose, onSave, userProfile }) => {
 
   return (
     <div className="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center z-50 p-4">
-      <Card className="w-full max-w-md bg-white">
-        <div className="p-6">
-          <div className="text-center mb-6">
-            <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
-              <DollarSign className="w-8 h-8 text-white" />
+      <Card className="w-full max-w-md bg-white shadow-2xl">
+        <div className="p-8">
+          <div className="text-center mb-8">
+            <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
+              <DollarSign className="w-10 h-10 text-white" />
             </div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">Welcome! Let's Set Up Your Account</h3>
-            <p className="text-gray-600">
-              To get started with your financial dashboard, please enter your monthly income and budget.
+            <h3 className="text-2xl font-bold text-gray-900 mb-3">Welcome to Finance AI Coach!</h3>
+            <p className="text-gray-600 leading-relaxed">
+              Let's set up your financial profile to get personalized insights and recommendations.
             </p>
           </div>
           
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-6">
             <Input
               label="Monthly Income"
               type="number"
@@ -104,14 +107,22 @@ const SetupModal = ({ isOpen, onClose, onSave, userProfile }) => {
               required
             />
             
-            <div className="bg-blue-50 p-4 rounded-lg">
-              <p className="text-sm text-blue-800">
-                💡 <strong>Tip:</strong> Your budget should typically be 70-80% of your income to allow for savings and unexpected expenses.
-              </p>
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-xl border border-blue-100">
+              <div className="flex items-start space-x-3">
+                <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <Zap className="w-4 h-4 text-blue-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-blue-900 mb-1">Smart Tip</p>
+                  <p className="text-sm text-blue-800">
+                    We recommend budgeting 70-80% of your income for expenses, leaving 20-30% for savings and investments.
+                  </p>
+                </div>
+              </div>
             </div>
             
-            <Button type="submit" className="w-full" loading={loading}>
-              Complete Setup & Continue
+            <Button type="submit" className="w-full py-3 text-lg font-semibold" loading={loading}>
+              Complete Setup & Start Managing
             </Button>
           </form>
         </div>
@@ -120,8 +131,8 @@ const SetupModal = ({ isOpen, onClose, onSave, userProfile }) => {
   );
 };
 
-// Quick action card component with navigation - Enhanced Design
-const QuickActionCard = ({ title, description, icon: Icon, color = 'blue', path }) => {
+// Enhanced Quick action card component
+const QuickActionCard = ({ title, description, icon: Icon, color = 'blue', path, stats }) => {
   const navigate = useNavigate();
   
   const handleClick = () => {
@@ -133,43 +144,47 @@ const QuickActionCard = ({ title, description, icon: Icon, color = 'blue', path 
 
   const colorClasses = {
     blue: 'from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700',
-    green: 'from-green-500 to-green-600 hover:from-green-600 hover:to-green-700',
+    green: 'from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700',
     purple: 'from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700',
     orange: 'from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700'
   };
 
   return (
     <div 
-      className={`bg-gradient-to-r ${colorClasses[color]} p-6 rounded-xl text-white cursor-pointer transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl`}
+      className={`bg-gradient-to-br ${colorClasses[color]} p-6 rounded-2xl text-white cursor-pointer transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-2xl group`}
       onClick={handleClick}
     >
-      <div className="flex items-center justify-between">
-        <div className="flex-1">
-          <h3 className="text-lg font-semibold mb-1">{title}</h3>
-          <p className="text-sm opacity-90">{description}</p>
+      <div className="flex items-center justify-between mb-4">
+        <div className="w-12 h-12 bg-white bg-opacity-20 rounded-xl flex items-center justify-center group-hover:bg-opacity-30 transition-all duration-300">
+          <Icon className="w-6 h-6" />
         </div>
-        <div className="ml-4">
-          <div className="w-12 h-12 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
-            <Icon className="w-6 h-6" />
+        {stats && (
+          <div className="text-right">
+            <div className="text-2xl font-bold">{stats}</div>
+            <div className="text-xs opacity-80">Total</div>
           </div>
-        </div>
+        )}
+      </div>
+      <div>
+        <h3 className="text-lg font-semibold mb-1">{title}</h3>
+        <p className="text-sm opacity-90">{description}</p>
       </div>
     </div>
   );
 };
 
-// Enhanced metric card component with blue theme
+// Enhanced metric card component
 const MetricCard = ({ title, value, change, icon: Icon, trend, prefix = '$', onEdit, isMain = false }) => (
-  <Card className={`${isMain ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white' : 'bg-white'} shadow-lg hover:shadow-xl transition-shadow duration-200`}>
+  <Card className={`${isMain ? 'bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 text-white border-0' : 'bg-white hover:bg-gray-50'} shadow-lg hover:shadow-xl transition-all duration-300 group`}>
     <div className="p-6">
       <div className="flex items-center justify-between mb-4">
-        <div className={`w-12 h-12 ${isMain ? 'bg-white bg-opacity-20' : 'bg-blue-100'} rounded-lg flex items-center justify-center`}>
-          <Icon className={`w-6 h-6 ${isMain ? 'text-white' : 'text-blue-600'}`} />
+        <div className={`w-14 h-14 ${isMain ? 'bg-white bg-opacity-20' : 'bg-blue-50'} rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}>
+          <Icon className={`w-7 h-7 ${isMain ? 'text-white' : 'text-blue-600'}`} />
         </div>
         {onEdit && (
           <button
             onClick={onEdit}
-            className={`p-2 ${isMain ? 'hover:bg-white hover:bg-opacity-20' : 'hover:bg-gray-100'} rounded-lg transition-colors`}
+            className={`p-2 ${isMain ? 'hover:bg-white hover:bg-opacity-20' : 'hover:bg-gray-100'} rounded-xl transition-colors`}
             title="Edit"
           >
             <Edit className={`w-4 h-4 ${isMain ? 'text-white' : 'text-gray-600'}`} />
@@ -178,19 +193,19 @@ const MetricCard = ({ title, value, change, icon: Icon, trend, prefix = '$', onE
       </div>
       
       <div>
-        <p className={`text-sm font-medium ${isMain ? 'text-white text-opacity-90' : 'text-gray-600'} mb-1`}>{title}</p>
-        <p className={`text-3xl font-bold ${isMain ? 'text-white' : 'text-gray-900'} mb-2`}>
+        <p className={`text-sm font-medium ${isMain ? 'text-white text-opacity-90' : 'text-gray-600'} mb-2`}>{title}</p>
+        <p className={`text-3xl font-bold ${isMain ? 'text-white' : 'text-gray-900'} mb-3`}>
           {prefix}{typeof value === 'number' ? value.toLocaleString() : value}
         </p>
         {change && (
           <div className={`flex items-center text-sm ${
             isMain ? 'text-white text-opacity-90' : 
-            trend === 'up' ? 'text-green-600' : 
-            trend === 'down' ? 'text-red-600' : 'text-gray-600'
+            trend === 'up' ? 'text-emerald-600' : 
+            trend === 'down' ? 'text-red-500' : 'text-gray-600'
           }`}>
             {trend === 'up' && <ArrowUpRight className="w-4 h-4 mr-1" />}
             {trend === 'down' && <ArrowDownRight className="w-4 h-4 mr-1" />}
-            {change}
+            <span className="font-medium">{change}</span>
           </div>
         )}
       </div>
@@ -198,21 +213,26 @@ const MetricCard = ({ title, value, change, icon: Icon, trend, prefix = '$', onE
   </Card>
 );
 
-// Recent transactions component with enhanced design
+// Enhanced Recent transactions component
 const RecentTransactions = ({ transactions }) => {
   const navigate = useNavigate();
   const recentTransactions = transactions.slice(0, 5);
 
   return (
-    <Card className="bg-white shadow-lg">
+    <Card className="bg-white shadow-lg hover:shadow-xl transition-shadow duration-300">
       <div className="p-6">
         <div className="flex justify-between items-center mb-6">
-          <h3 className="text-lg font-semibold text-gray-900">Recent Transactions</h3>
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
+              <Activity className="w-5 h-5 text-blue-600" />
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900">Recent Activity</h3>
+          </div>
           <Button 
             variant="outline" 
             size="sm"
             onClick={() => navigate('/transactions')}
-            className="text-blue-600 border-blue-600 hover:bg-blue-50"
+            className="text-blue-600 border-blue-200 hover:bg-blue-50"
           >
             View All
           </Button>
@@ -221,25 +241,25 @@ const RecentTransactions = ({ transactions }) => {
         {recentTransactions.length > 0 ? (
           <div className="space-y-4">
             {recentTransactions.map((transaction) => (
-              <div key={transaction.id} className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg transition-colors">
-                <div className="flex items-center space-x-3">
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                    transaction.type === 'income' ? 'bg-green-100' : 'bg-red-100'
+              <div key={transaction.id} className="flex items-center justify-between p-4 hover:bg-gray-50 rounded-xl transition-colors group">
+                <div className="flex items-center space-x-4">
+                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+                    transaction.type === 'income' ? 'bg-emerald-100' : 'bg-red-100'
                   }`}>
                     {transaction.type === 'income' ? (
-                      <ArrowUpRight className="w-5 h-5 text-green-600" />
+                      <ArrowUpRight className="w-6 h-6 text-emerald-600" />
                     ) : (
-                      <ArrowDownRight className="w-5 h-5 text-red-600" />
+                      <ArrowDownRight className="w-6 h-6 text-red-500" />
                     )}
                   </div>
                   <div>
-                    <p className="font-medium text-gray-900 text-sm">{transaction.description}</p>
-                    <p className="text-xs text-gray-500">{transaction.category} • {new Date(transaction.date).toLocaleDateString()}</p>
+                    <p className="font-medium text-gray-900">{transaction.description}</p>
+                    <p className="text-sm text-gray-500">{transaction.category} • {new Date(transaction.date).toLocaleDateString()}</p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className={`font-semibold text-sm ${
-                    transaction.type === 'income' ? 'text-green-600' : 'text-red-600'
+                  <p className={`font-bold ${
+                    transaction.type === 'income' ? 'text-emerald-600' : 'text-red-500'
                   }`}>
                     {transaction.type === 'income' ? '+' : '-'}${Math.abs(transaction.amount).toFixed(2)}
                   </p>
@@ -248,9 +268,11 @@ const RecentTransactions = ({ transactions }) => {
             ))}
           </div>
         ) : (
-          <div className="text-center py-8 text-gray-500">
-            <Receipt className="w-12 h-12 text-gray-300 mx-auto mb-2" />
-            <p>No transactions yet</p>
+          <div className="text-center py-12 text-gray-500">
+            <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <Receipt className="w-8 h-8 text-gray-400" />
+            </div>
+            <p className="font-medium">No transactions yet</p>
             <p className="text-sm">Add your first transaction to get started!</p>
           </div>
         )}
@@ -259,28 +281,33 @@ const RecentTransactions = ({ transactions }) => {
   );
 };
 
-// Budget overview component with enhanced design
+// Enhanced Budget overview component
 const BudgetOverview = ({ budgetUsage }) => {
   const navigate = useNavigate();
   const categories = Object.entries(budgetUsage).slice(0, 4);
 
   return (
-    <Card className="bg-white shadow-lg">
+    <Card className="bg-white shadow-lg hover:shadow-xl transition-shadow duration-300">
       <div className="p-6">
         <div className="flex justify-between items-center mb-6">
-          <h3 className="text-lg font-semibold text-gray-900">Budget Overview</h3>
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
+              <PieChart className="w-5 h-5 text-purple-600" />
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900">Budget Overview</h3>
+          </div>
           <Button 
             variant="outline" 
             size="sm"
             onClick={() => navigate('/budget')}
-            className="text-blue-600 border-blue-600 hover:bg-blue-50"
+            className="text-purple-600 border-purple-200 hover:bg-purple-50"
           >
-            Manage Budget
+            Manage
           </Button>
         </div>
         
         {categories.length > 0 ? (
-          <div className="space-y-4">
+          <div className="space-y-5">
             {categories.map(([category, usage]) => (
               <div key={category}>
                 <div className="flex justify-between text-sm mb-2">
@@ -289,25 +316,27 @@ const BudgetOverview = ({ budgetUsage }) => {
                     ${usage.spent.toFixed(2)} / ${usage.budget.toFixed(2)}
                   </span>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
+                <div className="w-full bg-gray-200 rounded-full h-3">
                   <div 
-                    className={`h-2 rounded-full transition-all duration-300 ${
+                    className={`h-3 rounded-full transition-all duration-500 ${
                       usage.isOverBudget ? 'bg-red-500' : 
-                      usage.percentage > 80 ? 'bg-yellow-500' : 'bg-blue-500'
+                      usage.percentage > 80 ? 'bg-yellow-500' : 'bg-emerald-500'
                     }`}
                     style={{ width: `${Math.min(usage.percentage, 100)}%` }}
                   />
                 </div>
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-gray-500 mt-2 font-medium">
                   {usage.percentage.toFixed(1)}% used
                 </p>
               </div>
             ))}
           </div>
         ) : (
-          <div className="text-center py-8 text-gray-500">
-            <PieChart className="w-12 h-12 text-gray-300 mx-auto mb-2" />
-            <p>No budget categories set</p>
+          <div className="text-center py-12 text-gray-500">
+            <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <PieChart className="w-8 h-8 text-gray-400" />
+            </div>
+            <p className="font-medium">No budget set</p>
             <p className="text-sm">Set up your budget to track spending!</p>
           </div>
         )}
@@ -316,47 +345,52 @@ const BudgetOverview = ({ budgetUsage }) => {
   );
 };
 
-// Goals progress component with enhanced design
+// Enhanced Goals progress component
 const GoalsProgress = ({ goals }) => {
   const navigate = useNavigate();
   const activeGoals = goals.slice(0, 3);
 
   return (
-    <Card className="bg-white shadow-lg">
+    <Card className="bg-white shadow-lg hover:shadow-xl transition-shadow duration-300">
       <div className="p-6">
         <div className="flex justify-between items-center mb-6">
-          <h3 className="text-lg font-semibold text-gray-900">Goals Progress</h3>
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center">
+              <Target className="w-5 h-5 text-emerald-600" />
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900">Goals Progress</h3>
+          </div>
           <Button 
             variant="outline" 
             size="sm"
             onClick={() => navigate('/goals')}
-            className="text-blue-600 border-blue-600 hover:bg-blue-50"
+            className="text-emerald-600 border-emerald-200 hover:bg-emerald-50"
           >
-            View All Goals
+            View All
           </Button>
         </div>
         
         {activeGoals.length > 0 ? (
-          <div className="space-y-4">
+          <div className="space-y-5">
             {activeGoals.map((goal) => {
               const progress = goal.target_amount > 0 ? (goal.current_amount / goal.target_amount) * 100 : 0;
               const isCompleted = progress >= 100;
               
               return (
                 <div key={goal.id}>
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="font-medium text-gray-900 text-sm">{goal.title}</span>
-                    {isCompleted && <CheckCircle className="w-4 h-4 text-green-500" />}
+                  <div className="flex justify-between items-center mb-3">
+                    <span className="font-medium text-gray-900">{goal.title}</span>
+                    {isCompleted && <CheckCircle className="w-5 h-5 text-emerald-500" />}
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div className="w-full bg-gray-200 rounded-full h-3">
                     <div 
-                      className={`h-2 rounded-full transition-all duration-300 ${
-                        isCompleted ? 'bg-green-500' : 'bg-blue-500'
+                      className={`h-3 rounded-full transition-all duration-500 ${
+                        isCompleted ? 'bg-emerald-500' : 'bg-blue-500'
                       }`}
                       style={{ width: `${Math.min(progress, 100)}%` }}
                     />
                   </div>
-                  <div className="flex justify-between text-xs text-gray-500 mt-1">
+                  <div className="flex justify-between text-sm text-gray-500 mt-2">
                     <span>${goal.current_amount.toLocaleString()}</span>
                     <span>${goal.target_amount.toLocaleString()}</span>
                   </div>
@@ -365,9 +399,11 @@ const GoalsProgress = ({ goals }) => {
             })}
           </div>
         ) : (
-          <div className="text-center py-8 text-gray-500">
-            <Target className="w-12 h-12 text-gray-300 mx-auto mb-2" />
-            <p>No goals set yet</p>
+          <div className="text-center py-12 text-gray-500">
+            <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <Target className="w-8 h-8 text-gray-400" />
+            </div>
+            <p className="font-medium">No goals set</p>
             <p className="text-sm">Create your first financial goal!</p>
           </div>
         )}
@@ -376,57 +412,64 @@ const GoalsProgress = ({ goals }) => {
   );
 };
 
-// AI Insights component with enhanced design
+// Enhanced AI Insights component
 const AIInsights = ({ insights }) => {
   const navigate = useNavigate();
   const topInsights = insights.slice(0, 3);
 
   return (
-    <Card className="bg-white shadow-lg">
+    <Card className="bg-white shadow-lg hover:shadow-xl transition-shadow duration-300">
       <div className="p-6">
         <div className="flex justify-between items-center mb-6">
-          <h3 className="text-lg font-semibold text-gray-900">AI Insights</h3>
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center">
+              <Zap className="w-5 h-5 text-indigo-600" />
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900">AI Insights</h3>
+          </div>
           <Button 
             variant="outline" 
             size="sm"
             onClick={() => navigate('/ai-coach')}
-            className="text-blue-600 border-blue-600 hover:bg-blue-50"
+            className="text-indigo-600 border-indigo-200 hover:bg-indigo-50"
           >
             AI Coach
           </Button>
         </div>
         
         {topInsights.length > 0 ? (
-          <div className="space-y-3">
+          <div className="space-y-4">
             {topInsights.map((insight, index) => (
               <div 
                 key={index}
-                className={`p-4 rounded-lg border-l-4 ${
+                className={`p-4 rounded-xl border-l-4 ${
                   insight.type === 'warning' ? 'bg-orange-50 border-orange-400' :
-                  insight.type === 'success' ? 'bg-green-50 border-green-400' :
+                  insight.type === 'success' ? 'bg-emerald-50 border-emerald-400' :
                   'bg-blue-50 border-blue-400'
                 }`}
               >
-                <div className="flex items-start space-x-2">
+                <div className="flex items-start space-x-3">
                   {insight.type === 'warning' ? (
-                    <AlertCircle className="w-4 h-4 text-orange-500 mt-0.5" />
+                    <AlertCircle className="w-5 h-5 text-orange-500 mt-0.5" />
                   ) : insight.type === 'success' ? (
-                    <CheckCircle className="w-4 h-4 text-green-500 mt-0.5" />
+                    <CheckCircle className="w-5 h-5 text-emerald-500 mt-0.5" />
                   ) : (
-                    <AlertCircle className="w-4 h-4 text-blue-500 mt-0.5" />
+                    <AlertCircle className="w-5 h-5 text-blue-500 mt-0.5" />
                   )}
                   <div>
-                    <h4 className="font-medium text-gray-900 text-sm">{insight.title}</h4>
-                    <p className="text-xs text-gray-600 mt-1">{insight.message}</p>
+                    <h4 className="font-medium text-gray-900">{insight.title}</h4>
+                    <p className="text-sm text-gray-600 mt-1">{insight.message}</p>
                   </div>
                 </div>
               </div>
             ))}
           </div>
         ) : (
-          <div className="text-center py-8 text-gray-500">
-            <AlertCircle className="w-12 h-12 text-gray-300 mx-auto mb-2" />
-            <p>No insights available</p>
+          <div className="text-center py-12 text-gray-500">
+            <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <Zap className="w-8 h-8 text-gray-400" />
+            </div>
+            <p className="font-medium">No insights available</p>
             <p className="text-sm">Add transactions to get AI insights!</p>
           </div>
         )}
@@ -435,7 +478,7 @@ const AIInsights = ({ insights }) => {
   );
 };
 
-// Main dashboard component with blue theme
+// Main dashboard component with enhanced design
 const Dashboard = () => {
   const navigate = useNavigate();
   const { user, userProfile, updateUserProfile, getUserDisplayName } = useAuth();
@@ -444,17 +487,12 @@ const Dashboard = () => {
   const { budgets, loading: budgetsLoading } = useBudgetCategories();
   const [showSetupModal, setShowSetupModal] = useState(false);
 
-  // Check if user needs setup - this is the key fix!
+  // Check if user needs setup
   const needsSetup = userProfile && !userProfile.setup_completed;
 
-  // Auto-show setup modal for new users - Enhanced logic
+  // Auto-show setup modal for new users
   React.useEffect(() => {
-    console.log('Dashboard useEffect - userProfile:', userProfile);
-    console.log('Setup completed:', userProfile?.setup_completed);
-    console.log('Needs setup:', needsSetup);
-    
     if (needsSetup) {
-      console.log('Showing setup modal for new user');
       setShowSetupModal(true);
     }
   }, [needsSetup, userProfile]);
@@ -513,14 +551,7 @@ const Dashboard = () => {
   }, [transactions]);
 
   const handleSetupSave = async (setupData) => {
-    console.log('Saving setup data:', setupData);
-    try {
-      await updateUserProfile(setupData);
-      console.log('Setup data saved successfully');
-    } catch (error) {
-      console.error('Error saving setup data:', error);
-      throw error;
-    }
+    await updateUserProfile(setupData);
   };
 
   const handleEditFinancials = () => {
@@ -532,17 +563,17 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       <div className="space-y-8 p-6">
-        {/* Header */}
+        {/* Enhanced Header */}
         <div className="text-center">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent mb-3">
             Welcome Back, {getUserDisplayName()}
           </h1>
-          <p className="text-gray-600">Here's your financial overview</p>
+          <p className="text-lg text-gray-600">Here's your financial overview for today</p>
         </div>
 
-        {/* Key metrics */}
+        {/* Enhanced Key metrics */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <MetricCard
             title="Total Balance"
@@ -553,7 +584,7 @@ const Dashboard = () => {
             isMain={true}
           />
           <MetricCard
-            title="Total Income"
+            title="Monthly Income"
             value={userProfile?.monthly_income || 0}
             change="+5.2%"
             icon={TrendingUp}
@@ -577,12 +608,17 @@ const Dashboard = () => {
           />
         </div>
 
-        {/* Charts */}
+        {/* Enhanced Charts */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Balance Overview Chart */}
-          <Card className="bg-white shadow-lg">
+          <Card className="bg-white shadow-lg hover:shadow-xl transition-shadow duration-300">
             <div className="p-6">
-              <h3 className="text-lg font-semibold mb-4 text-gray-900">Balance Overview</h3>
+              <div className="flex items-center space-x-3 mb-6">
+                <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
+                  <BarChart className="w-5 h-5 text-blue-600" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900">Balance Overview</h3>
+              </div>
               <ResponsiveContainer width="100%" height={300}>
                 <AreaChart data={monthlyData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
@@ -592,16 +628,16 @@ const Dashboard = () => {
                     contentStyle={{ 
                       backgroundColor: 'white', 
                       border: '1px solid #e5e7eb',
-                      borderRadius: '8px',
-                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                      borderRadius: '12px',
+                      boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1)'
                     }}
                   />
                   <Area 
                     type="monotone" 
                     dataKey="income" 
                     stackId="1"
-                    stroke="#3B82F6" 
-                    fill="#3B82F6"
+                    stroke="#10B981" 
+                    fill="#10B981"
                     fillOpacity={0.6}
                   />
                   <Area 
@@ -617,14 +653,19 @@ const Dashboard = () => {
             </div>
           </Card>
 
-          {/* All Spending Pie Chart */}
-          <Card className="bg-white shadow-lg">
+          {/* All Spending Visualization */}
+          <Card className="bg-white shadow-lg hover:shadow-xl transition-shadow duration-300">
             <div className="p-6">
-              <h3 className="text-lg font-semibold mb-4 text-gray-900">All Spending</h3>
+              <div className="flex items-center space-x-3 mb-6">
+                <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
+                  <PieChart className="w-5 h-5 text-purple-600" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900">Spending Distribution</h3>
+              </div>
               <div className="flex items-center justify-center h-[300px]">
                 <div className="relative">
-                  <div className="w-48 h-48 rounded-full bg-gradient-to-r from-blue-400 to-blue-600 flex items-center justify-center">
-                    <div className="w-32 h-32 bg-white rounded-full flex items-center justify-center">
+                  <div className="w-48 h-48 rounded-full bg-gradient-to-br from-blue-400 via-blue-500 to-blue-600 flex items-center justify-center shadow-2xl">
+                    <div className="w-32 h-32 bg-white rounded-full flex items-center justify-center shadow-inner">
                       <div className="text-center">
                         <p className="text-2xl font-bold text-gray-900">${totalExpenses.toLocaleString()}</p>
                         <p className="text-sm text-gray-600">Total Spent</p>
@@ -632,14 +673,14 @@ const Dashboard = () => {
                     </div>
                   </div>
                   <div className="absolute top-4 right-4 text-center">
-                    <div className="w-3 h-3 bg-blue-500 rounded-full mb-1"></div>
-                    <p className="text-xs text-gray-600">Workplace</p>
-                    <p className="text-xs font-semibold">68%</p>
+                    <div className="w-4 h-4 bg-blue-500 rounded-full mb-1"></div>
+                    <p className="text-xs text-gray-600 font-medium">Expenses</p>
+                    <p className="text-xs font-bold">68%</p>
                   </div>
                   <div className="absolute bottom-4 left-4 text-center">
-                    <div className="w-3 h-3 bg-green-500 rounded-full mb-1"></div>
-                    <p className="text-xs text-gray-600">Employee Saving</p>
-                    <p className="text-xs font-semibold">32%</p>
+                    <div className="w-4 h-4 bg-emerald-500 rounded-full mb-1"></div>
+                    <p className="text-xs text-gray-600 font-medium">Savings</p>
+                    <p className="text-xs font-bold">32%</p>
                   </div>
                 </div>
               </div>
@@ -647,34 +688,37 @@ const Dashboard = () => {
           </Card>
         </div>
 
-        {/* Quick actions with enhanced design */}
+        {/* Enhanced Quick actions */}
         <div>
-          <h3 className="text-xl font-semibold text-gray-900 mb-6">Quick Actions</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <h3 className="text-2xl font-bold text-gray-900 mb-6">Quick Actions</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <QuickActionCard
               title="Add Transaction"
               description="Record income or expense"
               icon={Plus}
               color="blue"
               path="/transactions"
+              stats={transactions.length}
             />
             <QuickActionCard
-              title="Set Budget"
+              title="Manage Budget"
               description="Plan your spending"
               icon={PieChart}
               color="green"
               path="/budget"
+              stats={Object.keys(budgets).length}
             />
             <QuickActionCard
-              title="Create Goal"
-              description="Set financial target"
+              title="Track Goals"
+              description="Monitor progress"
               icon={Target}
               color="purple"
               path="/goals"
+              stats={goals.length}
             />
             <QuickActionCard
               title="View Reports"
-              description="Analyze your finances"
+              description="Analyze finances"
               icon={BarChart}
               color="orange"
               path="/reports"
@@ -682,17 +726,17 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Dashboard widgets with enhanced design */}
+        {/* Enhanced Dashboard widgets */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <RecentTransactions transactions={transactions} />
           <BudgetOverview budgetUsage={budgetUsage} />
           <GoalsProgress goals={goals} />
         </div>
 
-        {/* AI Insights with enhanced design */}
+        {/* Enhanced AI Insights */}
         <AIInsights insights={insights} />
 
-        {/* Setup Modal - Enhanced to always show for new users */}
+        {/* Setup Modal */}
         <SetupModal
           isOpen={showSetupModal}
           onClose={() => setShowSetupModal(false)}

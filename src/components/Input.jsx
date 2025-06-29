@@ -1,6 +1,6 @@
 import React from 'react';
 
-// Reusable input component with sharp edges and icon support
+// Reusable input component with rounded corners and icon support
 const Input = ({ 
   label, 
   error, 
@@ -31,7 +31,7 @@ const Input = ({
           id={inputId}
           name={inputName}
           className={`
-            w-full ${Icon ? 'pl-10' : 'pl-3'} pr-3 py-2 border text-sm
+            w-full ${Icon ? 'pl-10' : 'pl-3'} pr-3 py-2 border text-sm rounded-lg
             focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
             bg-white dark:bg-gray-700 text-gray-900 dark:text-white
             transition-colors duration-200

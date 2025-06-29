@@ -21,13 +21,7 @@ import {
   Download,
   Trash2,
   Moon,
-  Sun,
-  Lightbulb,
-  Zap,
-  Calendar,
-  TrendingUp,
-  Smartphone as Mobile,
-  CreditCard as Investment
+  Sun
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotifications } from '../contexts/NotificationContext';
@@ -37,7 +31,6 @@ import { supabase } from '../lib/supabase';
 import Card from '../components/Card';
 import Button from '../components/Button';
 import Input from '../components/Input';
-import ResponsiveModal from '../components/ResponsiveModal';
 
 // Settings sections
 const settingSections = [
@@ -50,205 +43,27 @@ const settingSections = [
   { id: 'advanced', name: 'Advanced', icon: Shield }
 ];
 
-// Beta Features Modal Component
-const BetaFeaturesModal = ({ isOpen, onClose }) => {
-  const { addNotification } = useNotifications();
-
-  const betaFeatures = [
-    {
-      id: 'ai-categorization',
-      title: 'AI-Powered Expense Categorization',
-      description: 'Automatically categorize transactions using advanced machine learning',
-      status: 'In Development',
-      eta: 'Q2 2025',
-      icon: Lightbulb,
-      color: 'blue'
-    },
-    {
-      id: 'investment-tracking',
-      title: 'Investment Portfolio Tracking',
-      description: 'Track stocks, bonds, and crypto investments in real-time',
-      status: 'Planning',
-      eta: 'Q3 2025',
-      icon: Investment,
-      color: 'green'
-    },
-    {
-      id: 'smart-goals',
-      title: 'Smart Goal Recommendations',
-      description: 'AI-suggested financial goals based on your spending patterns',
-      status: 'Research',
-      eta: 'Q4 2025',
-      icon: TrendingUp,
-      color: 'purple'
-    },
-    {
-      id: 'advanced-analytics',
-      title: 'Advanced Analytics Dashboard',
-      description: 'Predictive analytics and financial forecasting tools',
-      status: 'Concept',
-      eta: '2026',
-      icon: BarChart,
-      color: 'orange'
-    },
-    {
-      id: 'mobile-app',
-      title: 'Native Mobile App',
-      description: 'iOS and Android apps with offline capabilities',
-      status: 'In Development',
-      eta: 'Q3 2025',
-      icon: Mobile,
-      color: 'indigo'
-    },
-    {
-      id: 'bank-integration',
-      title: 'Bank Account Integration',
-      description: 'Direct connection to your bank accounts for automatic transaction import',
-      status: 'Planning',
-      eta: 'Q2 2025',
-      icon: CreditCard,
-      color: 'teal'
-    }
-  ];
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'In Development': return 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300';
-      case 'Planning': return 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300';
-      case 'Research': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300';
-      case 'Concept': return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
-      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
-    }
-  };
-
-  const handleJoinBeta = () => {
-    addNotification({
-      type: 'success',
-      title: 'Beta Program Interest Recorded',
-      message: 'Thank you for your interest! We\'ll notify you when beta features become available.'
-    });
-    onClose();
-  };
-
-  const handleFeatureRequest = () => {
-    addNotification({
-      type: 'info',
-      title: 'Feature Request Noted',
-      message: 'Your feature request has been recorded. We appreciate your feedback!'
-    });
-  };
-
+// Toggle Switch Component
+const ToggleSwitch = ({ checked, onChange, disabled = false }) => {
   return (
-    <ResponsiveModal
-      isOpen={isOpen}
-      onClose={onClose}
-      title="Beta Features & Roadmap"
-      size="2xl"
+    <button
+      type="button"
+      onClick={() => !disabled && onChange(!checked)}
+      disabled={disabled}
+      className={`
+        relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 ease-in-out
+        ${checked ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-600'}
+        ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
+        focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
+      `}
     >
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="text-center">
-          <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Zap className="w-8 h-8 text-white" />
-          </div>
-          <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-            Exciting Features Coming Soon!
-          </h3>
-          <p className="text-gray-600 dark:text-gray-300">
-            Get a sneak peek at what we're building for the future of financial management
-          </p>
-        </div>
-
-        {/* Features Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {betaFeatures.map((feature) => {
-            const Icon = feature.icon;
-            return (
-              <div key={feature.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition-shadow">
-                <div className="flex items-start space-x-3">
-                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center bg-${feature.color}-100 dark:bg-${feature.color}-900/50`}>
-                    <Icon className={`w-5 h-5 text-${feature.color}-600 dark:text-${feature.color}-400`} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h4 className="font-medium text-gray-900 dark:text-white text-sm">
-                      {feature.title}
-                    </h4>
-                    <p className="text-xs text-gray-600 dark:text-gray-300 mt-1">
-                      {feature.description}
-                    </p>
-                    <div className="flex items-center justify-between mt-3">
-                      <span className={`text-xs px-2 py-1 rounded-full ${getStatusColor(feature.status)}`}>
-                        {feature.status}
-                      </span>
-                      <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
-                        <Calendar className="w-3 h-3 mr-1" />
-                        {feature.eta}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Beta Program Info */}
-        <div className="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 p-6 rounded-lg border border-purple-200 dark:border-purple-700">
-          <h4 className="font-semibold text-purple-900 dark:text-purple-300 mb-2">
-            🚀 Join Our Beta Program
-          </h4>
-          <p className="text-purple-800 dark:text-purple-200 text-sm mb-4">
-            Be among the first to test new features and help shape the future of Finance AI Coach. 
-            Beta testers get early access to features and can provide valuable feedback.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-3">
-            <Button 
-              onClick={handleJoinBeta}
-              className="flex-1"
-              size="sm"
-            >
-              Join Beta Program
-            </Button>
-            <Button 
-              onClick={handleFeatureRequest}
-              variant="outline"
-              className="flex-1"
-              size="sm"
-            >
-              Request Feature
-            </Button>
-          </div>
-        </div>
-
-        {/* Development Timeline */}
-        <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-          <h4 className="font-medium text-gray-900 dark:text-white mb-3">Development Timeline</h4>
-          <div className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span className="text-gray-600 dark:text-gray-300">Q2 2025:</span>
-              <span className="text-gray-900 dark:text-white">AI Categorization, Bank Integration</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600 dark:text-gray-300">Q3 2025:</span>
-              <span className="text-gray-900 dark:text-white">Mobile App, Investment Tracking</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600 dark:text-gray-300">Q4 2025:</span>
-              <span className="text-gray-900 dark:text-white">Smart Goals, Enhanced Analytics</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600 dark:text-gray-300">2026:</span>
-              <span className="text-gray-900 dark:text-white">Advanced Analytics, AI Insights</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Footer */}
-        <div className="text-center text-sm text-gray-500 dark:text-gray-400">
-          <p>Timeline estimates are subject to change based on development progress and user feedback.</p>
-        </div>
-      </div>
-    </ResponsiveModal>
+      <span
+        className={`
+          inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200 ease-in-out
+          ${checked ? 'translate-x-6' : 'translate-x-1'}
+        `}
+      />
+    </button>
   );
 };
 
@@ -353,27 +168,19 @@ const ProfileSettings = () => {
         />
         <p className="text-xs text-gray-500 dark:text-gray-400 -mt-2">Email cannot be changed</p>
         
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Bio</label>
-          <textarea
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 text-sm"
-            rows={3}
-            value={formData.bio}
-            onChange={(e) => handleInputChange('bio', e.target.value)}
-            placeholder="Tell us a bit about yourself..."
-          />
-        </div>
+        <Input
+          label="Bio"
+          value={formData.bio}
+          onChange={(e) => handleInputChange('bio', e.target.value)}
+          placeholder="Tell us about yourself"
+        />
         
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">About Your Work</label>
-          <textarea
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 text-sm"
-            rows={3}
-            value={formData.about_work}
-            onChange={(e) => handleInputChange('about_work', e.target.value)}
-            placeholder="Describe your work or profession..."
-          />
-        </div>
+        <Input
+          label="About Work"
+          value={formData.about_work}
+          onChange={(e) => handleInputChange('about_work', e.target.value)}
+          placeholder="What do you do for work?"
+        />
         
         <Button 
           onClick={handleSave} 
@@ -538,9 +345,7 @@ const FinancialSettings = () => {
                 <p className="font-medium text-gray-900 dark:text-white">Auto-categorize transactions</p>
                 <p className="text-sm text-gray-600 dark:text-gray-300">Automatically assign categories to new transactions</p>
               </div>
-              <button className="relative inline-flex h-6 w-11 items-center rounded-full bg-blue-600 transition-colors">
-                <span className="inline-block h-4 w-4 transform rounded-full bg-white transition-transform translate-x-6" />
-              </button>
+              <ToggleSwitch checked={true} onChange={() => {}} />
             </div>
             
             <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
@@ -548,9 +353,7 @@ const FinancialSettings = () => {
                 <p className="font-medium text-gray-900 dark:text-white">Budget alerts</p>
                 <p className="text-sm text-gray-600 dark:text-gray-300">Get notified when approaching budget limits</p>
               </div>
-              <button className="relative inline-flex h-6 w-11 items-center rounded-full bg-blue-600 transition-colors">
-                <span className="inline-block h-4 w-4 transform rounded-full bg-white transition-transform translate-x-6" />
-              </button>
+              <ToggleSwitch checked={true} onChange={() => {}} />
             </div>
           </div>
         </div>
@@ -851,18 +654,10 @@ const NotificationSettings = () => {
               <p className="font-medium text-gray-900 dark:text-white">{option.label}</p>
               <p className="text-sm text-gray-600 dark:text-gray-300">{option.description}</p>
             </div>
-            <button
-              onClick={() => handleToggle(option.key)}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                notifications[option.key] ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-600'
-              }`}
-            >
-              <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                  notifications[option.key] ? 'translate-x-6' : 'translate-x-1'
-                }`}
-              />
-            </button>
+            <ToggleSwitch 
+              checked={notifications[option.key]} 
+              onChange={() => handleToggle(option.key)} 
+            />
           </div>
         ))}
       </div>
@@ -1164,7 +959,6 @@ For questions or support, contact: support@financeapp.com
         await supabase.from('goals').delete().eq('user_id', userId);
         await supabase.from('budgets').delete().eq('user_id', userId);
         await supabase.from('incomes').delete().eq('user_id', userId);
-        await supabase.from('notifications').delete().eq('user_id', userId);
         await supabase.from('user_profiles').delete().eq('id', userId);
       }
 
@@ -1287,12 +1081,11 @@ For questions or support, contact: support@financeapp.com
   );
 };
 
-// Advanced settings with dark mode toggle and beta features
+// Advanced settings with dark mode toggle
 const AdvancedSettings = () => {
   const { addNotification } = useNotifications();
   const { isDarkMode, enableDarkMode, disableDarkMode } = useDarkMode();
   const [developerMode, setDeveloperMode] = useState(isDarkMode);
-  const [showBetaModal, setShowBetaModal] = useState(false);
 
   const handleDeveloperModeToggle = () => {
     const newDeveloperMode = !developerMode;
@@ -1312,63 +1105,52 @@ const AdvancedSettings = () => {
   };
 
   const handleBetaFeatures = () => {
-    setShowBetaModal(true);
+    addNotification({
+      type: 'info',
+      title: 'Beta Features',
+      message: 'Beta program enrollment will be available soon'
+    });
   };
 
   return (
-    <>
-      <Card>
-        <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Advanced Settings</h3>
-        <div className="space-y-4">
-          <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-            <div className="flex items-center space-x-3">
-              {isDarkMode ? <Moon className="w-5 h-5 text-blue-400" /> : <Sun className="w-5 h-5 text-gray-600" />}
-              <div>
-                <p className="font-medium text-gray-900 dark:text-white">Developer Mode</p>
-                <p className="text-sm text-gray-600 dark:text-gray-300">
-                  Enable advanced features and dark mode
-                </p>
-              </div>
+    <Card>
+      <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Advanced Settings</h3>
+      <div className="space-y-4">
+        <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+          <div className="flex items-center space-x-3">
+            {isDarkMode ? <Moon className="w-5 h-5 text-blue-400" /> : <Sun className="w-5 h-5 text-gray-600" />}
+            <div>
+              <p className="font-medium text-gray-900 dark:text-white">Developer Mode</p>
+              <p className="text-sm text-gray-600 dark:text-gray-300">
+                Enable advanced features and dark mode
+              </p>
             </div>
-            <Button 
-              size="sm" 
-              variant={developerMode ? "primary" : "outline"}
-              onClick={handleDeveloperModeToggle}
-            >
-              {developerMode ? 'Disable' : 'Enable'}
-            </Button>
           </div>
-          
-          <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-            <div className="flex items-center space-x-3">
-              <Zap className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-              <div>
-                <p className="font-medium text-gray-900 dark:text-white">Beta Features</p>
-                <p className="text-sm text-gray-600 dark:text-gray-300">
-                  Explore upcoming features and roadmap
-                </p>
-              </div>
-            </div>
-            <Button size="sm" variant="outline" onClick={handleBetaFeatures}>
-              <Lightbulb className="w-4 h-4 mr-2" />
-              View Roadmap
-            </Button>
-          </div>
+          <ToggleSwitch 
+            checked={developerMode} 
+            onChange={handleDeveloperModeToggle} 
+          />
         </div>
-      </Card>
-
-      <BetaFeaturesModal
-        isOpen={showBetaModal}
-        onClose={() => setShowBetaModal(false)}
-      />
-    </>
+        
+        <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+          <div>
+            <p className="font-medium text-gray-900 dark:text-white">Beta Features</p>
+            <p className="text-sm text-gray-600 dark:text-gray-300">
+              Try new features before they're released
+            </p>
+          </div>
+          <Button size="sm" variant="outline" onClick={handleBetaFeatures}>
+            Join Beta
+          </Button>
+        </div>
+      </div>
+    </Card>
   );
 };
 
 // Main settings page component
 const Settings = () => {
   const { logout } = useAuth();
-  const { isDarkMode } = useDarkMode();
   const [activeSection, setActiveSection] = useState('profile');
 
   const handleLogout = async () => {
