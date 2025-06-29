@@ -166,7 +166,7 @@ const MetricCard = ({ title, value, change, icon: Icon, trend, prefix = '$', onE
   </Card>
 );
 
-// Recent transactions component
+// Recent transactions component with navigation
 const RecentTransactions = ({ transactions }) => {
   const navigate = useNavigate();
   const recentTransactions = transactions.slice(0, 5);
@@ -227,7 +227,7 @@ const RecentTransactions = ({ transactions }) => {
   );
 };
 
-// Budget overview component
+// Budget overview component with navigation
 const BudgetOverview = ({ budgetUsage }) => {
   const navigate = useNavigate();
   const categories = Object.entries(budgetUsage).slice(0, 4);
@@ -283,7 +283,7 @@ const BudgetOverview = ({ budgetUsage }) => {
   );
 };
 
-// Goals progress component
+// Goals progress component with navigation
 const GoalsProgress = ({ goals }) => {
   const navigate = useNavigate();
   const activeGoals = goals.slice(0, 3);
@@ -342,7 +342,7 @@ const GoalsProgress = ({ goals }) => {
   );
 };
 
-// AI Insights component
+// AI Insights component with navigation
 const AIInsights = ({ insights }) => {
   const navigate = useNavigate();
   const topInsights = insights.slice(0, 3);
@@ -482,7 +482,7 @@ const Dashboard = () => {
     setShowSetupModal(true);
   };
 
-  // Quick action handlers
+  // Quick action handlers with proper navigation
   const handleQuickAction = (action) => {
     switch (action) {
       case 'add-transaction':
@@ -607,7 +607,7 @@ const Dashboard = () => {
         </Card>
       </div>
 
-      {/* Quick actions */}
+      {/* Quick actions with working navigation */}
       <Card>
         <div className="p-6">
           <h3 className="text-lg font-semibold mb-4">Quick Actions</h3>
@@ -644,14 +644,14 @@ const Dashboard = () => {
         </div>
       </Card>
 
-      {/* Dashboard widgets */}
+      {/* Dashboard widgets with navigation */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <RecentTransactions transactions={transactions} />
         <BudgetOverview budgetUsage={budgetUsage} />
         <GoalsProgress goals={goals} />
       </div>
 
-      {/* AI Insights */}
+      {/* AI Insights with navigation */}
       <AIInsights insights={insights} />
 
       {/* Setup Modal */}
