@@ -326,6 +326,56 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Direct login for existing users without OTP
+  const directLogin = async (email) => {
+    try {
+      console.log('Attempting direct login for existing user:', email);
+      setError(null);
+      
+      // Get user profile from database
+      const { data: profiles, error: profileError } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('email', email)
+        .limit(1);
+
+      if (profileError) {
+        console.error('Error fetching user profile:', profileError);
+        throw new Error('Failed to fetch user profile');
+      }
+
+      if (!profiles || profiles.length === 0) {
+        throw new Error('User profile not found');
+      }
+
+      const userProfile = profiles[0];
+      console.log('Found user profile for direct login:', userProfile);
+
+      // Create user object
+      const userData = {
+        id: userProfile.id,
+        email: userProfile.email,
+        name: userProfile.name || capitalizeName(userProfile.email.split('@')[0])
+      };
+
+      // Set user and profile immediately
+      setUser(userData);
+      setUserProfile(userProfile);
+
+      // Store in persistent storage
+      localStorage.setItem('financeapp_user', JSON.stringify(userData));
+      localStorage.setItem('financeapp_profile', JSON.stringify(userProfile));
+      localStorage.setItem('financeapp_session_timestamp', Date.now().toString());
+
+      console.log('Direct login successful for:', email);
+      return { success: true, user: userData };
+    } catch (error) {
+      console.error('Direct login error:', error);
+      setError(error.message || 'Failed to login directly');
+      throw error;
+    }
+  };
+
   // Check if user exists (for returning users)
   const checkUserExists = async (email) => {
     try {
@@ -545,14 +595,14 @@ export const AuthProvider = ({ children }) => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
         <div className="text-center">
-          <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 animate-spin mx-auto mb-4"></div>
+          <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-gray-600 dark:text-gray-300">Initializing...</p>
           {error && (
-            <div className="mt-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 max-w-md mx-auto">
+            <div className="mt-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg max-w-md mx-auto">
               <p className="text-red-800 dark:text-red-200 text-sm">{error}</p>
               <button 
                 onClick={() => window.location.reload()} 
-                className="mt-2 px-4 py-2 bg-red-600 text-white text-sm hover:bg-red-700 transition-colors"
+                className="mt-2 px-4 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700 transition-colors"
               >
                 Reload Page
               </button>
@@ -572,6 +622,7 @@ export const AuthProvider = ({ children }) => {
       sendVerificationCode,
       verifyCode,
       checkUserExists,
+      directLogin,
       logout,
       updateUserProfile,
       getUserDisplayName,

@@ -8,7 +8,7 @@ import Button from '../components/Button';
 import { Mail, Shield, ArrowRight, CheckCircle, AlertCircle, ExternalLink, RefreshCw, LogIn } from 'lucide-react';
 
 const Login = () => {
-  const [step, setStep] = useState('email'); // 'email' or 'verification'
+  const [step, setStep] = useState('email'); // 'email', 'direct-login', or 'verification'
   const [email, setEmail] = useState('');
   const [verificationCode, setVerificationCode] = useState('');
   const [error, setError] = useState('');
@@ -16,7 +16,7 @@ const Login = () => {
   const [isReturningUser, setIsReturningUser] = useState(false);
   const [lastCodeSentAt, setLastCodeSentAt] = useState(null);
   const [userExists, setUserExists] = useState(false);
-  const { user, sendVerificationCode, verifyCode, checkUserExists, isLoading, error: authError, clearError } = useAuth();
+  const { user, sendVerificationCode, verifyCode, checkUserExists, directLogin, isLoading, error: authError, clearError } = useAuth();
   const { addNotification } = useNotifications();
 
   // Redirect if already logged in
@@ -103,21 +103,20 @@ const Login = () => {
     setError('');
     
     try {
-      // For existing users, send OTP for verification
-      const result = await sendVerificationCode(email);
+      // For existing users, attempt direct login without OTP
+      const result = await directLogin(email);
       
       if (result.success) {
-        setStep('verification');
-        setLastCodeSentAt(Date.now());
         addNotification({
           type: 'success',
-          title: 'Verification Code Sent',
-          message: `We've sent a verification code to ${email} for security`
+          title: 'Welcome Back!',
+          message: `Successfully logged in to your account`
         });
+        // Navigation will happen automatically via auth state change
       }
     } catch (error) {
       console.error('Direct login error:', error);
-      setError(error.message || 'Failed to send verification code. Please try again.');
+      setError(error.message || 'Failed to login. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -247,7 +246,7 @@ const Login = () => {
             {step === 'email' 
               ? 'Your intelligent financial companion - no password required!' 
               : step === 'direct-login'
-              ? `Welcome back! We found your account for ${email}`
+              ? `Welcome back! Click below to access your dashboard`
               : `We sent a 6-digit code to ${email}`
             }
           </p>
@@ -302,7 +301,7 @@ const Login = () => {
                   <span className="text-sm font-medium">Secure & Passwordless</span>
                 </div>
                 <p className="text-xs sm:text-sm text-blue-700 dark:text-blue-300 mt-1">
-                  We'll check if you have an account. New users will receive a verification code.
+                  Existing users get instant access. New users receive a verification code.
                 </p>
               </div>
             </form>
@@ -318,7 +317,7 @@ const Login = () => {
                   </span>
                 </div>
                 <p className="text-xs sm:text-sm mt-1 text-green-700 dark:text-green-200">
-                  We found your existing account for {email}
+                  We found your existing account for {email}. Click below for instant access.
                 </p>
               </div>
 
@@ -329,9 +328,9 @@ const Login = () => {
                   disabled={isSubmitting}
                   className="flex-1 text-base sm:text-lg py-3"
                 >
-                  {isSubmitting ? 'Sending Code...' : (
+                  {isSubmitting ? 'Logging in...' : (
                     <>
-                      Access Dashboard
+                      Go to Dashboard
                       <LogIn className="w-4 h-4 ml-2" />
                     </>
                   )}
@@ -350,31 +349,18 @@ const Login = () => {
               </div>
             </div>
           ) : (
-            // Verification Step
+            // Verification Step (only for new users)
             <form onSubmit={handleCodeSubmit} className="space-y-4 sm:space-y-6">
               {/* Status indicator */}
-              <div className={`p-3 sm:p-4 rounded-lg border-l-4 ${
-                isReturningUser 
-                  ? 'bg-green-50 dark:bg-green-900/20 border-green-400' 
-                  : 'bg-blue-50 dark:bg-blue-900/20 border-blue-400'
-              }`}>
+              <div className="p-3 sm:p-4 rounded-lg border-l-4 bg-blue-50 dark:bg-blue-900/20 border-blue-400">
                 <div className="flex items-center">
-                  <CheckCircle className={`w-5 h-5 mr-2 flex-shrink-0 ${
-                    isReturningUser ? 'text-green-600 dark:text-green-400' : 'text-blue-600 dark:text-blue-400'
-                  }`} />
-                  <span className={`font-medium text-sm sm:text-base ${
-                    isReturningUser ? 'text-green-900 dark:text-green-300' : 'text-blue-900 dark:text-blue-300'
-                  }`}>
-                    {isReturningUser ? 'Welcome back!' : 'Creating your account...'}
+                  <CheckCircle className="w-5 h-5 mr-2 flex-shrink-0 text-blue-600 dark:text-blue-400" />
+                  <span className="font-medium text-sm sm:text-base text-blue-900 dark:text-blue-300">
+                    Creating your account...
                   </span>
                 </div>
-                <p className={`text-xs sm:text-sm mt-1 ${
-                  isReturningUser ? 'text-green-700 dark:text-green-200' : 'text-blue-700 dark:text-blue-200'
-                }`}>
-                  {isReturningUser 
-                    ? 'Enter the verification code to access your account.' 
-                    : 'We\'ll set up your new account once you verify your email.'
-                  }
+                <p className="text-xs sm:text-sm mt-1 text-blue-700 dark:text-blue-200">
+                  We'll set up your new account once you verify your email.
                 </p>
               </div>
 
@@ -432,7 +418,7 @@ const Login = () => {
                 >
                   {isSubmitting ? 'Verifying...' : (
                     <>
-                      {isReturningUser ? 'Go to Dashboard' : 'Complete Setup'}
+                      Complete Setup
                       <LogIn className="w-4 h-4 ml-2" />
                     </>
                   )}
@@ -476,9 +462,9 @@ const Login = () => {
         <div className="mt-4 sm:mt-6 text-center">
           <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 px-4">
             {step === 'email' 
-              ? 'Existing users will be recognized automatically. New users will receive a verification code.'
+              ? 'Existing users get instant access. New users will receive a verification code.'
               : step === 'direct-login'
-              ? 'For security, we\'ll send a verification code to confirm it\'s really you.'
+              ? 'Your account is ready! Click the button above to access your dashboard instantly.'
               : 'Having trouble? Make sure to check your spam folder and that you entered the correct email address.'
             }
           </p>
