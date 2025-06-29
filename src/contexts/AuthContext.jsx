@@ -90,14 +90,14 @@ export const AuthProvider = ({ children }) => {
       console.log('Setting user data:', userData);
       setUser(userData);
       
-      // Try to get/create profile with timeout and fallback
+      // Try to get/create profile with increased timeout and better error handling
       try {
         console.log('Creating/getting profile for user:', authUser.id, authUser.email);
         
-        // Set a timeout for profile creation - increased from 20 seconds to 30 seconds
+        // Increased timeout from 30 seconds to 60 seconds
         const profilePromise = createOrGetUserProfile(authUser.id, authUser.email);
         const timeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Profile creation timeout')), 30000)
+          setTimeout(() => reject(new Error('Profile creation timeout')), 60000)
         );
         
         const profile = await Promise.race([profilePromise, timeoutPromise]);
@@ -134,15 +134,32 @@ export const AuthProvider = ({ children }) => {
         setUserProfile(fallbackProfile);
         localStorage.setItem('financeapp_profile', JSON.stringify(fallbackProfile));
         
-        // Try to create profile in background without blocking
+        // Try to create profile in background without blocking - with retry logic
         setTimeout(async () => {
-          try {
-            await createOrGetUserProfile(authUser.id, authUser.email);
-            console.log('Background profile creation successful');
-          } catch (bgError) {
-            console.warn('Background profile creation failed:', bgError);
+          let retryCount = 0;
+          const maxRetries = 3;
+          
+          while (retryCount < maxRetries) {
+            try {
+              console.log(`Background profile creation attempt ${retryCount + 1}/${maxRetries}`);
+              const profile = await createOrGetUserProfile(authUser.id, authUser.email);
+              console.log('Background profile creation successful:', profile);
+              
+              // Update the profile state if successful
+              setUserProfile(profile);
+              localStorage.setItem('financeapp_profile', JSON.stringify(profile));
+              break;
+            } catch (bgError) {
+              retryCount++;
+              console.warn(`Background profile creation attempt ${retryCount} failed:`, bgError);
+              
+              if (retryCount < maxRetries) {
+                // Wait before retrying (exponential backoff)
+                await new Promise(resolve => setTimeout(resolve, Math.pow(2, retryCount) * 1000));
+              }
+            }
           }
-        }, 1000);
+        }, 2000); // Start after 2 seconds instead of 1
       }
       
       // Save basic user data to localStorage
