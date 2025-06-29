@@ -75,7 +75,7 @@ function App() {
           <Router>
             <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
               <Routes>
-                {/* Public Routes */}
+                {/* Public Routes - Show when no user is logged in */}
                 <Route 
                   path="/login" 
                   element={
@@ -105,7 +105,7 @@ function App() {
                   element={<ResetPassword />} 
                 />
                 
-                {/* Protected Routes */}
+                {/* Protected Routes - Show only when user is logged in */}
                 <Route 
                   path="/" 
                   element={
@@ -125,7 +125,7 @@ function App() {
                   <Route path="settings" element={<Settings />} />
                 </Route>
                 
-                {/* Catch all route */}
+                {/* Default route - redirect to login when no user */}
                 <Route path="*" element={<Navigate to="/login" replace />} />
               </Routes>
               <ToastContainer />
