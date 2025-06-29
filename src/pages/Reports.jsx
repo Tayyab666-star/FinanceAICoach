@@ -37,15 +37,15 @@ const ReportModal = ({ isOpen, onClose, template, onGenerate }) => {
   return (
     <div className="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center z-50">
       <Card className="w-full max-w-md m-4">
-        <h3 className="text-lg font-semibold mb-4">Generate Report</h3>
-        <p className="text-gray-600 mb-4">{template?.title}</p>
+        <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Generate Report</h3>
+        <p className="text-gray-600 dark:text-gray-300 mb-4">{template?.title}</p>
         
         <div className="space-y-4">
           {/* Date Range */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Date Range</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Date Range</label>
             <select
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               value={dateRange}
               onChange={(e) => setDateRange(e.target.value)}
             >
@@ -61,7 +61,7 @@ const ReportModal = ({ isOpen, onClose, template, onGenerate }) => {
 
           {/* Format */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Export Format</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Export Format</label>
             <div className="flex space-x-4">
               <label className="flex items-center">
                 <input
@@ -71,7 +71,7 @@ const ReportModal = ({ isOpen, onClose, template, onGenerate }) => {
                   onChange={(e) => setFormat(e.target.value)}
                   className="mr-2"
                 />
-                PDF
+                <span className="text-gray-900 dark:text-white">PDF</span>
               </label>
               <label className="flex items-center">
                 <input
@@ -81,7 +81,7 @@ const ReportModal = ({ isOpen, onClose, template, onGenerate }) => {
                   onChange={(e) => setFormat(e.target.value)}
                   className="mr-2"
                 />
-                CSV
+                <span className="text-gray-900 dark:text-white">CSV</span>
               </label>
               <label className="flex items-center">
                 <input
@@ -91,7 +91,7 @@ const ReportModal = ({ isOpen, onClose, template, onGenerate }) => {
                   onChange={(e) => setFormat(e.target.value)}
                   className="mr-2"
                 />
-                Excel
+                <span className="text-gray-900 dark:text-white">Excel</span>
               </label>
             </div>
           </div>
@@ -105,7 +105,7 @@ const ReportModal = ({ isOpen, onClose, template, onGenerate }) => {
                 onChange={(e) => setIncludeCharts(e.target.checked)}
                 className="mr-2"
               />
-              Include charts and visualizations
+              <span className="text-gray-900 dark:text-white">Include charts and visualizations</span>
             </label>
           </div>
 
@@ -402,38 +402,38 @@ Expense Transactions: ${filteredTransactions.filter(t => t.type === 'expense').l
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Reports & Exports</h1>
-        <p className="text-gray-600">Generate comprehensive financial reports and export your data</p>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Reports & Exports</h1>
+        <p className="text-gray-600 dark:text-gray-300">Generate comprehensive financial reports and export your data</p>
       </div>
 
       {/* Quick stats with real data */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card className="p-4 text-center">
-          <p className="text-2xl font-bold text-gray-900">{stats.reportsGenerated}</p>
-          <p className="text-sm font-medium text-gray-600">Reports Generated</p>
-          <p className="text-xs text-gray-500 mt-1">This session</p>
+          <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.reportsGenerated}</p>
+          <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Reports Generated</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">This session</p>
         </Card>
         <Card className="p-4 text-center">
-          <p className="text-2xl font-bold text-gray-900">{stats.dataPoints}</p>
-          <p className="text-sm font-medium text-gray-600">Data Points</p>
-          <p className="text-xs text-gray-500 mt-1">Across all accounts</p>
+          <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.dataPoints}</p>
+          <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Data Points</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Across all accounts</p>
         </Card>
         <Card className="p-4 text-center">
-          <p className="text-2xl font-bold text-gray-900">3</p>
-          <p className="text-sm font-medium text-gray-600">Export Formats</p>
-          <p className="text-xs text-gray-500 mt-1">PDF, CSV, Excel</p>
+          <p className="text-2xl font-bold text-gray-900 dark:text-white">3</p>
+          <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Export Formats</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">PDF, CSV, Excel</p>
         </Card>
         <Card className="p-4 text-center">
-          <p className="text-2xl font-bold text-gray-900">{transactions.length}</p>
-          <p className="text-sm font-medium text-gray-600">Total Transactions</p>
-          <p className="text-xs text-gray-500 mt-1">All time</p>
+          <p className="text-2xl font-bold text-gray-900 dark:text-white">{transactions.length}</p>
+          <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Total Transactions</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">All time</p>
         </Card>
       </div>
 
       {/* Report templates */}
       <Card>
         <div className="p-6">
-          <h3 className="text-lg font-semibold mb-6">Available Reports</h3>
+          <h3 className="text-lg font-semibold mb-6 text-gray-900 dark:text-white">Available Reports</h3>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {reportTemplates.map((template) => {
@@ -441,25 +441,25 @@ Expense Transactions: ${filteredTransactions.filter(t => t.type === 'expense').l
               return (
                 <div 
                   key={template.id}
-                  className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 hover:shadow-md transition-all cursor-pointer"
+                  className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:border-blue-300 dark:hover:border-blue-600 hover:shadow-md transition-all cursor-pointer"
                   onClick={() => handleGenerateReport(template)}
                 >
                   <div className="flex items-start space-x-3 mb-3">
-                    <div className="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                      <Icon className="w-5 h-5 text-blue-600" />
+                    <div className="flex-shrink-0 w-10 h-10 bg-blue-100 dark:bg-blue-900/50 rounded-lg flex items-center justify-center">
+                      <Icon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h4 className="text-sm font-medium text-gray-900">{template.title}</h4>
-                      <p className="text-xs text-gray-600 mt-1">{template.description}</p>
+                      <h4 className="text-sm font-medium text-gray-900 dark:text-white">{template.title}</h4>
+                      <p className="text-xs text-gray-600 dark:text-gray-300 mt-1">{template.description}</p>
                     </div>
                   </div>
                   
-                  <div className="text-xs text-gray-500 mb-3">
-                    <strong>Preview:</strong> {template.preview}
+                  <div className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+                    <strong>Preview:</strong> <span className="text-gray-900 dark:text-white">{template.preview}</span>
                   </div>
                   
                   <div className="flex justify-between items-center">
-                    <span className="text-xs text-gray-500">Format: {template.format}</span>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">Format: <span className="text-gray-900 dark:text-white">{template.format}</span></span>
                     <Button size="sm" variant="outline">
                       <Download className="w-3 h-3 mr-1" />
                       Generate
@@ -475,22 +475,22 @@ Expense Transactions: ${filteredTransactions.filter(t => t.type === 'expense').l
       {/* Recent reports */}
       <Card>
         <div className="p-6">
-          <h3 className="text-lg font-semibold mb-4">Recent Reports</h3>
+          <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Recent Reports</h3>
           
           {recentReports.length > 0 ? (
             <div className="space-y-3">
               {recentReports.map((report) => (
-                <div key={report.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div key={report.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
                   <div className="flex items-center space-x-3">
-                    <FileText className="w-5 h-5 text-gray-600" />
+                    <FileText className="w-5 h-5 text-gray-600 dark:text-gray-300" />
                     <div>
-                      <p className="text-sm font-medium text-gray-900">{report.name}</p>
-                      <p className="text-xs text-gray-500">Generated {report.date} • {report.size}</p>
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">{report.name}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">Generated {report.date} • {report.size}</p>
                     </div>
                   </div>
                   
                   <div className="flex items-center space-x-2">
-                    <span className="text-xs text-gray-500 bg-gray-200 px-2 py-1 rounded">
+                    <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-200 dark:bg-gray-600 px-2 py-1 rounded">
                       {report.format}
                     </span>
                     <Button size="sm" variant="outline">
@@ -501,8 +501,8 @@ Expense Transactions: ${filteredTransactions.filter(t => t.type === 'expense').l
               ))}
             </div>
           ) : (
-            <div className="text-center py-8 text-gray-500">
-              <FileText className="w-12 h-12 text-gray-300 mx-auto mb-2" />
+            <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+              <FileText className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-2" />
               <p>No reports generated yet</p>
               <p className="text-sm">Generate your first report to see it here</p>
             </div>
@@ -513,7 +513,7 @@ Expense Transactions: ${filteredTransactions.filter(t => t.type === 'expense').l
       {/* Export options */}
       <Card>
         <div className="p-6">
-          <h3 className="text-lg font-semibold mb-4">Quick Export Options</h3>
+          <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Quick Export Options</h3>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Button 
@@ -522,7 +522,7 @@ Expense Transactions: ${filteredTransactions.filter(t => t.type === 'expense').l
               onClick={() => handleQuickExport('transactions')}
             >
               <Download className="w-4 h-4 mr-2" />
-              Export All Transactions ({transactions.length})
+              <span className="text-gray-900 dark:text-white">Export All Transactions ({transactions.length})</span>
             </Button>
             
             <Button 
@@ -531,7 +531,7 @@ Expense Transactions: ${filteredTransactions.filter(t => t.type === 'expense').l
               onClick={() => handleQuickExport('budget')}
             >
               <Download className="w-4 h-4 mr-2" />
-              Export Budget Data ({Object.keys(budgets).length} categories)
+              <span className="text-gray-900 dark:text-white">Export Budget Data ({Object.keys(budgets).length} categories)</span>
             </Button>
             
             <Button 
@@ -540,7 +540,7 @@ Expense Transactions: ${filteredTransactions.filter(t => t.type === 'expense').l
               onClick={() => handleQuickExport('goals')}
             >
               <Download className="w-4 h-4 mr-2" />
-              Export Goals Progress ({goals.length} goals)
+              <span className="text-gray-900 dark:text-white">Export Goals Progress ({goals.length} goals)</span>
             </Button>
           </div>
         </div>

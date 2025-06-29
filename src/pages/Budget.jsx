@@ -18,22 +18,22 @@ const BudgetCard = ({ category, usage, onEdit }) => {
     <Card className="p-4">
       <div className="flex justify-between items-start mb-3">
         <div>
-          <h3 className="font-semibold text-gray-900">{category}</h3>
-          <p className="text-sm text-gray-600">
+          <h3 className="font-semibold text-gray-900 dark:text-white">{category}</h3>
+          <p className="text-sm text-gray-600 dark:text-gray-300">
             ${usage.spent.toFixed(2)} of ${usage.budget.toFixed(2)}
           </p>
         </div>
         <button 
           onClick={() => onEdit(category, usage.budget)}
-          className="p-1 hover:bg-gray-100 rounded"
+          className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
         >
-          <Edit className="w-4 h-4 text-gray-600" />
+          <Edit className="w-4 h-4 text-gray-600 dark:text-gray-300" />
         </button>
       </div>
 
       {/* Progress bar */}
       <div className="mb-3">
-        <div className="w-full bg-gray-200 rounded-full h-2">
+        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
           <div 
             className={`h-2 rounded-full transition-all duration-300 ${
               isOverBudget ? 'bg-red-500' : percentage > 80 ? 'bg-yellow-500' : 'bg-green-500'
@@ -41,9 +41,9 @@ const BudgetCard = ({ category, usage, onEdit }) => {
             style={{ width: `${Math.min(percentage, 100)}%` }}
           />
         </div>
-        <div className="flex justify-between text-xs text-gray-600 mt-1">
-          <span>{percentage.toFixed(1)}% used</span>
-          <span className={isOverBudget ? 'text-red-600' : 'text-green-600'}>
+        <div className="flex justify-between text-xs text-gray-600 dark:text-gray-300 mt-1">
+          <span className="text-gray-900 dark:text-white">{percentage.toFixed(1)}% used</span>
+          <span className={isOverBudget ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}>
             {isOverBudget ? `$${Math.abs(usage.remaining).toFixed(2)} over` : `$${usage.remaining.toFixed(2)} left`}
           </span>
         </div>
@@ -54,17 +54,17 @@ const BudgetCard = ({ category, usage, onEdit }) => {
         {isOverBudget ? (
           <>
             <AlertTriangle className="w-4 h-4 text-red-500 mr-2" />
-            <span className="text-sm text-red-600">Over budget</span>
+            <span className="text-sm text-red-600 dark:text-red-400">Over budget</span>
           </>
         ) : percentage > 80 ? (
           <>
             <AlertTriangle className="w-4 h-4 text-yellow-500 mr-2" />
-            <span className="text-sm text-yellow-600">Almost at limit</span>
+            <span className="text-sm text-yellow-600 dark:text-yellow-400">Almost at limit</span>
           </>
         ) : (
           <>
             <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
-            <span className="text-sm text-green-600">On track</span>
+            <span className="text-sm text-green-600 dark:text-green-400">On track</span>
           </>
         )}
       </div>
@@ -126,13 +126,13 @@ const AISuggestions = ({ budgetUsage, monthlyIncome, onApply }) => {
     return (
       <Card>
         <div className="flex items-center mb-4">
-          <Brain className="w-5 h-5 text-blue-600 mr-2" />
-          <h3 className="text-lg font-semibold">AI Budget Suggestions</h3>
+          <Brain className="w-5 h-5 text-blue-600 dark:text-blue-400 mr-2" />
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">AI Budget Suggestions</h3>
         </div>
         <div className="text-center py-4">
           <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-2" />
-          <p className="text-gray-600">Your budget looks well-balanced!</p>
-          <p className="text-sm text-gray-500">No immediate adjustments needed.</p>
+          <p className="text-gray-600 dark:text-gray-300">Your budget looks well-balanced!</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">No immediate adjustments needed.</p>
         </div>
       </Card>
     );
@@ -141,33 +141,33 @@ const AISuggestions = ({ budgetUsage, monthlyIncome, onApply }) => {
   return (
     <Card>
       <div className="flex items-center mb-4">
-        <Brain className="w-5 h-5 text-blue-600 mr-2" />
-        <h3 className="text-lg font-semibold">AI Budget Suggestions</h3>
+        <Brain className="w-5 h-5 text-blue-600 dark:text-blue-400 mr-2" />
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">AI Budget Suggestions</h3>
       </div>
       
       <div className="space-y-4">
         {suggestions.map((suggestion, index) => (
-          <div key={index} className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+          <div key={index} className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-700">
             <div className="flex justify-between items-start mb-2">
-              <h4 className="font-medium text-gray-900">{suggestion.category}</h4>
+              <h4 className="font-medium text-gray-900 dark:text-white">{suggestion.category}</h4>
               <span className={`text-xs px-2 py-1 rounded-full ${
                 suggestion.confidence === 'High' 
-                  ? 'bg-green-100 text-green-800' 
-                  : 'bg-yellow-100 text-yellow-800'
+                  ? 'bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-300' 
+                  : 'bg-yellow-100 dark:bg-yellow-900/50 text-yellow-800 dark:text-yellow-300'
               }`}>
                 {suggestion.confidence} Confidence
               </span>
             </div>
             
-            <p className="text-sm text-gray-600 mb-3">{suggestion.reason}</p>
+            <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">{suggestion.reason}</p>
             
             <div className="flex items-center justify-between">
               <div className="text-sm">
-                <span className="text-gray-600">Current: </span>
-                <span className="font-medium">${suggestion.currentBudget.toFixed(2)}</span>
-                <span className="text-gray-600 mx-2">→</span>
-                <span className="text-gray-600">Suggested: </span>
-                <span className="font-medium text-blue-600">${suggestion.suggestedBudget.toFixed(2)}</span>
+                <span className="text-gray-600 dark:text-gray-300">Current: </span>
+                <span className="font-medium text-gray-900 dark:text-white">${suggestion.currentBudget.toFixed(2)}</span>
+                <span className="text-gray-600 dark:text-gray-300 mx-2">→</span>
+                <span className="text-gray-600 dark:text-gray-300">Suggested: </span>
+                <span className="font-medium text-blue-600 dark:text-blue-400">${suggestion.suggestedBudget.toFixed(2)}</span>
               </div>
               
               <Button 
@@ -226,9 +226,9 @@ const BudgetSetupModal = ({ isOpen, onClose, onSave, monthlyBudget }) => {
   return (
     <div className="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center z-50">
       <Card className="w-full max-w-2xl m-4 max-h-[90vh] overflow-y-auto">
-        <h3 className="text-lg font-semibold mb-4">Set Up Category Budgets</h3>
-        <p className="text-gray-600 mb-6">
-          Allocate your monthly budget of ${monthlyBudget.toLocaleString()} across categories
+        <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Set Up Category Budgets</h3>
+        <p className="text-gray-600 dark:text-gray-300 mb-6">
+          Allocate your monthly budget of <span className="font-semibold text-gray-900 dark:text-white">${monthlyBudget.toLocaleString()}</span> across categories
         </p>
         
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -246,14 +246,14 @@ const BudgetSetupModal = ({ isOpen, onClose, onSave, monthlyBudget }) => {
             ))}
           </div>
           
-          <div className={`p-4 rounded-lg ${remaining >= 0 ? 'bg-green-50' : 'bg-red-50'}`}>
+          <div className={`p-4 rounded-lg ${remaining >= 0 ? 'bg-green-50 dark:bg-green-900/20' : 'bg-red-50 dark:bg-red-900/20'}`}>
             <div className="flex justify-between items-center">
-              <span className="font-medium">Total Allocated:</span>
-              <span className="font-bold">${totalAllocated.toLocaleString()}</span>
+              <span className="font-medium text-gray-900 dark:text-white">Total Allocated:</span>
+              <span className="font-bold text-gray-900 dark:text-white">${totalAllocated.toLocaleString()}</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="font-medium">Remaining:</span>
-              <span className={`font-bold ${remaining >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+              <span className="font-medium text-gray-900 dark:text-white">Remaining:</span>
+              <span className={`font-bold ${remaining >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                 ${remaining.toLocaleString()}
               </span>
             </div>
@@ -312,7 +312,7 @@ const EditCategoryModal = ({ isOpen, onClose, category, currentBudget, onSave })
   return (
     <div className="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center z-50">
       <Card className="w-full max-w-md m-4">
-        <h3 className="text-lg font-semibold mb-4">Edit {category} Budget</h3>
+        <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Edit {category} Budget</h3>
         
         <form onSubmit={handleSubmit} className="space-y-4">
           <Input
@@ -384,8 +384,8 @@ const Budget = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Budget Management</h1>
-          <p className="text-gray-600">Plan and track your spending by category</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Budget Management</h1>
+          <p className="text-gray-600 dark:text-gray-300">Plan and track your spending by category</p>
         </div>
         
         <div className="flex space-x-3">
@@ -403,10 +403,10 @@ const Budget = () => {
       {!hasSetupBudgets ? (
         // Setup prompt
         <Card className="p-12 text-center">
-          <TrendingUp className="w-16 h-16 text-blue-500 mx-auto mb-4" />
-          <h3 className="text-xl font-semibold text-gray-900 mb-2">Set Up Your Budget</h3>
-          <p className="text-gray-600 mb-6">
-            Allocate your monthly budget of ${userProfile?.monthly_budget?.toLocaleString() || '0'} across different categories to track your spending.
+          <TrendingUp className="w-16 h-16 text-blue-500 dark:text-blue-400 mx-auto mb-4" />
+          <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Set Up Your Budget</h3>
+          <p className="text-gray-600 dark:text-gray-300 mb-6">
+            Allocate your monthly budget of <span className="font-semibold text-gray-900 dark:text-white">${userProfile?.monthly_budget?.toLocaleString() || '0'}</span> across different categories to track your spending.
           </p>
           <Button onClick={() => setShowSetupModal(true)} size="lg">
             <Plus className="w-5 h-5 mr-2" />
@@ -418,19 +418,19 @@ const Budget = () => {
           {/* Budget overview */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <Card className="p-4 text-center">
-              <h3 className="text-sm font-medium text-gray-600 mb-2">Total Budgeted</h3>
-              <p className="text-2xl font-bold text-gray-900">${totalAllocated.toLocaleString()}</p>
+              <h3 className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">Total Budgeted</h3>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">${totalAllocated.toLocaleString()}</p>
             </Card>
             
             <Card className="p-4 text-center">
-              <h3 className="text-sm font-medium text-gray-600 mb-2">Total Spent</h3>
-              <p className="text-2xl font-bold text-gray-900">${totalSpent.toLocaleString()}</p>
+              <h3 className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">Total Spent</h3>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">${totalSpent.toLocaleString()}</p>
             </Card>
             
             <Card className="p-4 text-center">
-              <h3 className="text-sm font-medium text-gray-600 mb-2">Remaining</h3>
+              <h3 className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">Remaining</h3>
               <p className={`text-2xl font-bold ${
-                totalRemaining >= 0 ? 'text-green-600' : 'text-red-600'
+                totalRemaining >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
               }`}>
                 ${Math.abs(totalRemaining).toLocaleString()}
               </p>

@@ -101,38 +101,38 @@ const LearnMoreModal = ({ isOpen, onClose, insight }) => {
     >
       <div className="space-y-6">
         <div className={`p-4 rounded-lg border-l-4 ${
-          insight.type === 'warning' ? 'bg-orange-50 border-orange-400' :
-          insight.type === 'success' ? 'bg-green-50 border-green-400' :
-          'bg-blue-50 border-blue-400'
+          insight.type === 'warning' ? 'bg-orange-50 dark:bg-orange-900/20 border-orange-400' :
+          insight.type === 'success' ? 'bg-green-50 dark:bg-green-900/20 border-green-400' :
+          'bg-blue-50 dark:bg-blue-900/20 border-blue-400'
         }`}>
-          <h4 className="font-medium text-gray-900 mb-2">{insight.title}</h4>
-          <p className="text-sm text-gray-600">{insight.message}</p>
+          <h4 className="font-medium text-gray-900 dark:text-white mb-2">{insight.title}</h4>
+          <p className="text-sm text-gray-600 dark:text-gray-300">{insight.message}</p>
         </div>
 
         <div>
-          <h4 className="font-medium text-gray-900 mb-3">Detailed Analysis</h4>
-          <div className="prose prose-sm text-gray-600">
+          <h4 className="font-medium text-gray-900 dark:text-white mb-3">Detailed Analysis</h4>
+          <div className="prose prose-sm text-gray-600 dark:text-gray-300">
             {details.content.split('\n').map((line, index) => (
-              <p key={index} className="mb-2">{line}</p>
+              <p key={index} className="mb-2 text-gray-600 dark:text-gray-300">{line}</p>
             ))}
           </div>
         </div>
 
         <div>
-          <h4 className="font-medium text-gray-900 mb-3">Actionable Tips</h4>
+          <h4 className="font-medium text-gray-900 dark:text-white mb-3">Actionable Tips</h4>
           <ul className="space-y-2">
             {details.tips.map((tip, index) => (
               <li key={index} className="flex items-start space-x-2">
                 <span className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></span>
-                <span className="text-sm text-gray-600">{tip}</span>
+                <span className="text-sm text-gray-600 dark:text-gray-300">{tip}</span>
               </li>
             ))}
           </ul>
         </div>
 
-        <div className="bg-gray-50 p-4 rounded-lg">
-          <h4 className="font-medium text-gray-900 mb-2">💡 Pro Tip</h4>
-          <p className="text-sm text-gray-600">
+        <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+          <h4 className="font-medium text-gray-900 dark:text-white mb-2">💡 Pro Tip</h4>
+          <p className="text-sm text-gray-600 dark:text-gray-300">
             Use our AI Coach feature to get personalized financial advice and ask specific questions about your financial situation.
           </p>
         </div>
@@ -154,8 +154,8 @@ const AIInsights = ({ insights }) => {
   if (!insights || insights.length === 0) {
     return (
       <Card>
-        <h3 className="text-lg font-semibold mb-4">AI Financial Insights</h3>
-        <div className="text-center py-8 text-gray-500">
+        <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">AI Financial Insights</h3>
+        <div className="text-center py-8 text-gray-500 dark:text-gray-400">
           <p>Add more transactions to get personalized insights!</p>
         </div>
       </Card>
@@ -165,21 +165,21 @@ const AIInsights = ({ insights }) => {
   return (
     <>
       <Card>
-        <h3 className="text-lg font-semibold mb-4">AI Financial Insights</h3>
+        <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">AI Financial Insights</h3>
         <div className="space-y-4">
           {insights.slice(0, 3).map((insight, index) => (
             <div 
               key={index}
               className={`p-4 rounded-lg border-l-4 ${
                 insight.type === 'warning' 
-                  ? 'bg-orange-50 border-orange-400' 
+                  ? 'bg-orange-50 dark:bg-orange-900/20 border-orange-400' 
                   : insight.type === 'success'
-                  ? 'bg-green-50 border-green-400'
-                  : 'bg-blue-50 border-blue-400'
+                  ? 'bg-green-50 dark:bg-green-900/20 border-green-400'
+                  : 'bg-blue-50 dark:bg-blue-900/20 border-blue-400'
               }`}
             >
-              <h4 className="font-medium text-gray-900 mb-1">{insight.title}</h4>
-              <p className="text-sm text-gray-600 mb-3">{insight.message}</p>
+              <h4 className="font-medium text-gray-900 dark:text-white mb-1">{insight.title}</h4>
+              <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">{insight.message}</p>
               <Button 
                 size="sm" 
                 variant="outline"
@@ -206,19 +206,19 @@ const MetricCard = ({ title, value, change, icon: Icon, trend }) => (
   <Card className="p-4">
     <div className="flex items-center justify-between">
       <div>
-        <p className="text-sm font-medium text-gray-600">{title}</p>
-        <p className="text-2xl font-bold text-gray-900">{value}</p>
+        <p className="text-sm font-medium text-gray-600 dark:text-gray-300">{title}</p>
+        <p className="text-2xl font-bold text-gray-900 dark:text-white">{value}</p>
         {change && (
           <div className={`flex items-center mt-1 text-sm ${
-            trend === 'up' ? 'text-green-600' : 'text-red-600'
+            trend === 'up' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
           }`}>
             {trend === 'up' ? <TrendingUp className="w-4 h-4 mr-1" /> : <TrendingDown className="w-4 h-4 mr-1" />}
-            {change}
+            <span className="text-gray-900 dark:text-white">{change}</span>
           </div>
         )}
       </div>
-      <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-        <Icon className="w-6 h-6 text-blue-600" />
+      <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/50 rounded-lg flex items-center justify-center">
+        <Icon className="w-6 h-6 text-blue-600 dark:text-blue-400" />
       </div>
     </div>
   </Card>
@@ -391,20 +391,20 @@ const Analytics = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Financial Analytics</h1>
-          <p className="text-gray-600">Deep insights into your financial patterns</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Financial Analytics</h1>
+          <p className="text-gray-600 dark:text-gray-300">Deep insights into your financial patterns</p>
         </div>
         
         {/* Time range selector */}
-        <div className="flex bg-gray-100 rounded-lg p-1">
+        <div className="flex bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
           {['1m', '3m', '6m', '1y'].map((range) => (
             <button
               key={range}
               onClick={() => setTimeRange(range)}
               className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
                 timeRange === range
-                  ? 'bg-white text-blue-600 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
+                  ? 'bg-white dark:bg-gray-600 text-blue-600 dark:text-blue-400 shadow-sm'
+                  : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
               }`}
             >
               {range === '1m' ? '1 Month' : 
@@ -451,7 +451,7 @@ const Analytics = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Income vs Expenses */}
         <Card>
-          <h3 className="text-lg font-semibold mb-4">Income vs Expenses</h3>
+          <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Income vs Expenses</h3>
           {monthlyData.length > 0 ? (
             <ResponsiveContainer width="100%" height={300}>
               <AreaChart data={monthlyData}>
@@ -478,7 +478,7 @@ const Analytics = () => {
               </AreaChart>
             </ResponsiveContainer>
           ) : (
-            <div className="h-[300px] flex items-center justify-center text-gray-500">
+            <div className="h-[300px] flex items-center justify-center text-gray-500 dark:text-gray-400">
               <div className="text-center">
                 <p>No transaction data available</p>
                 <p className="text-sm">Add transactions to see your income vs expenses chart</p>
@@ -489,7 +489,7 @@ const Analytics = () => {
 
         {/* Spending by Category */}
         <Card>
-          <h3 className="text-lg font-semibold mb-4">Spending by Category</h3>
+          <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Spending by Category</h3>
           {categorySpending.length > 0 ? (
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
@@ -510,7 +510,7 @@ const Analytics = () => {
               </PieChart>
             </ResponsiveContainer>
           ) : (
-            <div className="h-[300px] flex items-center justify-center text-gray-500">
+            <div className="h-[300px] flex items-center justify-center text-gray-500 dark:text-gray-400">
               <div className="text-center">
                 <p>No expense data available</p>
                 <p className="text-sm">Add expense transactions to see category breakdown</p>
@@ -521,7 +521,7 @@ const Analytics = () => {
 
         {/* Daily Spending Pattern */}
         <Card>
-          <h3 className="text-lg font-semibold mb-4">Daily Spending Pattern</h3>
+          <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Daily Spending Pattern</h3>
           {dailySpending.some(d => d.amount > 0) ? (
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={dailySpending}>
@@ -533,7 +533,7 @@ const Analytics = () => {
               </BarChart>
             </ResponsiveContainer>
           ) : (
-            <div className="h-[300px] flex items-center justify-center text-gray-500">
+            <div className="h-[300px] flex items-center justify-center text-gray-500 dark:text-gray-400">
               <div className="text-center">
                 <p>No spending pattern data</p>
                 <p className="text-sm">Add more transactions to see daily spending patterns</p>
@@ -544,7 +544,7 @@ const Analytics = () => {
 
         {/* Savings Trend */}
         <Card>
-          <h3 className="text-lg font-semibold mb-4">Savings Trend</h3>
+          <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Savings Trend</h3>
           {monthlyData.length > 0 ? (
             <ResponsiveContainer width="100%" height={300}>
               <LineChart data={monthlyData}>
@@ -562,7 +562,7 @@ const Analytics = () => {
               </LineChart>
             </ResponsiveContainer>
           ) : (
-            <div className="h-[300px] flex items-center justify-center text-gray-500">
+            <div className="h-[300px] flex items-center justify-center text-gray-500 dark:text-gray-400">
               <div className="text-center">
                 <p>No savings data available</p>
                 <p className="text-sm">Add income and expense transactions to track savings</p>
@@ -577,16 +577,16 @@ const Analytics = () => {
 
       {/* Category breakdown table */}
       <Card>
-        <h3 className="text-lg font-semibold mb-4">Category Breakdown</h3>
+        <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Category Breakdown</h3>
         {categorySpending.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-gray-200">
-                  <th className="text-left py-3 text-gray-600 font-medium">Category</th>
-                  <th className="text-right py-3 text-gray-600 font-medium">Amount</th>
-                  <th className="text-right py-3 text-gray-600 font-medium">Percentage</th>
-                  <th className="text-right py-3 text-gray-600 font-medium">Transactions</th>
+                <tr className="border-b border-gray-200 dark:border-gray-700">
+                  <th className="text-left py-3 text-gray-600 dark:text-gray-300 font-medium">Category</th>
+                  <th className="text-right py-3 text-gray-600 dark:text-gray-300 font-medium">Amount</th>
+                  <th className="text-right py-3 text-gray-600 dark:text-gray-300 font-medium">Percentage</th>
+                  <th className="text-right py-3 text-gray-600 dark:text-gray-300 font-medium">Transactions</th>
                 </tr>
               </thead>
               <tbody>
@@ -596,19 +596,19 @@ const Analytics = () => {
                   ).length;
                   
                   return (
-                    <tr key={index} className="border-b border-gray-100">
+                    <tr key={index} className="border-b border-gray-100 dark:border-gray-700">
                       <td className="py-3">
                         <div className="flex items-center">
                           <div 
                             className="w-3 h-3 rounded-full mr-3"
                             style={{ backgroundColor: category.color }}
                           />
-                          {category.name}
+                          <span className="text-gray-900 dark:text-white">{category.name}</span>
                         </div>
                       </td>
-                      <td className="text-right py-3 font-medium">${category.amount.toFixed(2)}</td>
-                      <td className="text-right py-3">{category.percentage}%</td>
-                      <td className="text-right py-3 text-gray-600">{transactionCount}</td>
+                      <td className="text-right py-3 font-medium text-gray-900 dark:text-white">${category.amount.toFixed(2)}</td>
+                      <td className="text-right py-3 text-gray-900 dark:text-white">{category.percentage}%</td>
+                      <td className="text-right py-3 text-gray-600 dark:text-gray-300">{transactionCount}</td>
                     </tr>
                   );
                 })}
@@ -616,7 +616,7 @@ const Analytics = () => {
             </table>
           </div>
         ) : (
-          <div className="text-center py-8 text-gray-500">
+          <div className="text-center py-8 text-gray-500 dark:text-gray-400">
             <p>No expense categories to display</p>
             <p className="text-sm">Add expense transactions to see detailed breakdown</p>
           </div>
