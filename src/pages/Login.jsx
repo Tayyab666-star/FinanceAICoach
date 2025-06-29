@@ -169,7 +169,7 @@ const Login = () => {
   // Show loading state while auth is being checked
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 px-4">
         <div className="text-center">
           <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-gray-600 dark:text-gray-300">Loading...</p>
@@ -179,15 +179,15 @@ const Login = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 px-4 py-8">
       <div className="max-w-md w-full">
         {/* Header */}
-        <div className="text-center mb-8">
-          <div className="flex justify-center mb-4">
+        <div className="text-center mb-6 sm:mb-8">
+          <div className="flex justify-center items-center mb-4 space-x-3">
             <img 
               src="/WhatsApp Image 2025-06-29 at 13.46.00_d292e4a6.jpg" 
               alt="Finance AI Coach" 
-              className="h-16 w-auto object-contain"
+              className="h-12 sm:h-16 w-auto object-contain"
               onError={(e) => {
                 // Fallback to gradient icon if image fails to load
                 e.target.style.display = 'none';
@@ -195,15 +195,23 @@ const Login = () => {
               }}
             />
             <div 
-              className="w-16 h-16 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg hidden"
+              className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg hidden"
             >
-              <span className="text-2xl font-bold text-white">F</span>
+              <span className="text-xl sm:text-2xl font-bold text-white">F</span>
+            </div>
+            <div className="text-left">
+              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white">
+                Finance AI Coach
+              </h1>
+              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 mt-1">
+                Intelligent Financial Companion
+              </p>
             </div>
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-            {step === 'email' ? 'Welcome to Finance AI Coach' : 'Check Your Email'}
-          </h1>
-          <p className="text-gray-600 dark:text-gray-300 mt-2">
+          <h2 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-2">
+            {step === 'email' ? 'Welcome' : 'Check Your Email'}
+          </h2>
+          <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300">
             {step === 'email' 
               ? 'Your intelligent financial companion - no password required!' 
               : `We sent a 6-digit code to ${email}`
@@ -211,10 +219,10 @@ const Login = () => {
           </p>
         </div>
         
-        <Card className="shadow-xl border-0 backdrop-blur-sm bg-white/90 dark:bg-gray-800/90">
+        <Card className="shadow-xl border-0 backdrop-blur-sm bg-white/90 dark:bg-gray-800/90 p-4 sm:p-6">
           {step === 'email' ? (
             // Email Step
-            <form onSubmit={handleEmailSubmit} className="space-y-6">
+            <form onSubmit={handleEmailSubmit} className="space-y-4 sm:space-y-6">
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                 <Input
@@ -226,7 +234,7 @@ const Login = () => {
                     setError('');
                   }}
                   placeholder="Enter your email address"
-                  className="pl-12 text-lg"
+                  className="pl-12 text-base sm:text-lg"
                   disabled={isSubmitting}
                   error={error}
                 />
@@ -236,7 +244,7 @@ const Login = () => {
                 type="submit"
                 loading={isSubmitting}
                 disabled={isSubmitting}
-                className="w-full text-lg py-3"
+                className="w-full text-base sm:text-lg py-3"
               >
                 {isSubmitting ? 'Sending Code...' : (
                   <>
@@ -247,36 +255,36 @@ const Login = () => {
               </Button>
               
               {/* Security note */}
-              <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+              <div className="bg-blue-50 dark:bg-blue-900/20 p-3 sm:p-4 rounded-lg">
                 <div className="flex items-center text-blue-800 dark:text-blue-200">
-                  <Shield className="w-4 h-4 mr-2" />
+                  <Shield className="w-4 h-4 mr-2 flex-shrink-0" />
                   <span className="text-sm font-medium">Secure & Passwordless</span>
                 </div>
-                <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
+                <p className="text-xs sm:text-sm text-blue-700 dark:text-blue-300 mt-1">
                   We'll send a secure 6-digit verification code to your email. No passwords to remember!
                 </p>
               </div>
             </form>
           ) : (
             // Verification Step
-            <form onSubmit={handleCodeSubmit} className="space-y-6">
+            <form onSubmit={handleCodeSubmit} className="space-y-4 sm:space-y-6">
               {/* Status indicator */}
-              <div className={`p-4 rounded-lg border-l-4 ${
+              <div className={`p-3 sm:p-4 rounded-lg border-l-4 ${
                 isReturningUser 
                   ? 'bg-green-50 dark:bg-green-900/20 border-green-400' 
                   : 'bg-blue-50 dark:bg-blue-900/20 border-blue-400'
               }`}>
                 <div className="flex items-center">
-                  <CheckCircle className={`w-5 h-5 mr-2 ${
+                  <CheckCircle className={`w-5 h-5 mr-2 flex-shrink-0 ${
                     isReturningUser ? 'text-green-600 dark:text-green-400' : 'text-blue-600 dark:text-blue-400'
                   }`} />
-                  <span className={`font-medium ${
+                  <span className={`font-medium text-sm sm:text-base ${
                     isReturningUser ? 'text-green-900 dark:text-green-300' : 'text-blue-900 dark:text-blue-300'
                   }`}>
                     {isReturningUser ? 'Welcome back!' : 'Creating your account...'}
                   </span>
                 </div>
-                <p className={`text-sm mt-1 ${
+                <p className={`text-xs sm:text-sm mt-1 ${
                   isReturningUser ? 'text-green-700 dark:text-green-200' : 'text-blue-700 dark:text-blue-200'
                 }`}>
                   {isReturningUser 
@@ -299,7 +307,7 @@ const Login = () => {
                     setError('');
                   }}
                   placeholder="000000"
-                  className="text-center text-2xl tracking-widest font-mono"
+                  className="text-center text-xl sm:text-2xl tracking-widest font-mono"
                   disabled={isSubmitting}
                   error={error}
                   maxLength={6}
@@ -307,10 +315,10 @@ const Login = () => {
               </div>
 
               {/* Email check reminder */}
-              <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg border border-yellow-200 dark:border-yellow-700">
+              <div className="bg-yellow-50 dark:bg-yellow-900/20 p-3 sm:p-4 rounded-lg border border-yellow-200 dark:border-yellow-700">
                 <div className="flex items-start">
                   <AlertCircle className="w-5 h-5 text-yellow-600 dark:text-yellow-400 mr-2 mt-0.5 flex-shrink-0" />
-                  <div>
+                  <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
                       Check your email for the 6-digit code
                     </p>
@@ -339,7 +347,7 @@ const Login = () => {
                   type="submit"
                   loading={isSubmitting}
                   disabled={isSubmitting || verificationCode.length !== 6}
-                  className="flex-1 text-lg py-3"
+                  className="flex-1 text-base sm:text-lg py-3"
                 >
                   {isSubmitting ? 'Verifying...' : 'Continue to Dashboard'}
                 </Button>
@@ -347,7 +355,7 @@ const Login = () => {
               
               {/* Resend and back options */}
               <div className="flex flex-col space-y-3 text-center">
-                <div className="flex items-center justify-center space-x-4">
+                <div className="flex flex-col sm:flex-row items-center justify-center space-y-2 sm:space-y-0 sm:space-x-4">
                   <button
                     type="button"
                     onClick={handleResendCode}
@@ -362,7 +370,7 @@ const Login = () => {
                     {canResendCode() ? 'Resend Code' : `Resend in ${getResendCooldown()}s`}
                   </button>
                   
-                  <span className="text-gray-300 dark:text-gray-600">|</span>
+                  <span className="text-gray-300 dark:text-gray-600 hidden sm:inline">|</span>
                   
                   <button
                     type="button"
@@ -379,8 +387,8 @@ const Login = () => {
         </Card>
         
         {/* Help text */}
-        <div className="mt-6 text-center">
-          <p className="text-sm text-gray-500 dark:text-gray-400">
+        <div className="mt-4 sm:mt-6 text-center">
+          <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 px-4">
             {step === 'email' 
               ? 'New users will automatically get an account created upon email verification.'
               : 'Having trouble? Make sure to check your spam folder and that you entered the correct email address.'
