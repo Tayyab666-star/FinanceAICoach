@@ -1,6 +1,6 @@
 import React from 'react';
 
-// Reusable input component with rounded corners and icon support
+// Reusable input component with consistent styling, proper form attributes, and responsive design
 const Input = ({ 
   label, 
   error, 

@@ -15,6 +15,7 @@ const Login = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isReturningUser, setIsReturningUser] = useState(false);
   const [lastCodeSentAt, setLastCodeSentAt] = useState(null);
+  const [userExists, setUserExists] = useState(false);
   const { user, sendVerificationCode, verifyCode, checkUserExists, isLoading, error: authError, clearError } = useAuth();
   const { addNotification } = useNotifications();
 
@@ -63,8 +64,46 @@ const Login = () => {
       // Check if user exists
       const userCheck = await checkUserExists(email);
       setIsReturningUser(userCheck.exists);
+      setUserExists(userCheck.exists);
       
-      // Send verification code
+      if (userCheck.exists) {
+        // For existing users, show direct login option
+        addNotification({
+          type: 'success',
+          title: 'Account Found',
+          message: `Welcome back! We found your account for ${email}`
+        });
+        
+        // Set step to show direct login option
+        setStep('direct-login');
+      } else {
+        // For new users, send verification code
+        const result = await sendVerificationCode(email);
+        
+        if (result.success) {
+          setStep('verification');
+          setLastCodeSentAt(Date.now());
+          addNotification({
+            type: 'success',
+            title: 'Verification Code Sent',
+            message: `We've sent a 6-digit verification code to ${email}`
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Email submission error:', error);
+      setError(error.message || 'Failed to process email. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDirectLogin = async () => {
+    setIsSubmitting(true);
+    setError('');
+    
+    try {
+      // For existing users, send OTP for verification
       const result = await sendVerificationCode(email);
       
       if (result.success) {
@@ -73,11 +112,11 @@ const Login = () => {
         addNotification({
           type: 'success',
           title: 'Verification Code Sent',
-          message: `We've sent a 6-digit verification code to ${email}`
+          message: `We've sent a verification code to ${email} for security`
         });
       }
     } catch (error) {
-      console.error('Email submission error:', error);
+      console.error('Direct login error:', error);
       setError(error.message || 'Failed to send verification code. Please try again.');
     } finally {
       setIsSubmitting(false);
@@ -148,6 +187,7 @@ const Login = () => {
     setVerificationCode('');
     setError('');
     setIsReturningUser(false);
+    setUserExists(false);
     setLastCodeSentAt(null);
   };
 
@@ -200,11 +240,14 @@ const Login = () => {
             </div>
           </div>
           <h2 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-2">
-            {step === 'email' ? 'Welcome' : 'Check Your Email'}
+            {step === 'email' ? 'Welcome' : 
+             step === 'direct-login' ? 'Account Found' : 'Check Your Email'}
           </h2>
           <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300">
             {step === 'email' 
               ? 'Your intelligent financial companion - no password required!' 
+              : step === 'direct-login'
+              ? `Welcome back! We found your account for ${email}`
               : `We sent a 6-digit code to ${email}`
             }
           </p>
@@ -244,9 +287,9 @@ const Login = () => {
                 disabled={isSubmitting || !email}
                 className="w-full text-base sm:text-lg py-3"
               >
-                {isSubmitting ? 'Sending Code...' : (
+                {isSubmitting ? 'Checking Account...' : (
                   <>
-                    Send Verification Code
+                    Continue
                     <ArrowRight className="w-5 h-5 ml-2" />
                   </>
                 )}
@@ -259,10 +302,53 @@ const Login = () => {
                   <span className="text-sm font-medium">Secure & Passwordless</span>
                 </div>
                 <p className="text-xs sm:text-sm text-blue-700 dark:text-blue-300 mt-1">
-                  We'll send a secure 6-digit verification code to your email. No passwords to remember!
+                  We'll check if you have an account. New users will receive a verification code.
                 </p>
               </div>
             </form>
+          ) : step === 'direct-login' ? (
+            // Direct Login Step for Existing Users
+            <div className="space-y-4 sm:space-y-6">
+              {/* Account found indicator */}
+              <div className="p-3 sm:p-4 rounded-lg border-l-4 bg-green-50 dark:bg-green-900/20 border-green-400">
+                <div className="flex items-center">
+                  <CheckCircle className="w-5 h-5 mr-2 flex-shrink-0 text-green-600 dark:text-green-400" />
+                  <span className="font-medium text-sm sm:text-base text-green-900 dark:text-green-300">
+                    Welcome back!
+                  </span>
+                </div>
+                <p className="text-xs sm:text-sm mt-1 text-green-700 dark:text-green-200">
+                  We found your existing account for {email}
+                </p>
+              </div>
+
+              <div className="flex space-x-3">
+                <Button
+                  onClick={handleDirectLogin}
+                  loading={isSubmitting}
+                  disabled={isSubmitting}
+                  className="flex-1 text-base sm:text-lg py-3"
+                >
+                  {isSubmitting ? 'Sending Code...' : (
+                    <>
+                      Access Dashboard
+                      <LogIn className="w-4 h-4 ml-2" />
+                    </>
+                  )}
+                </Button>
+              </div>
+              
+              <div className="text-center">
+                <button
+                  type="button"
+                  onClick={handleBackToEmail}
+                  disabled={isSubmitting}
+                  className="text-sm text-gray-600 hover:text-gray-500 dark:text-gray-400 dark:hover:text-gray-300"
+                >
+                  Use Different Email
+                </button>
+              </div>
+            </div>
           ) : (
             // Verification Step
             <form onSubmit={handleCodeSubmit} className="space-y-4 sm:space-y-6">
@@ -286,7 +372,7 @@ const Login = () => {
                   isReturningUser ? 'text-green-700 dark:text-green-200' : 'text-blue-700 dark:text-blue-200'
                 }`}>
                   {isReturningUser 
-                    ? 'We found your existing account. Enter the code to sign in.' 
+                    ? 'Enter the verification code to access your account.' 
                     : 'We\'ll set up your new account once you verify your email.'
                   }
                 </p>
@@ -390,7 +476,9 @@ const Login = () => {
         <div className="mt-4 sm:mt-6 text-center">
           <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 px-4">
             {step === 'email' 
-              ? 'New users will automatically get an account created upon email verification.'
+              ? 'Existing users will be recognized automatically. New users will receive a verification code.'
+              : step === 'direct-login'
+              ? 'For security, we\'ll send a verification code to confirm it\'s really you.'
               : 'Having trouble? Make sure to check your spam folder and that you entered the correct email address.'
             }
           </p>
