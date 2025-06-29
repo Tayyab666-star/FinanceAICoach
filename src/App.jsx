@@ -13,6 +13,7 @@ import Reports from './pages/Reports';
 import Settings from './pages/Settings';
 import Layout from './components/Layout';
 import LoadingSpinner from './components/LoadingSpinner';
+import ToastContainer from './components/ToastContainer';
  
 const ProtectedRoute = ({ children }) => {
   const { user, isLoading } = useAuth();
@@ -97,6 +98,7 @@ function App() {
               </Route>
               <Route path="*" element={<Navigate to="/login" replace />} />
             </Routes>
+            <ToastContainer />
           </div>
         </Router>
       </NotificationProvider>

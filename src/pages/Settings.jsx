@@ -17,10 +17,16 @@ import {
   Smartphone,
   Mail,
   CheckCircle,
-  X
+  X,
+  Download,
+  Trash2,
+  Moon,
+  Sun
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotifications } from '../contexts/NotificationContext';
+import { useTransactions, useGoals, useBudgetCategories } from '../hooks/useSupabaseData';
+import { supabase } from '../lib/supabase';
 import Card from '../components/Card';
 import Button from '../components/Button';
 import Input from '../components/Input';
@@ -35,6 +41,9 @@ const settingSections = [
   { id: 'data', name: 'Data & Privacy', icon: Database },
   { id: 'advanced', name: 'Advanced', icon: Shield }
 ];
+
+// Dark mode context
+const DarkModeContext = React.createContext();
 
 // Profile settings component
 const ProfileSettings = () => {
@@ -377,6 +386,11 @@ const SecuritySettings = () => {
 
   const handleEnableTwoFactor = () => {
     setShowTwoFactorSetup(true);
+    addNotification({
+      type: 'info',
+      title: '2FA Setup Started',
+      message: 'Please enter your phone number to continue'
+    });
   };
 
   const handleVerifyTwoFactor = () => {
@@ -780,10 +794,366 @@ const ConnectedAccounts = () => {
   );
 };
 
+// Data & Privacy component with export and delete functionality
+const DataPrivacySettings = () => {
+  const { user, userProfile, logout } = useAuth();
+  const { transactions } = useTransactions();
+  const { goals } = useGoals();
+  const { budgets } = useBudgetCategories();
+  const { addNotification } = useNotifications();
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const generateComprehensiveReport = () => {
+    const reportDate = new Date().toLocaleDateString();
+    const totalIncome = transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
+    const totalExpenses = transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + Math.abs(t.amount), 0);
+    const netWorth = totalIncome - totalExpenses;
+    
+    // Calculate category spending
+    const categorySpending = {};
+    transactions.filter(t => t.type === 'expense').forEach(t => {
+      categorySpending[t.category] = (categorySpending[t.category] || 0) + Math.abs(t.amount);
+    });
+
+    const reportContent = `
+COMPREHENSIVE FINANCIAL REPORT
+Generated on: ${reportDate}
+Account: ${user?.email}
+User: ${userProfile?.name || 'N/A'}
+
+═══════════════════════════════════════════════════════════════════
+
+EXECUTIVE SUMMARY
+═══════════════════════════════════════════════════════════════════
+Total Income:           $${totalIncome.toLocaleString()}
+Total Expenses:         $${totalExpenses.toLocaleString()}
+Net Worth:              $${netWorth.toLocaleString()}
+Savings Rate:           ${totalIncome > 0 ? ((netWorth / totalIncome) * 100).toFixed(1) : 0}%
+Total Transactions:     ${transactions.length}
+
+ACCOUNT INFORMATION
+═══════════════════════════════════════════════════════════════════
+Monthly Income:         $${(userProfile?.monthly_income || 0).toLocaleString()}
+Monthly Budget:         $${(userProfile?.monthly_budget || 0).toLocaleString()}
+Setup Completed:        ${userProfile?.setup_completed ? 'Yes' : 'No'}
+Account Created:        ${userProfile?.created_at ? new Date(userProfile.created_at).toLocaleDateString() : 'N/A'}
+
+INCOME BREAKDOWN
+═══════════════════════════════════════════════════════════════════
+${transactions.filter(t => t.type === 'income').map(t => 
+  `${t.date} | $${t.amount.toFixed(2)} | ${t.description} | ${t.category}`
+).join('\n') || 'No income transactions recorded'}
+
+EXPENSE BREAKDOWN BY CATEGORY
+═══════════════════════════════════════════════════════════════════
+${Object.entries(categorySpending).map(([category, amount]) => 
+  `${category}: $${amount.toFixed(2)} (${totalExpenses > 0 ? ((amount / totalExpenses) * 100).toFixed(1) : 0}%)`
+).join('\n') || 'No expense categories found'}
+
+DETAILED EXPENSE TRANSACTIONS
+═══════════════════════════════════════════════════════════════════
+${transactions.filter(t => t.type === 'expense').map(t => 
+  `${t.date} | $${Math.abs(t.amount).toFixed(2)} | ${t.category} | ${t.description}`
+).join('\n') || 'No expense transactions recorded'}
+
+BUDGET ALLOCATION
+═══════════════════════════════════════════════════════════════════
+${Object.entries(budgets).map(([category, amount]) => 
+  `${category}: $${amount.toFixed(2)} allocated`
+).join('\n') || 'No budget categories set'}
+
+FINANCIAL GOALS
+═══════════════════════════════════════════════════════════════════
+${goals.map(goal => {
+  const progress = goal.target_amount > 0 ? (goal.current_amount / goal.target_amount) * 100 : 0;
+  return `${goal.title}:
+  Target: $${goal.target_amount.toLocaleString()}
+  Current: $${goal.current_amount.toLocaleString()}
+  Progress: ${progress.toFixed(1)}%
+  Deadline: ${goal.deadline}
+  Category: ${goal.category}`;
+}).join('\n\n') || 'No financial goals set'}
+
+SPENDING PATTERNS & INSIGHTS
+═══════════════════════════════════════════════════════════════════
+• Average transaction amount: $${transactions.length > 0 ? (totalExpenses / transactions.filter(t => t.type === 'expense').length).toFixed(2) : '0.00'}
+• Most frequent category: ${Object.entries(categorySpending).sort((a, b) => b[1] - a[1])[0]?.[0] || 'N/A'}
+• Largest expense: $${Math.max(...transactions.filter(t => t.type === 'expense').map(t => Math.abs(t.amount)), 0).toFixed(2)}
+• Budget utilization: ${Object.keys(budgets).length > 0 ? 'Active budget tracking' : 'No budget set'}
+
+RECOMMENDATIONS
+═══════════════════════════════════════════════════════════════════
+${netWorth >= 0 ? '✓ Positive net worth - Great job maintaining financial health!' : '⚠ Negative net worth - Consider reducing expenses or increasing income'}
+${(netWorth / totalIncome * 100) > 20 ? '✓ Excellent savings rate - You\'re on track for financial success' : '• Consider increasing your savings rate to at least 20%'}
+${goals.length > 0 ? '✓ Financial goals set - Stay focused on achieving them' : '• Consider setting financial goals to improve motivation'}
+${Object.keys(budgets).length > 0 ? '✓ Budget tracking active - Continue monitoring your spending' : '• Set up budget categories to better track your spending'}
+
+═══════════════════════════════════════════════════════════════════
+Report generated by FinanceApp
+For questions or support, contact: support@financeapp.com
+═══════════════════════════════════════════════════════════════════
+    `;
+
+    return reportContent;
+  };
+
+  const handleExportData = () => {
+    try {
+      const reportContent = generateComprehensiveReport();
+      const blob = new Blob([reportContent], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `financial-report-${new Date().toISOString().split('T')[0]}.txt`;
+      a.click();
+      URL.revokeObjectURL(url);
+
+      addNotification({
+        type: 'success',
+        title: 'Data Exported Successfully',
+        message: 'Your comprehensive financial report has been downloaded'
+      });
+    } catch (error) {
+      addNotification({
+        type: 'error',
+        title: 'Export Failed',
+        message: 'Failed to export data. Please try again.'
+      });
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmText !== 'DELETE') {
+      addNotification({
+        type: 'error',
+        title: 'Confirmation Required',
+        message: 'Please type "DELETE" to confirm account deletion'
+      });
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      // Delete all user data from Supabase
+      const userId = user?.id;
+      
+      if (userId) {
+        // Delete in order to respect foreign key constraints
+        await supabase.from('transactions').delete().eq('user_id', userId);
+        await supabase.from('goals').delete().eq('user_id', userId);
+        await supabase.from('budgets').delete().eq('user_id', userId);
+        await supabase.from('incomes').delete().eq('user_id', userId);
+        await supabase.from('user_profiles').delete().eq('id', userId);
+      }
+
+      addNotification({
+        type: 'success',
+        title: 'Account Deleted',
+        message: 'Your account and all data have been permanently deleted'
+      });
+
+      // Logout and redirect to login
+      setTimeout(() => {
+        logout();
+      }, 2000);
+
+    } catch (error) {
+      console.error('Error deleting account:', error);
+      addNotification({
+        type: 'error',
+        title: 'Deletion Failed',
+        message: 'Failed to delete account. Please try again or contact support.'
+      });
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteConfirm(false);
+      setDeleteConfirmText('');
+    }
+  };
+
+  return (
+    <Card>
+      <h3 className="text-lg font-semibold mb-4">Data & Privacy</h3>
+      <div className="space-y-4">
+        <div className="p-4 bg-blue-50 rounded-lg">
+          <h4 className="font-medium text-blue-900 mb-2">Data Export</h4>
+          <p className="text-sm text-blue-800 mb-3">Download a comprehensive report of all your financial data</p>
+          <Button size="sm" variant="outline" onClick={handleExportData}>
+            <Download className="w-4 h-4 mr-2" />
+            Export Data
+          </Button>
+        </div>
+        
+        <div className="p-4 bg-red-50 rounded-lg">
+          <h4 className="font-medium text-red-900 mb-2">Delete Account</h4>
+          <p className="text-sm text-red-800 mb-3">Permanently delete your account and all data</p>
+          <Button 
+            size="sm" 
+            variant="danger" 
+            onClick={() => setShowDeleteConfirm(true)}
+          >
+            <Trash2 className="w-4 h-4 mr-2" />
+            Delete Account
+          </Button>
+        </div>
+      </div>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center z-50">
+          <Card className="w-full max-w-md m-4">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-red-900">Delete Account</h3>
+              <button 
+                onClick={() => setShowDeleteConfirm(false)}
+                className="p-1 hover:bg-gray-100 rounded"
+              >
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
+            
+            <div className="space-y-4">
+              <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-sm text-red-800 font-medium mb-2">⚠️ This action cannot be undone!</p>
+                <p className="text-sm text-red-700">
+                  This will permanently delete:
+                </p>
+                <ul className="text-sm text-red-700 mt-2 ml-4 list-disc">
+                  <li>Your profile and account information</li>
+                  <li>All transaction history ({transactions.length} transactions)</li>
+                  <li>All financial goals ({goals.length} goals)</li>
+                  <li>All budget categories and settings</li>
+                  <li>All connected account information</li>
+                </ul>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Type "DELETE" to confirm:
+                </label>
+                <Input
+                  value={deleteConfirmText}
+                  onChange={(e) => setDeleteConfirmText(e.target.value)}
+                  placeholder="Type DELETE here"
+                  className="font-mono"
+                />
+              </div>
+              
+              <div className="flex space-x-3">
+                <Button 
+                  variant="danger" 
+                  onClick={handleDeleteAccount}
+                  disabled={deleteConfirmText !== 'DELETE' || isDeleting}
+                  loading={isDeleting}
+                  className="flex-1"
+                >
+                  {isDeleting ? 'Deleting...' : 'Delete Account Permanently'}
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowDeleteConfirm(false)}
+                  disabled={isDeleting}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          </Card>
+        </div>
+      )}
+    </Card>
+  );
+};
+
+// Advanced settings with dark mode toggle
+const AdvancedSettings = () => {
+  const { addNotification } = useNotifications();
+  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [developerMode, setDeveloperMode] = useState(false);
+
+  const handleDeveloperModeToggle = () => {
+    const newDeveloperMode = !developerMode;
+    setDeveloperMode(newDeveloperMode);
+    setIsDarkMode(newDeveloperMode);
+    
+    // Apply dark mode to document
+    if (newDeveloperMode) {
+      document.documentElement.classList.add('dark');
+      document.body.style.backgroundColor = '#1f2937';
+      document.body.style.color = '#f9fafb';
+    } else {
+      document.documentElement.classList.remove('dark');
+      document.body.style.backgroundColor = '';
+      document.body.style.color = '';
+    }
+    
+    addNotification({
+      type: 'success',
+      title: `Developer Mode ${newDeveloperMode ? 'Enabled' : 'Disabled'}`,
+      message: `Dark mode has been ${newDeveloperMode ? 'activated' : 'deactivated'}`
+    });
+  };
+
+  const handleBetaFeatures = () => {
+    addNotification({
+      type: 'info',
+      title: 'Beta Features',
+      message: 'Beta program enrollment will be available soon'
+    });
+  };
+
+  return (
+    <Card className={isDarkMode ? 'bg-gray-800 border-gray-700' : ''}>
+      <h3 className={`text-lg font-semibold mb-4 ${isDarkMode ? 'text-white' : ''}`}>Advanced Settings</h3>
+      <div className="space-y-4">
+        <div className={`flex items-center justify-between p-3 rounded-lg ${isDarkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
+          <div className="flex items-center space-x-3">
+            {isDarkMode ? <Moon className="w-5 h-5 text-blue-400" /> : <Sun className="w-5 h-5 text-gray-600" />}
+            <div>
+              <p className={`font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Developer Mode</p>
+              <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                Enable advanced features and dark mode
+              </p>
+            </div>
+          </div>
+          <Button 
+            size="sm" 
+            variant={developerMode ? "primary" : "outline"}
+            onClick={handleDeveloperModeToggle}
+          >
+            {developerMode ? 'Disable' : 'Enable'}
+          </Button>
+        </div>
+        
+        <div className={`flex items-center justify-between p-3 rounded-lg ${isDarkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
+          <div>
+            <p className={`font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Beta Features</p>
+            <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+              Try new features before they're released
+            </p>
+          </div>
+          <Button size="sm" variant="outline" onClick={handleBetaFeatures}>
+            Join Beta
+          </Button>
+        </div>
+      </div>
+    </Card>
+  );
+};
+
 // Main settings page component
 const Settings = () => {
   const { logout } = useAuth();
   const [activeSection, setActiveSection] = useState('profile');
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
+  // Check for dark mode
+  useEffect(() => {
+    const darkMode = document.documentElement.classList.contains('dark');
+    setIsDarkMode(darkMode);
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -806,59 +1176,21 @@ const Settings = () => {
       case 'accounts':
         return <ConnectedAccounts />;
       case 'data':
-        return (
-          <Card>
-            <h3 className="text-lg font-semibold mb-4">Data & Privacy</h3>
-            <div className="space-y-4">
-              <div className="p-4 bg-blue-50 rounded-lg">
-                <h4 className="font-medium text-blue-900 mb-2">Data Export</h4>
-                <p className="text-sm text-blue-800 mb-3">Download all your financial data</p>
-                <Button size="sm" variant="outline">Export Data</Button>
-              </div>
-              
-              <div className="p-4 bg-red-50 rounded-lg">
-                <h4 className="font-medium text-red-900 mb-2">Delete Account</h4>
-                <p className="text-sm text-red-800 mb-3">Permanently delete your account and all data</p>
-                <Button size="sm" variant="danger">Delete Account</Button>
-              </div>
-            </div>
-          </Card>
-        );
+        return <DataPrivacySettings />;
       case 'advanced':
-        return (
-          <Card>
-            <h3 className="text-lg font-semibold mb-4">Advanced Settings</h3>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <div>
-                  <p className="font-medium text-gray-900">Developer Mode</p>
-                  <p className="text-sm text-gray-600">Enable advanced features and API access</p>
-                </div>
-                <Button size="sm" variant="outline">Enable</Button>
-              </div>
-              
-              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <div>
-                  <p className="font-medium text-gray-900">Beta Features</p>
-                  <p className="text-sm text-gray-600">Try new features before they're released</p>
-                </div>
-                <Button size="sm" variant="outline">Join Beta</Button>
-              </div>
-            </div>
-          </Card>
-        );
+        return <AdvancedSettings />;
       default:
         return <ProfileSettings />;
     }
   };
 
   return (
-    <div className="space-y-6">
+    <div className={`space-y-6 ${isDarkMode ? 'text-white' : ''}`}>
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
-          <p className="text-gray-600">Manage your account and preferences</p>
+          <h1 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Settings</h1>
+          <p className={isDarkMode ? 'text-gray-300' : 'text-gray-600'}>Manage your account and preferences</p>
         </div>
         
         <Button variant="outline" onClick={handleLogout}>
@@ -869,7 +1201,7 @@ const Settings = () => {
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Settings navigation */}
         <div className="lg:col-span-1">
-          <Card className="p-4">
+          <Card className={`p-4 ${isDarkMode ? 'bg-gray-800 border-gray-700' : ''}`}>
             <nav className="space-y-1">
               {settingSections.map((section) => {
                 const Icon = section.icon;
@@ -879,8 +1211,12 @@ const Settings = () => {
                     onClick={() => setActiveSection(section.id)}
                     className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
                       activeSection === section.id
-                        ? 'bg-blue-50 text-blue-700'
-                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                        ? isDarkMode 
+                          ? 'bg-blue-900 text-blue-200' 
+                          : 'bg-blue-50 text-blue-700'
+                        : isDarkMode
+                          ? 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                          : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                     }`}
                   >
                     <Icon className="w-4 h-4 mr-3" />

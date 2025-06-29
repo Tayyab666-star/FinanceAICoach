@@ -9,6 +9,7 @@ const Button = ({
   loading = false,
   disabled = false,
   className = '',
+  as = 'button',
   ...props 
 }) => {
   const baseClasses = 'inline-flex items-center justify-center font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2';
@@ -28,8 +29,10 @@ const Button = ({
   
   const isDisabled = disabled || loading;
   
+  const Component = as;
+  
   return (
-    <button
+    <Component
       className={`
         ${baseClasses}
         ${variants[variant]}
@@ -42,7 +45,7 @@ const Button = ({
     >
       {loading && <LoadingSpinner size="sm" className="mr-2" />}
       {children}
-    </button>
+    </Component>
   );
 };
 
