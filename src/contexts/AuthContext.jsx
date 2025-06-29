@@ -12,28 +12,58 @@ export const AuthProvider = ({ children }) => {
   const [isInitialized, setIsInitialized] = useState(false);
   const [error, setError] = useState(null);
 
-  // Initialize auth state on mount
+  // Initialize auth state on mount with persistent session
   useEffect(() => {
     let mounted = true;
 
-    // Get initial session immediately
+    // Get initial session immediately with persistent storage check
     const getInitialSession = async () => {
       try {
         setIsLoading(true);
         setError(null);
         
+        // First check localStorage for cached user data
+        const cachedUser = localStorage.getItem('financeapp_user');
+        const cachedProfile = localStorage.getItem('financeapp_profile');
+        
+        if (cachedUser && cachedProfile) {
+          try {
+            const userData = JSON.parse(cachedUser);
+            const profileData = JSON.parse(cachedProfile);
+            
+            console.log('Found cached user data:', userData.email);
+            setUser(userData);
+            setUserProfile(profileData);
+          } catch (e) {
+            console.warn('Invalid cached data, clearing:', e);
+            localStorage.removeItem('financeapp_user');
+            localStorage.removeItem('financeapp_profile');
+          }
+        }
+        
+        // Then check Supabase session
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
           console.error('Error getting session:', error);
-          setError('Failed to load session. Please refresh the page.');
+          // Don't set error if we have cached data
+          if (!cachedUser) {
+            setError('Failed to load session. Please refresh the page.');
+          }
         } else if (session?.user && mounted) {
-          console.log('Found existing session for user:', session.user.email);
+          console.log('Found existing Supabase session for user:', session.user.email);
           await handleAuthUser(session.user);
+        } else if (!cachedUser && mounted) {
+          // No session and no cached data - user is not logged in
+          console.log('No session found and no cached data');
+          setUser(null);
+          setUserProfile(null);
         }
       } catch (error) {
         console.error('Error in getInitialSession:', error);
-        setError('Failed to initialize authentication. Please refresh the page.');
+        if (!localStorage.getItem('financeapp_user')) {
+          setError('Failed to initialize authentication. Please refresh the page.');
+        }
       } finally {
         if (mounted) {
           setIsLoading(false);
@@ -42,7 +72,7 @@ export const AuthProvider = ({ children }) => {
       }
     };
 
-    // Listen for auth changes
+    // Listen for auth changes with persistent session handling
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!mounted) return;
 
@@ -59,8 +89,14 @@ export const AuthProvider = ({ children }) => {
           console.log('User signed out');
           setUser(null);
           setUserProfile(null);
+          // Clear persistent storage on explicit logout
           localStorage.removeItem('financeapp_user');
           localStorage.removeItem('financeapp_profile');
+          localStorage.removeItem('financeapp_session_timestamp');
+        } else if (event === 'TOKEN_REFRESHED' && session?.user) {
+          console.log('Token refreshed for user:', session.user.email);
+          // Update session timestamp on token refresh
+          localStorage.setItem('financeapp_session_timestamp', Date.now().toString());
         }
       } catch (error) {
         console.error('Error handling auth state change:', error);
@@ -96,7 +132,7 @@ export const AuthProvider = ({ children }) => {
       .join(' ');
   };
 
-  // Optimized auth user handler - immediate response
+  // Enhanced auth user handler with persistent storage
   const handleAuthUser = async (authUser) => {
     try {
       console.log('Handling auth user:', authUser.email);
@@ -111,6 +147,9 @@ export const AuthProvider = ({ children }) => {
       console.log('Setting user data immediately:', userData);
       setUser(userData);
       
+      // Store session timestamp for persistence tracking
+      localStorage.setItem('financeapp_session_timestamp', Date.now().toString());
+      
       // Try to get real profile from database first
       try {
         const { data: existingProfile, error: fetchError } = await supabase
@@ -122,6 +161,8 @@ export const AuthProvider = ({ children }) => {
         if (existingProfile) {
           console.log('Found existing profile:', existingProfile);
           setUserProfile(existingProfile);
+          
+          // Store in persistent storage
           localStorage.setItem('financeapp_user', JSON.stringify(userData));
           localStorage.setItem('financeapp_profile', JSON.stringify(existingProfile));
           return;
@@ -145,7 +186,7 @@ export const AuthProvider = ({ children }) => {
       console.log('Setting new user profile with setup_completed: false:', newProfile);
       setUserProfile(newProfile);
       
-      // Save to localStorage immediately
+      // Save to persistent storage immediately
       localStorage.setItem('financeapp_user', JSON.stringify(userData));
       localStorage.setItem('financeapp_profile', JSON.stringify(newProfile));
       
@@ -199,7 +240,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Send verification code to email (FORCE OTP, disable magic links)
+  // Enhanced send verification code with persistent session setup
   const sendVerificationCode = async (email) => {
     try {
       console.log('Sending OTP to:', email);
@@ -241,7 +282,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Verify the code entered by user
+  // Enhanced verify code with persistent session setup
   const verifyCode = async (email, token) => {
     try {
       console.log('Verifying OTP for:', email, 'Token length:', token.length);
@@ -269,6 +310,13 @@ export const AuthProvider = ({ children }) => {
       }
 
       console.log('OTP verified successfully:', data);
+      
+      // Set up persistent session immediately
+      if (data.user) {
+        localStorage.setItem('financeapp_session_timestamp', Date.now().toString());
+        console.log('Persistent session established for:', data.user.email);
+      }
+      
       // The auth state change will be handled by the listener
       return { success: true, user: data.user };
     } catch (error) {
@@ -306,24 +354,39 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Enhanced logout with persistent storage cleanup
   const logout = async () => {
     try {
       console.log('Logging out user');
       setError(null);
+      
+      // Clear persistent storage first
+      localStorage.removeItem('financeapp_user');
+      localStorage.removeItem('financeapp_profile');
+      localStorage.removeItem('financeapp_session_timestamp');
+      
+      // Then sign out from Supabase
       await supabase.auth.signOut();
-      // The auth state change will be handled by the listener
+      
+      // Clear local state
+      setUser(null);
+      setUserProfile(null);
+      
+      console.log('User logged out successfully');
     } catch (error) {
       console.error('Logout error:', error);
       setError('Failed to logout. Please try again.');
       
-      // Still clear local state even if signOut fails
+      // Still clear local state and storage even if signOut fails
       setUser(null);
       setUserProfile(null);
       localStorage.removeItem('financeapp_user');
       localStorage.removeItem('financeapp_profile');
+      localStorage.removeItem('financeapp_session_timestamp');
     }
   };
 
+  // Enhanced update user profile with persistent storage
   const updateUserProfile = async (updates) => {
     if (!user?.id) {
       console.error('No user ID available for profile update');
@@ -441,7 +504,7 @@ export const AuthProvider = ({ children }) => {
       setUserProfile(data);
       setUser(updatedUser);
       
-      // Update localStorage
+      // Update persistent storage
       localStorage.setItem('financeapp_user', JSON.stringify(updatedUser));
       localStorage.setItem('financeapp_profile', JSON.stringify(data));
     } catch (error) {
@@ -464,6 +527,17 @@ export const AuthProvider = ({ children }) => {
   // Clear error function
   const clearError = () => {
     setError(null);
+  };
+
+  // Check session validity for persistent auth
+  const isSessionValid = () => {
+    const sessionTimestamp = localStorage.getItem('financeapp_session_timestamp');
+    if (!sessionTimestamp) return false;
+    
+    const sessionAge = Date.now() - parseInt(sessionTimestamp);
+    const maxAge = 30 * 24 * 60 * 60 * 1000; // 30 days
+    
+    return sessionAge < maxAge;
   };
 
   // Don't render children until auth is initialized - but make it fast
@@ -502,7 +576,8 @@ export const AuthProvider = ({ children }) => {
       updateUserProfile,
       getUserDisplayName,
       refreshUserProfile,
-      clearError
+      clearError,
+      isSessionValid
     }}>
       {children}
     </AuthContext.Provider>

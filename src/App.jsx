@@ -17,7 +17,7 @@ import LoadingSpinner from './components/LoadingSpinner';
 import ToastContainer from './components/ToastContainer';
  
 const ProtectedRoute = ({ children }) => {
-  const { user, isLoading, error } = useAuth();
+  const { user, isLoading, error, isSessionValid } = useAuth();
   
   // Show loading spinner while checking auth state
   if (isLoading) {
@@ -34,8 +34,12 @@ const ProtectedRoute = ({ children }) => {
     );
   }
   
-  // Redirect to login if not authenticated
-  if (!user) {
+  // Check if user exists and session is valid for persistent auth
+  const hasValidSession = user && isSessionValid();
+  
+  // Redirect to login if not authenticated or session expired
+  if (!hasValidSession) {
+    console.log('No valid session found, redirecting to login');
     return <Navigate to="/login" replace />;
   }
   
@@ -44,7 +48,7 @@ const ProtectedRoute = ({ children }) => {
 };
 
 const PublicRoute = ({ children }) => {
-  const { user, isLoading, error } = useAuth();
+  const { user, isLoading, error, isSessionValid } = useAuth();
   
   // Show loading spinner while checking auth state
   if (isLoading) {
@@ -61,8 +65,12 @@ const PublicRoute = ({ children }) => {
     );
   }
   
-  // Redirect to dashboard if already authenticated
-  if (user) {
+  // Check if user has valid persistent session
+  const hasValidSession = user && isSessionValid();
+  
+  // Redirect to dashboard if already authenticated with valid session
+  if (hasValidSession) {
+    console.log('Valid session found, redirecting to dashboard');
     return <Navigate to="/dashboard" replace />;
   }
   
@@ -108,7 +116,7 @@ function App() {
                   <Route path="settings" element={<Settings />} />
                 </Route>
                 
-                {/* Default route - redirect to login when no user */}
+                {/* Default route - redirect based on auth status */}
                 <Route path="*" element={<Navigate to="/login" replace />} />
               </Routes>
               <ToastContainer />
