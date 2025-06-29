@@ -41,21 +41,21 @@ const ResponsiveModal = ({
         className={`
           w-full ${sizeClasses[size]} 
           max-h-[90vh] overflow-y-auto
-          bg-white rounded-lg shadow-xl
+          bg-white dark:bg-gray-800 rounded-lg shadow-xl
           transform transition-all duration-200 ease-out
         `}
       >
         <Card className="m-0 rounded-lg">
           {(title || showCloseButton) && (
             <div className="flex justify-between items-center p-6 pb-4">
-              {title && <h3 className="text-lg font-semibold text-gray-900">{title}</h3>}
+              {title && <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{title}</h3>}
               {showCloseButton && (
                 <button 
                   onClick={onClose} 
-                  className="p-1 hover:bg-gray-100 rounded-full transition-colors"
+                  className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
                   aria-label="Close modal"
                 >
-                  <X className="w-5 h-5 text-gray-500" />
+                  <X className="w-5 h-5 text-gray-500 dark:text-gray-400" />
                 </button>
               )}
             </div>

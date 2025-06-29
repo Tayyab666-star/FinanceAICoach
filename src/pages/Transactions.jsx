@@ -109,7 +109,7 @@ const TransactionModal = ({ isOpen, onClose, onSave, transaction = null }) => {
         />
         
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Type</label>
           <div className="flex space-x-4">
             <label className="flex items-center">
               <input
@@ -120,7 +120,7 @@ const TransactionModal = ({ isOpen, onClose, onSave, transaction = null }) => {
                 onChange={(e) => setFormData({ ...formData, type: e.target.value })}
                 className="mr-2"
               />
-              Expense
+              <span className="text-gray-900 dark:text-white">Expense</span>
             </label>
             <label className="flex items-center">
               <input
@@ -131,17 +131,17 @@ const TransactionModal = ({ isOpen, onClose, onSave, transaction = null }) => {
                 onChange={(e) => setFormData({ ...formData, type: e.target.value })}
                 className="mr-2"
               />
-              Income
+              <span className="text-gray-900 dark:text-white">Income</span>
             </label>
           </div>
         </div>
         
         <div>
-          <label htmlFor="category-select" className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+          <label htmlFor="category-select" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Category</label>
           <select
             id="category-select"
             name="category"
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             value={formData.category}
             onChange={(e) => setFormData({ ...formData, category: e.target.value })}
           >
@@ -256,9 +256,9 @@ const ReceiptUploadModal = ({ isOpen, onClose, onAdd }) => {
     >
       {!ocrResult && !processing && (
         <div className="space-y-4">
-          <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
-            <Camera className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-600 mb-4">Upload receipt image for automatic processing</p>
+          <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-8 text-center">
+            <Camera className="w-12 h-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
+            <p className="text-gray-600 dark:text-gray-300 mb-4">Upload receipt image for automatic processing</p>
             <input
               type="file"
               accept="image/*"
@@ -277,21 +277,21 @@ const ReceiptUploadModal = ({ isOpen, onClose, onAdd }) => {
       
       {processing && (
         <div className="text-center py-8">
-          <div className="animate-spin w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full mx-auto mb-4"></div>
-          <p className="text-gray-600 mb-2">Processing receipt...</p>
-          <div className="w-full bg-gray-200 rounded-full h-2">
+          <div className="animate-spin w-8 h-8 border-4 border-blue-200 dark:border-blue-800 border-t-blue-600 dark:border-t-blue-400 rounded-full mx-auto mb-4"></div>
+          <p className="text-gray-600 dark:text-gray-300 mb-2">Processing receipt...</p>
+          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
             <div 
               className="bg-blue-600 h-2 rounded-full transition-all duration-300"
               style={{ width: `${confidence}%` }}
             ></div>
           </div>
-          <p className="text-sm text-gray-500 mt-2">Confidence: {confidence}%</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">Confidence: {confidence}%</p>
         </div>
       )}
       
       {ocrResult && (
         <div className="space-y-4">
-          <div className="flex items-center text-green-600 mb-4">
+          <div className="flex items-center text-green-600 dark:text-green-400 mb-4">
             <CheckCircle className="w-5 h-5 mr-2" />
             <span>Receipt processed successfully!</span>
           </div>
@@ -312,11 +312,11 @@ const ReceiptUploadModal = ({ isOpen, onClose, onAdd }) => {
               onChange={(e) => setOcrResult({ ...ocrResult, amount: parseFloat(e.target.value) })}
             />
             <div>
-              <label htmlFor="ocr-category" className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+              <label htmlFor="ocr-category" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Category</label>
               <select
                 id="ocr-category"
                 name="category"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 value={ocrResult.category}
                 onChange={(e) => setOcrResult({ ...ocrResult, category: e.target.value })}
               >
@@ -355,28 +355,28 @@ const FilterDropdown = ({ filterType, filterCategory, onTypeChange, onCategoryCh
     <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
       <ResponsiveDropdown
         trigger={
-          <button className="flex items-center justify-between px-4 py-2 border border-gray-300 rounded-lg bg-white hover:bg-gray-50 min-w-[120px]">
-            <span className="text-sm">{filterType === 'all' ? 'All Types' : filterType === 'income' ? 'Income' : 'Expenses'}</span>
-            <ChevronDown className="w-4 h-4 ml-2" />
+          <button className="flex items-center justify-between px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 min-w-[120px]">
+            <span className="text-sm text-gray-900 dark:text-white">{filterType === 'all' ? 'All Types' : filterType === 'income' ? 'Income' : 'Expenses'}</span>
+            <ChevronDown className="w-4 h-4 ml-2 text-gray-600 dark:text-gray-300" />
           </button>
         }
         align="left"
       >
         <button
           onClick={() => onTypeChange('all')}
-          className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+          className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-900 dark:text-white"
         >
           All Types
         </button>
         <button
           onClick={() => onTypeChange('income')}
-          className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+          className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-900 dark:text-white"
         >
           Income
         </button>
         <button
           onClick={() => onTypeChange('expense')}
-          className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+          className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-900 dark:text-white"
         >
           Expenses
         </button>
@@ -384,18 +384,18 @@ const FilterDropdown = ({ filterType, filterCategory, onTypeChange, onCategoryCh
 
       <ResponsiveDropdown
         trigger={
-          <button className="flex items-center justify-between px-4 py-2 border border-gray-300 rounded-lg bg-white hover:bg-gray-50 min-w-[140px]">
-            <span className="text-sm truncate">
+          <button className="flex items-center justify-between px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 min-w-[140px]">
+            <span className="text-sm truncate text-gray-900 dark:text-white">
               {filterCategory === 'all' ? 'All Categories' : filterCategory}
             </span>
-            <ChevronDown className="w-4 h-4 ml-2" />
+            <ChevronDown className="w-4 h-4 ml-2 text-gray-600 dark:text-gray-300" />
           </button>
         }
         align="left"
       >
         <button
           onClick={() => onCategoryChange('all')}
-          className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+          className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-900 dark:text-white"
         >
           All Categories
         </button>
@@ -403,7 +403,7 @@ const FilterDropdown = ({ filterType, filterCategory, onTypeChange, onCategoryCh
           <button
             key={category}
             onClick={() => onCategoryChange(category)}
-            className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+            className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-900 dark:text-white"
           >
             {category === 'Food' ? 'Food & Dining' : 
              category === 'Transport' ? 'Transportation' :
@@ -475,8 +475,8 @@ const Transactions = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Transactions</h1>
-          <p className="text-gray-600">Manage your financial transactions</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Transactions</h1>
+          <p className="text-gray-600 dark:text-gray-300">Manage your financial transactions</p>
         </div>
         
         <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3 w-full sm:w-auto">
@@ -501,18 +501,18 @@ const Transactions = () => {
       {/* Summary cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card className="p-4 text-center">
-          <h3 className="text-sm font-medium text-gray-600 mb-2">Total Income</h3>
-          <p className="text-2xl font-bold text-green-600">${totalIncome.toLocaleString()}</p>
+          <h3 className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">Total Income</h3>
+          <p className="text-2xl font-bold text-green-600 dark:text-green-400">${totalIncome.toLocaleString()}</p>
         </Card>
         
         <Card className="p-4 text-center">
-          <h3 className="text-sm font-medium text-gray-600 mb-2">Total Expenses</h3>
-          <p className="text-2xl font-bold text-red-600">${totalExpenses.toLocaleString()}</p>
+          <h3 className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">Total Expenses</h3>
+          <p className="text-2xl font-bold text-red-600 dark:text-red-400">${totalExpenses.toLocaleString()}</p>
         </Card>
         
         <Card className="p-4 text-center">
-          <h3 className="text-sm font-medium text-gray-600 mb-2">Net Amount</h3>
-          <p className={`text-2xl font-bold ${totalIncome - totalExpenses >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+          <h3 className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">Net Amount</h3>
+          <p className={`text-2xl font-bold ${totalIncome - totalExpenses >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
             ${(totalIncome - totalExpenses).toLocaleString()}
           </p>
         </Card>
@@ -523,12 +523,12 @@ const Transactions = () => {
         <div className="flex flex-col lg:flex-row space-y-4 lg:space-y-0 lg:space-x-4">
           <div className="flex-1">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 w-4 h-4" />
               <input
                 type="text"
                 name="search"
                 placeholder="Search transactions..."
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -546,26 +546,26 @@ const Transactions = () => {
 
       {/* Transactions list */}
       <Card>
-        <div className="divide-y divide-gray-100">
+        <div className="divide-y divide-gray-100 dark:divide-gray-700">
           {filteredTransactions.map((transaction) => (
             <div 
               key={transaction.id} 
-              className="flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
+              className="flex items-center justify-between p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
             >
               <div className="flex items-center space-x-4 flex-1 min-w-0">
                 <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
-                  transaction.type === 'income' ? 'bg-green-100' : 'bg-red-100'
+                  transaction.type === 'income' ? 'bg-green-100 dark:bg-green-900/50' : 'bg-red-100 dark:bg-red-900/50'
                 }`}>
                   {transaction.type === 'income' ? (
-                    <Plus className="w-5 h-5 text-green-600" />
+                    <Plus className="w-5 h-5 text-green-600 dark:text-green-400" />
                   ) : (
-                    <X className="w-5 h-5 text-red-600" />
+                    <X className="w-5 h-5 text-red-600 dark:text-red-400" />
                   )}
                 </div>
                 
                 <div className="min-w-0 flex-1">
-                  <p className="font-medium text-gray-900 truncate">{transaction.description}</p>
-                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-gray-500">
+                  <p className="font-medium text-gray-900 dark:text-white truncate">{transaction.description}</p>
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-gray-500 dark:text-gray-400">
                     <span>{new Date(transaction.date).toLocaleDateString()}</span>
                     <span>•</span>
                     <span>{transaction.category}</span>
@@ -574,7 +574,7 @@ const Transactions = () => {
                     {transaction.receipt_url && (
                       <>
                         <span>•</span>
-                        <span className="text-blue-600">📎 Receipt</span>
+                        <span className="text-blue-600 dark:text-blue-400">📎 Receipt</span>
                       </>
                     )}
                   </div>
@@ -583,7 +583,7 @@ const Transactions = () => {
               
               <div className="flex items-center space-x-3 flex-shrink-0">
                 <p className={`font-semibold ${
-                  transaction.type === 'income' ? 'text-green-600' : 'text-red-600'
+                  transaction.type === 'income' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
                 }`}>
                   {transaction.type === 'income' ? '+' : '-'}${Math.abs(transaction.amount).toFixed(2)}
                 </p>
@@ -591,17 +591,17 @@ const Transactions = () => {
                 <div className="flex space-x-1">
                   <button
                     onClick={() => handleEditTransaction(transaction)}
-                    className="p-1 hover:bg-gray-100 rounded transition-colors"
+                    className="p-1 hover:bg-gray-100 dark:hover:bg-gray-600 rounded transition-colors"
                     aria-label="Edit transaction"
                   >
-                    <Edit className="w-4 h-4 text-gray-600" />
+                    <Edit className="w-4 h-4 text-gray-600 dark:text-gray-300" />
                   </button>
                   <button
                     onClick={() => handleDeleteTransaction(transaction.id)}
-                    className="p-1 hover:bg-gray-100 rounded transition-colors"
+                    className="p-1 hover:bg-gray-100 dark:hover:bg-gray-600 rounded transition-colors"
                     aria-label="Delete transaction"
                   >
-                    <Trash2 className="w-4 h-4 text-gray-600" />
+                    <Trash2 className="w-4 h-4 text-gray-600 dark:text-gray-300" />
                   </button>
                 </div>
               </div>
@@ -609,7 +609,7 @@ const Transactions = () => {
           ))}
           
           {filteredTransactions.length === 0 && (
-            <div className="text-center py-12 text-gray-500">
+            <div className="text-center py-12 text-gray-500 dark:text-gray-400">
               {transactions.length === 0 
                 ? "No transactions yet. Add your first transaction to get started!"
                 : "No transactions found matching your criteria."
