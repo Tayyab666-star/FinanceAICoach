@@ -127,7 +127,7 @@ export const AuthProvider = ({ children }) => {
 
       if (error) {
         if (error.message.includes('Invalid login credentials')) {
-          throw new Error('User not found. Please check your email and password or create a new account.');
+          throw new Error('Invalid email or password. Please check your credentials and try again.');
         }
         throw error;
       }
@@ -154,6 +154,9 @@ export const AuthProvider = ({ children }) => {
       throw error;
     }
   };
+
+  // Alias for signOut to maintain compatibility
+  const logout = signOut;
 
   // Reset password
   const resetPassword = async (email) => {
@@ -196,9 +199,9 @@ export const AuthProvider = ({ children }) => {
           id: userId,
           email: email,
           name: name || email.split('@')[0],
-          monthly_income: 0,
-          monthly_budget: 0,
-          setup_completed: false
+          monthly_income: 5000,
+          monthly_budget: 4000,
+          setup_completed: true
         }])
         .select()
         .single();
@@ -244,6 +247,13 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Refresh user profile
+  const refreshUserProfile = async () => {
+    if (user?.id) {
+      await fetchUserProfile(user.id);
+    }
+  };
+
   // Get user display name
   const getUserDisplayName = () => {
     if (userProfile?.name) return userProfile.name;
@@ -272,9 +282,11 @@ export const AuthProvider = ({ children }) => {
       signUp,
       signIn,
       signOut,
+      logout,
       resetPassword,
       updatePassword,
       updateUserProfile,
+      refreshUserProfile,
       getUserDisplayName,
       fetchUserProfile
     }}>
