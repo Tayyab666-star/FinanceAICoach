@@ -94,10 +94,10 @@ export const AuthProvider = ({ children }) => {
       try {
         console.log('Creating/getting profile for user:', authUser.id, authUser.email);
         
-        // Set a timeout for profile creation
+        // Set a timeout for profile creation - increased from 10 seconds to 20 seconds
         const profilePromise = createOrGetUserProfile(authUser.id, authUser.email);
         const timeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Profile creation timeout')), 10000)
+          setTimeout(() => reject(new Error('Profile creation timeout')), 20000)
         );
         
         const profile = await Promise.race([profilePromise, timeoutPromise]);
