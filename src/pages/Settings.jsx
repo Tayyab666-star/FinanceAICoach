@@ -18,7 +18,13 @@ import {
   Download,
   Trash2,
   Moon,
-  Sun
+  Sun,
+  Sparkles,
+  Zap,
+  Brain,
+  Rocket,
+  Star,
+  TrendingUp
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotifications } from '../contexts/NotificationContext';
@@ -38,6 +44,219 @@ const settingSections = [
   { id: 'accounts', name: 'Connected Accounts', icon: CreditCard },
   { id: 'data', name: 'Data & Privacy', icon: Database }
 ];
+
+// Beta Features Modal Component
+const BetaFeaturesModal = ({ isOpen, onClose }) => {
+  if (!isOpen) return null;
+
+  const betaFeatures = [
+    {
+      icon: Brain,
+      title: 'AI Financial Advisor',
+      description: 'Advanced AI that provides personalized investment advice and portfolio optimization',
+      status: 'Coming Q2 2025',
+      color: 'blue'
+    },
+    {
+      icon: Zap,
+      title: 'Real-time Market Integration',
+      description: 'Live stock prices, crypto tracking, and market alerts directly in your dashboard',
+      status: 'Coming Q3 2025',
+      color: 'green'
+    },
+    {
+      icon: Sparkles,
+      title: 'Smart Receipt Scanner 2.0',
+      description: 'Enhanced OCR with automatic categorization and expense prediction',
+      status: 'Beta Testing',
+      color: 'purple'
+    },
+    {
+      icon: TrendingUp,
+      title: 'Advanced Analytics',
+      description: 'Predictive spending patterns, cash flow forecasting, and financial health scoring',
+      status: 'Coming Q2 2025',
+      color: 'orange'
+    },
+    {
+      icon: Rocket,
+      title: 'Multi-Currency Support',
+      description: 'Track expenses and income in multiple currencies with real-time conversion',
+      status: 'Coming Q4 2025',
+      color: 'red'
+    },
+    {
+      icon: Star,
+      title: 'Social Financial Goals',
+      description: 'Share goals with family, compete with friends, and join community challenges',
+      status: 'Coming 2026',
+      color: 'yellow'
+    }
+  ];
+
+  const upcomingUpdates = [
+    'Enhanced dark mode with custom themes',
+    'Mobile app for iOS and Android',
+    'Bank account synchronization',
+    'Tax preparation assistance',
+    'Investment portfolio tracking',
+    'Cryptocurrency wallet integration',
+    'Bill reminder notifications',
+    'Subscription management tools'
+  ];
+
+  return (
+    <div className="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center z-50 p-4">
+      <div className="bg-white dark:bg-gray-800 max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-xl">
+        <div className="p-6">
+          {/* Header */}
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center space-x-3">
+              <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center">
+                <Sparkles className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Beta Features Program</h2>
+                <p className="text-gray-600 dark:text-gray-300">Get early access to cutting-edge financial tools</p>
+              </div>
+            </div>
+            <button 
+              onClick={onClose}
+              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            >
+              <X className="w-6 h-6 text-gray-500 dark:text-gray-400" />
+            </button>
+          </div>
+
+          {/* Beta Program Benefits */}
+          <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 p-6 mb-8">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">🚀 Beta Program Benefits</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 bg-green-100 dark:bg-green-900/50 flex items-center justify-center">
+                  <Check className="w-4 h-4 text-green-600 dark:text-green-400" />
+                </div>
+                <span className="text-gray-700 dark:text-gray-300">Early access to new features</span>
+              </div>
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 bg-green-100 dark:bg-green-900/50 flex items-center justify-center">
+                  <Check className="w-4 h-4 text-green-600 dark:text-green-400" />
+                </div>
+                <span className="text-gray-700 dark:text-gray-300">Direct feedback channel to developers</span>
+              </div>
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 bg-green-100 dark:bg-green-900/50 flex items-center justify-center">
+                  <Check className="w-4 h-4 text-green-600 dark:text-green-400" />
+                </div>
+                <span className="text-gray-700 dark:text-gray-300">Priority customer support</span>
+              </div>
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 bg-green-100 dark:bg-green-900/50 flex items-center justify-center">
+                  <Check className="w-4 h-4 text-green-600 dark:text-green-400" />
+                </div>
+                <span className="text-gray-700 dark:text-gray-300">Exclusive beta tester badge</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Upcoming Features */}
+          <div className="mb-8">
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">🔮 Upcoming Features</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {betaFeatures.map((feature, index) => {
+                const Icon = feature.icon;
+                return (
+                  <div key={index} className="border border-gray-200 dark:border-gray-700 p-4 hover:shadow-md transition-shadow">
+                    <div className="flex items-start space-x-4">
+                      <div className={`w-12 h-12 flex items-center justify-center ${
+                        feature.color === 'blue' ? 'bg-blue-100 dark:bg-blue-900/50' :
+                        feature.color === 'green' ? 'bg-green-100 dark:bg-green-900/50' :
+                        feature.color === 'purple' ? 'bg-purple-100 dark:bg-purple-900/50' :
+                        feature.color === 'orange' ? 'bg-orange-100 dark:bg-orange-900/50' :
+                        feature.color === 'red' ? 'bg-red-100 dark:bg-red-900/50' :
+                        'bg-yellow-100 dark:bg-yellow-900/50'
+                      }`}>
+                        <Icon className={`w-6 h-6 ${
+                          feature.color === 'blue' ? 'text-blue-600 dark:text-blue-400' :
+                          feature.color === 'green' ? 'text-green-600 dark:text-green-400' :
+                          feature.color === 'purple' ? 'text-purple-600 dark:text-purple-400' :
+                          feature.color === 'orange' ? 'text-orange-600 dark:text-orange-400' :
+                          feature.color === 'red' ? 'text-red-600 dark:text-red-400' :
+                          'text-yellow-600 dark:text-yellow-400'
+                        }`} />
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-gray-900 dark:text-white mb-2">{feature.title}</h4>
+                        <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">{feature.description}</p>
+                        <span className={`inline-block px-3 py-1 text-xs font-medium ${
+                          feature.status === 'Beta Testing' ? 'bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-300' :
+                          'bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300'
+                        }`}>
+                          {feature.status}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Upcoming Updates */}
+          <div className="mb-8">
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">📋 Planned Updates</h3>
+            <div className="bg-gray-50 dark:bg-gray-700 p-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                {upcomingUpdates.map((update, index) => (
+                  <div key={index} className="flex items-center space-x-2">
+                    <div className="w-2 h-2 bg-blue-500"></div>
+                    <span className="text-sm text-gray-700 dark:text-gray-300">{update}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Call to Action */}
+          <div className="bg-gradient-to-r from-purple-500 to-pink-500 p-6 text-white">
+            <div className="text-center">
+              <h3 className="text-xl font-bold mb-2">Ready to Shape the Future of Finance?</h3>
+              <p className="mb-4 opacity-90">Join our beta program and get exclusive early access to revolutionary features</p>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <Button 
+                  className="bg-white text-purple-600 hover:bg-gray-100"
+                  onClick={() => {
+                    // Simulate joining beta program
+                    onClose();
+                    // You could add actual beta signup logic here
+                    alert('Thank you for your interest! Beta program enrollment will be available soon.');
+                  }}
+                >
+                  <Star className="w-4 h-4 mr-2" />
+                  Join Beta Program
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="border-white text-white hover:bg-white hover:text-purple-600"
+                  onClick={onClose}
+                >
+                  Maybe Later
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="mt-6 text-center">
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Features and timelines are subject to change. Beta access is limited and by invitation only.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 // Profile settings component with working name updates and new bio/about_work fields
 const ProfileSettings = () => {
@@ -1005,11 +1224,12 @@ For questions or support, contact: support@financeapp.com
   );
 };
 
-// Advanced settings with dark mode toggle
+// Advanced settings with dark mode toggle and beta features
 const AdvancedSettings = () => {
   const { addNotification } = useNotifications();
   const { isDarkMode, enableDarkMode, disableDarkMode } = useDarkMode();
   const [developerMode, setDeveloperMode] = useState(isDarkMode);
+  const [showBetaModal, setShowBetaModal] = useState(false);
 
   const handleDeveloperModeToggle = () => {
     const newDeveloperMode = !developerMode;
@@ -1029,49 +1249,53 @@ const AdvancedSettings = () => {
   };
 
   const handleBetaFeatures = () => {
-    addNotification({
-      type: 'info',
-      title: 'Beta Features',
-      message: 'Beta program enrollment will be available soon'
-    });
+    setShowBetaModal(true);
   };
 
   return (
-    <Card>
-      <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Advanced Settings</h3>
-      <div className="space-y-4">
-        <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700">
-          <div className="flex items-center space-x-3">
-            {isDarkMode ? <Moon className="w-5 h-5 text-blue-400" /> : <Sun className="w-5 h-5 text-gray-600" />}
+    <>
+      <Card>
+        <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Advanced Settings</h3>
+        <div className="space-y-4">
+          <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700">
+            <div className="flex items-center space-x-3">
+              {isDarkMode ? <Moon className="w-5 h-5 text-blue-400" /> : <Sun className="w-5 h-5 text-gray-600" />}
+              <div>
+                <p className="font-medium text-gray-900 dark:text-white">Developer Mode</p>
+                <p className="text-sm text-gray-600 dark:text-gray-300">
+                  Enable advanced features and dark mode
+                </p>
+              </div>
+            </div>
+            <Button 
+              size="sm" 
+              variant={developerMode ? "primary" : "outline"}
+              onClick={handleDeveloperModeToggle}
+            >
+              {developerMode ? 'Disable' : 'Enable'}
+            </Button>
+          </div>
+          
+          <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700">
             <div>
-              <p className="font-medium text-gray-900 dark:text-white">Developer Mode</p>
+              <p className="font-medium text-gray-900 dark:text-white">Beta Features</p>
               <p className="text-sm text-gray-600 dark:text-gray-300">
-                Enable advanced features and dark mode
+                Try new features before they're released
               </p>
             </div>
+            <Button size="sm" variant="outline" onClick={handleBetaFeatures}>
+              Join Beta
+            </Button>
           </div>
-          <Button 
-            size="sm" 
-            variant={developerMode ? "primary" : "outline"}
-            onClick={handleDeveloperModeToggle}
-          >
-            {developerMode ? 'Disable' : 'Enable'}
-          </Button>
         </div>
-        
-        <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700">
-          <div>
-            <p className="font-medium text-gray-900 dark:text-white">Beta Features</p>
-            <p className="text-sm text-gray-600 dark:text-gray-300">
-              Try new features before they're released
-            </p>
-          </div>
-          <Button size="sm" variant="outline" onClick={handleBetaFeatures}>
-            Join Beta
-          </Button>
-        </div>
-      </div>
-    </Card>
+      </Card>
+
+      {/* Beta Features Modal */}
+      <BetaFeaturesModal 
+        isOpen={showBetaModal} 
+        onClose={() => setShowBetaModal(false)} 
+      />
+    </>
   );
 };
 
@@ -1117,9 +1341,12 @@ const Settings = () => {
           <p className="text-gray-600 dark:text-gray-300">Manage your account and preferences</p>
         </div>
         
-        <Button variant="outline" onClick={handleLogout}>
-          Sign Out
-        </Button>
+        <div className="flex space-x-3">
+          <AdvancedSettings />
+          <Button variant="outline" onClick={handleLogout}>
+            Sign Out
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">

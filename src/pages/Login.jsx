@@ -222,33 +222,21 @@ const Login = () => {
         
         <Card className="shadow-xl border-0 backdrop-blur-sm bg-white/90 dark:bg-gray-800/90 p-4 sm:p-6">
           {step === 'email' ? (
-            // Email Step
+            // Email Step - Fixed input alignment
             <form onSubmit={handleEmailSubmit} className="space-y-4 sm:space-y-6">
-              {/* Fixed Email Input with Proper Icon Alignment */}
-              <div className="space-y-1">
-                <label htmlFor="email-input" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Email Address
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Mail className="h-5 w-5 text-gray-400" />
-                  </div>
-                  <input
-                    id="email-input"
-                    name="email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => {
-                      setEmail(e.target.value);
-                      setError('');
-                    }}
-                    placeholder="Enter your email address"
-                    className="w-full pl-10 pr-3 py-3 border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 text-base sm:text-lg"
-                    disabled={isSubmitting}
-                    required
-                  />
-                </div>
-              </div>
+              <Input
+                label="Email Address"
+                type="email"
+                value={email}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  setError('');
+                }}
+                placeholder="Enter your email address"
+                className="text-base sm:text-lg"
+                disabled={isSubmitting}
+                icon={Mail}
+              />
               
               <Button
                 type="submit"
