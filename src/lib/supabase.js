@@ -28,8 +28,8 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     autoRefreshToken: true,
     persistSession: true,
-    detectSessionInUrl: true,
-    flowType: 'pkce' // Use PKCE flow for better security
+    detectSessionInUrl: false, // Disable URL detection for OTP flow
+    flowType: 'pkce'
   }
 });
 

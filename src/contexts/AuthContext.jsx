@@ -23,6 +23,7 @@ export const AuthProvider = ({ children }) => {
         if (error) {
           console.error('Error getting session:', error);
         } else if (session?.user && mounted) {
+          console.log('Found existing session for user:', session.user.email);
           await handleAuthUser(session.user);
         }
       } catch (error) {
@@ -39,11 +40,13 @@ export const AuthProvider = ({ children }) => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!mounted) return;
 
-      console.log('Auth state changed:', event, session?.user?.id);
+      console.log('Auth state changed:', event, session?.user?.email);
       
       if (event === 'SIGNED_IN' && session?.user) {
+        console.log('User signed in:', session.user.email);
         await handleAuthUser(session.user);
       } else if (event === 'SIGNED_OUT') {
+        console.log('User signed out');
         setUser(null);
         setUserProfile(null);
         localStorage.removeItem('financeapp_user');
@@ -75,40 +78,48 @@ export const AuthProvider = ({ children }) => {
   // Handle authenticated user
   const handleAuthUser = async (authUser) => {
     try {
+      console.log('Handling auth user:', authUser.email);
       const profile = await createOrGetUserProfile(authUser.id, authUser.email);
       const userData = { 
-        id: authUser.id, // Use Supabase auth user ID
+        id: authUser.id,
         email: authUser.email, 
-        name: profile.name 
+        name: profile?.name || authUser.email.split('@')[0]
       };
       
+      console.log('Setting user data:', userData);
       setUser(userData);
       setUserProfile(profile);
       
       // Save to localStorage for persistence
       localStorage.setItem('financeapp_user', JSON.stringify(userData));
-      localStorage.setItem('financeapp_profile', JSON.stringify(profile));
+      if (profile) {
+        localStorage.setItem('financeapp_profile', JSON.stringify(profile));
+      }
     } catch (error) {
       console.error('Error handling auth user:', error);
+      // Don't throw error, just log it and continue
     }
   };
 
   // Create or get user profile using Supabase auth user ID
   const createOrGetUserProfile = async (authUserId, email) => {
     try {
+      console.log('Creating/getting profile for user:', authUserId, email);
+      
       // First, try to get existing profile using auth user ID
       const { data: existingProfiles, error: fetchError } = await supabase
         .from('user_profiles')
         .select('*')
-        .eq('id', authUserId) // Use auth user ID as primary key
+        .eq('id', authUserId)
         .limit(1);
 
       if (fetchError) {
         console.error('Error fetching user profile:', fetchError);
-        throw fetchError;
+        // Don't throw error, continue with profile creation
       }
 
       if (existingProfiles && existingProfiles.length > 0) {
+        console.log('Found existing profile:', existingProfiles[0]);
         return existingProfiles[0];
       }
 
@@ -116,10 +127,11 @@ export const AuthProvider = ({ children }) => {
       const firstName = email.split('@')[0];
       const capitalizedName = capitalizeName(firstName);
       
+      console.log('Creating new profile for:', email);
       const { data: newProfile, error: insertError } = await supabase
         .from('user_profiles')
         .insert([{
-          id: authUserId, // Use Supabase auth user ID
+          id: authUserId,
           email: email,
           name: capitalizedName,
           monthly_income: 0,
@@ -131,13 +143,30 @@ export const AuthProvider = ({ children }) => {
 
       if (insertError) {
         console.error('Error creating user profile:', insertError);
-        throw insertError;
+        // Return a basic profile object even if database insert fails
+        return {
+          id: authUserId,
+          email: email,
+          name: capitalizedName,
+          monthly_income: 0,
+          monthly_budget: 0,
+          setup_completed: false
+        };
       }
 
+      console.log('Created new profile:', newProfile);
       return newProfile;
     } catch (error) {
       console.error('Error in createOrGetUserProfile:', error);
-      throw error;
+      // Return a basic profile object as fallback
+      return {
+        id: authUserId,
+        email: email,
+        name: capitalizeName(email.split('@')[0]),
+        monthly_income: 0,
+        monthly_budget: 0,
+        setup_completed: false
+      };
     }
   };
 
@@ -151,10 +180,9 @@ export const AuthProvider = ({ children }) => {
         email: email,
         options: {
           shouldCreateUser: true,
-          emailRedirectTo: null, // Explicitly disable redirect
+          emailRedirectTo: undefined, // Explicitly disable redirect
           data: {
-            // Force OTP mode
-            otp_type: 'email'
+            email: email
           }
         }
       });
@@ -190,7 +218,7 @@ export const AuthProvider = ({ children }) => {
       const { data, error } = await supabase.auth.verifyOtp({
         email: email,
         token: token,
-        type: 'email' // Explicitly specify email OTP type
+        type: 'email'
       });
 
       if (error) {
@@ -244,6 +272,7 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     try {
+      console.log('Logging out user');
       await supabase.auth.signOut();
       // The auth state change will be handled by the listener
     } catch (error) {
@@ -257,7 +286,10 @@ export const AuthProvider = ({ children }) => {
   };
 
   const updateUserProfile = async (updates) => {
-    if (!user?.id) return;
+    if (!user?.id) {
+      console.error('No user ID available for profile update');
+      return;
+    }
     
     try {
       setIsLoading(true);
@@ -279,7 +311,10 @@ export const AuthProvider = ({ children }) => {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error updating profile:', error);
+        throw error;
+      }
       
       // Update both user and userProfile states
       const updatedUser = {
@@ -315,7 +350,10 @@ export const AuthProvider = ({ children }) => {
         .eq('id', user.id)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error refreshing profile:', error);
+        return;
+      }
       
       const updatedUser = {
         ...user,

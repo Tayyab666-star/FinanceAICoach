@@ -19,6 +19,8 @@ import ToastContainer from './components/ToastContainer';
 const ProtectedRoute = ({ children }) => {
   const { user, isLoading } = useAuth();
   
+  console.log('ProtectedRoute - User:', user, 'Loading:', isLoading);
+  
   // Show loading spinner while checking auth state
   if (isLoading) {
     return (
@@ -33,15 +35,19 @@ const ProtectedRoute = ({ children }) => {
   
   // Redirect to login if not authenticated
   if (!user) {
+    console.log('No user found, redirecting to login');
     return <Navigate to="/login" replace />;
   }
   
+  console.log('User authenticated, rendering protected content');
   // Render protected content
   return children;
 };
 
 const PublicRoute = ({ children }) => {
   const { user, isLoading } = useAuth();
+  
+  console.log('PublicRoute - User:', user, 'Loading:', isLoading);
   
   // Show loading spinner while checking auth state
   if (isLoading) {
@@ -57,6 +63,7 @@ const PublicRoute = ({ children }) => {
   
   // Redirect to dashboard if already authenticated
   if (user) {
+    console.log('User already authenticated, redirecting to dashboard');
     return <Navigate to="/dashboard" replace />;
   }
   
