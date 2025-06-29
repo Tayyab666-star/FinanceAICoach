@@ -22,10 +22,14 @@ import {
   Trash2,
   Moon,
   Sun,
-  Sparkles,
   Zap,
+  Sparkles,
   Rocket,
-  Star
+  Star,
+  TrendingUp,
+  Brain,
+  Target,
+  BarChart3
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotifications } from '../contexts/NotificationContext';
@@ -37,71 +41,91 @@ import Button from '../components/Button';
 import Input from '../components/Input';
 import ResponsiveModal from '../components/ResponsiveModal';
 
+// Settings sections
+const settingSections = [
+  { id: 'profile', name: 'Profile', icon: User },
+  { id: 'financial', name: 'Financial Settings', icon: DollarSign },
+  { id: 'security', name: 'Security', icon: Lock },
+  { id: 'notifications', name: 'Notifications', icon: Bell },
+  { id: 'accounts', name: 'Connected Accounts', icon: CreditCard },
+  { id: 'data', name: 'Data & Privacy', icon: Database },
+  { id: 'advanced', name: 'Advanced', icon: Shield }
+];
+
 // Beta Features Modal Component
 const BetaFeaturesModal = ({ isOpen, onClose }) => {
   const betaFeatures = [
     {
-      id: 'ai-insights',
-      title: 'Advanced AI Financial Insights',
-      description: 'Get personalized investment recommendations and market analysis powered by advanced AI algorithms.',
-      status: 'Coming Q2 2025',
-      icon: Sparkles,
-      category: 'AI & Analytics'
+      icon: Brain,
+      title: 'AI-Powered Expense Categorization',
+      description: 'Automatically categorize transactions using advanced machine learning',
+      status: 'Coming Soon',
+      eta: 'Q2 2025',
+      color: 'blue'
     },
     {
-      id: 'crypto-tracking',
-      title: 'Cryptocurrency Portfolio Tracking',
-      description: 'Track your crypto investments across multiple exchanges with real-time price updates and portfolio analysis.',
-      status: 'Coming Q3 2025',
+      icon: TrendingUp,
+      title: 'Investment Portfolio Tracking',
+      description: 'Track stocks, crypto, and other investments in real-time',
+      status: 'In Development',
+      eta: 'Q3 2025',
+      color: 'green'
+    },
+    {
+      icon: Target,
+      title: 'Smart Goal Recommendations',
+      description: 'AI suggests personalized financial goals based on your spending patterns',
+      status: 'Planning',
+      eta: 'Q4 2025',
+      color: 'purple'
+    },
+    {
+      icon: BarChart3,
+      title: 'Advanced Analytics Dashboard',
+      description: 'Deep insights with predictive analytics and trend forecasting',
+      status: 'Research',
+      eta: '2026',
+      color: 'orange'
+    },
+    {
+      icon: Smartphone,
+      title: 'Mobile App',
+      description: 'Native iOS and Android apps with offline capabilities',
+      status: 'Planning',
+      eta: 'Q3 2025',
+      color: 'indigo'
+    },
+    {
       icon: Zap,
-      category: 'Investment'
-    },
-    {
-      id: 'smart-budgeting',
-      title: 'Smart Budget Optimization',
-      description: 'AI-powered budget suggestions that automatically adjust based on your spending patterns and financial goals.',
-      status: 'Beta Testing',
-      icon: Rocket,
-      category: 'Budgeting'
-    },
-    {
-      id: 'social-features',
-      title: 'Social Financial Challenges',
-      description: 'Join savings challenges with friends and family, compete in financial goals, and share achievements.',
-      status: 'Coming Q4 2025',
-      icon: Star,
-      category: 'Social'
-    },
-    {
-      id: 'investment-advisor',
-      title: 'AI Investment Advisor',
-      description: 'Get personalized investment advice based on your risk tolerance, financial goals, and market conditions.',
-      status: 'Research Phase',
-      icon: Sparkles,
-      category: 'Investment'
-    },
-    {
-      id: 'bill-automation',
-      title: 'Smart Bill Management',
-      description: 'Automatically categorize bills, predict upcoming expenses, and get alerts for unusual charges.',
-      status: 'Coming Q2 2025',
-      icon: Zap,
-      category: 'Automation'
+      title: 'Bank Account Integration',
+      description: 'Direct connection to your bank accounts for automatic transaction import',
+      status: 'Coming Soon',
+      eta: 'Q2 2025',
+      color: 'yellow'
     }
   ];
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'Beta Testing':
-        return 'bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-300';
-      case 'Research Phase':
-        return 'bg-purple-100 dark:bg-purple-900/50 text-purple-800 dark:text-purple-300';
-      default:
-        return 'bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300';
+      case 'Coming Soon': return 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300';
+      case 'In Development': return 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300';
+      case 'Planning': return 'bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-300';
+      case 'Research': return 'bg-orange-100 text-orange-800 dark:bg-orange-900/50 dark:text-orange-300';
+      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
     }
   };
 
-  const categories = [...new Set(betaFeatures.map(f => f.category))];
+  const getIconColor = (color) => {
+    switch (color) {
+      case 'blue': return 'text-blue-600 dark:text-blue-400';
+      case 'green': return 'text-green-600 dark:text-green-400';
+      case 'purple': return 'text-purple-600 dark:text-purple-400';
+      case 'orange': return 'text-orange-600 dark:text-orange-400';
+      case 'indigo': return 'text-indigo-600 dark:text-indigo-400';
+      case 'yellow': return 'text-yellow-600 dark:text-yellow-400';
+      default: return 'text-gray-600 dark:text-gray-400';
+    }
+  };
 
   return (
     <ResponsiveModal
@@ -113,133 +137,105 @@ const BetaFeaturesModal = ({ isOpen, onClose }) => {
       <div className="space-y-6">
         {/* Header */}
         <div className="text-center">
-          <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-500 mx-auto mb-4 flex items-center justify-center">
+          <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center mx-auto mb-4">
             <Sparkles className="w-8 h-8 text-white" />
           </div>
           <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
             Exciting Features Coming Soon!
           </h3>
           <p className="text-gray-600 dark:text-gray-300">
-            Get a sneak peek at the innovative features we're building to make your financial journey even better.
+            Here's what we're working on to make your financial management even better
           </p>
         </div>
 
-        {/* Features by Category */}
-        {categories.map(category => (
-          <div key={category} className="space-y-3">
-            <h4 className="text-lg font-semibold text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2">
-              {category}
-            </h4>
-            <div className="grid gap-4">
-              {betaFeatures
-                .filter(feature => feature.category === category)
-                .map(feature => {
-                  const Icon = feature.icon;
-                  return (
-                    <div key={feature.id} className="p-4 border border-gray-200 dark:border-gray-700 hover:border-purple-300 dark:hover:border-purple-600 transition-colors">
-                      <div className="flex items-start space-x-4">
-                        <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center">
-                          <Icon className="w-5 h-5 text-white" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between mb-2">
-                            <h5 className="font-medium text-gray-900 dark:text-white">
-                              {feature.title}
-                            </h5>
-                            <span className={`text-xs px-2 py-1 font-medium ${getStatusColor(feature.status)}`}>
-                              {feature.status}
-                            </span>
-                          </div>
-                          <p className="text-sm text-gray-600 dark:text-gray-300">
-                            {feature.description}
-                          </p>
-                        </div>
-                      </div>
+        {/* Features Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {betaFeatures.map((feature, index) => {
+            const Icon = feature.icon;
+            return (
+              <div key={index} className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:shadow-md transition-shadow">
+                <div className="flex items-start space-x-3">
+                  <div className={`w-10 h-10 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center flex-shrink-0`}>
+                    <Icon className={`w-5 h-5 ${getIconColor(feature.color)}`} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-medium text-gray-900 dark:text-white text-sm mb-1">
+                      {feature.title}
+                    </h4>
+                    <p className="text-xs text-gray-600 dark:text-gray-300 mb-2">
+                      {feature.description}
+                    </p>
+                    <div className="flex items-center justify-between">
+                      <span className={`text-xs px-2 py-1 rounded-full ${getStatusColor(feature.status)}`}>
+                        {feature.status}
+                      </span>
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                        ETA: {feature.eta}
+                      </span>
                     </div>
-                  );
-                })}
-            </div>
-          </div>
-        ))}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
 
         {/* Beta Program Info */}
-        <div className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 p-6 border border-purple-200 dark:border-purple-700">
-          <h4 className="font-semibold text-purple-900 dark:text-purple-300 mb-3 flex items-center">
-            <Star className="w-5 h-5 mr-2" />
-            Join Our Beta Program
-          </h4>
-          <p className="text-sm text-purple-800 dark:text-purple-200 mb-4">
+        <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 p-6 rounded-lg border border-blue-200 dark:border-blue-700">
+          <div className="flex items-center mb-4">
+            <Rocket className="w-6 h-6 text-blue-600 dark:text-blue-400 mr-3" />
+            <h4 className="font-semibold text-blue-900 dark:text-blue-300">Join Our Beta Program</h4>
+          </div>
+          <p className="text-blue-800 dark:text-blue-200 text-sm mb-4">
             Want early access to these features? Join our beta program to test new features before they're released to everyone!
           </p>
-          <div className="space-y-2 text-sm text-purple-700 dark:text-purple-300">
+          <div className="space-y-2 text-sm text-blue-700 dark:text-blue-300">
             <div className="flex items-center">
-              <Check className="w-4 h-4 mr-2 text-green-600" />
-              Early access to new features
+              <Star className="w-4 h-4 mr-2" />
+              <span>Get early access to new features</span>
             </div>
             <div className="flex items-center">
-              <Check className="w-4 h-4 mr-2 text-green-600" />
-              Direct feedback channel to our development team
+              <Star className="w-4 h-4 mr-2" />
+              <span>Provide feedback to shape development</span>
             </div>
             <div className="flex items-center">
-              <Check className="w-4 h-4 mr-2 text-green-600" />
-              Influence the direction of new features
-            </div>
-            <div className="flex items-center">
-              <Check className="w-4 h-4 mr-2 text-green-600" />
-              Beta tester badge and recognition
+              <Star className="w-4 h-4 mr-2" />
+              <span>Direct communication with our development team</span>
             </div>
           </div>
           <Button 
-            className="mt-4 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white"
+            className="mt-4" 
             size="sm"
+            onClick={() => {
+              // This would typically open a beta signup form
+              alert('Beta program signup will be available soon! We\'ll notify you when it\'s ready.');
+            }}
           >
             Join Beta Program
           </Button>
         </div>
 
-        {/* Timeline */}
-        <div className="bg-gray-50 dark:bg-gray-700 p-4">
-          <h4 className="font-semibold text-gray-900 dark:text-white mb-3">Development Timeline</h4>
-          <div className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span className="text-gray-600 dark:text-gray-300">Q1 2025</span>
-              <span className="text-gray-900 dark:text-white">Enhanced AI Coach & Receipt Scanning</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600 dark:text-gray-300">Q2 2025</span>
-              <span className="text-gray-900 dark:text-white">Advanced AI Insights & Bill Automation</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600 dark:text-gray-300">Q3 2025</span>
-              <span className="text-gray-900 dark:text-white">Cryptocurrency Tracking & Investment Tools</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600 dark:text-gray-300">Q4 2025</span>
-              <span className="text-gray-900 dark:text-white">Social Features & Community Challenges</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Footer */}
-        <div className="text-center text-sm text-gray-500 dark:text-gray-400">
-          <p>Have ideas for new features? We'd love to hear from you!</p>
-          <p className="mt-1">Contact us at <span className="text-blue-600 dark:text-blue-400">feedback@financeapp.com</span></p>
+        {/* Feedback Section */}
+        <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+          <h4 className="font-medium text-gray-900 dark:text-white mb-2">Have a Feature Request?</h4>
+          <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">
+            We'd love to hear your ideas! Your feedback helps us prioritize what to build next.
+          </p>
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => {
+              // This would typically open a feedback form
+              alert('Feature request form coming soon! For now, you can reach out to us directly.');
+            }}
+          >
+            Submit Feature Request
+          </Button>
         </div>
       </div>
     </ResponsiveModal>
   );
 };
-
-// Settings sections
-const settingSections = [
-  { id: 'profile', name: 'Profile', icon: User },
-  { id: 'financial', name: 'Financial Settings', icon: DollarSign },
-  { id: 'security', name: 'Security', icon: Lock },
-  { id: 'notifications', name: 'Notifications', icon: Bell },
-  { id: 'accounts', name: 'Connected Accounts', icon: CreditCard },
-  { id: 'data', name: 'Data & Privacy', icon: Database },
-  { id: 'advanced', name: 'Advanced', icon: Shield }
-];
 
 // Profile settings component
 const ProfileSettings = () => {
@@ -345,7 +341,7 @@ const ProfileSettings = () => {
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Bio</label>
           <textarea
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 text-sm"
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 text-sm"
             rows={3}
             value={formData.bio}
             onChange={(e) => handleInputChange('bio', e.target.value)}
@@ -356,11 +352,11 @@ const ProfileSettings = () => {
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">About Your Work</label>
           <textarea
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 text-sm"
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 text-sm"
             rows={3}
             value={formData.about_work}
             onChange={(e) => handleInputChange('about_work', e.target.value)}
-            placeholder="What do you do for work? This helps us provide better financial advice..."
+            placeholder="What do you do for work?"
           />
         </div>
         
@@ -457,7 +453,7 @@ const FinancialSettings = () => {
       
       <div className="space-y-6">
         {/* Current financial info */}
-        <div className="bg-blue-50 dark:bg-blue-900/20 p-4">
+        <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
           <h4 className="font-medium text-blue-900 dark:text-blue-300 mb-2">Current Financial Information</h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
             <div>
@@ -497,7 +493,7 @@ const FinancialSettings = () => {
 
         {/* Budget recommendation */}
         {formData.monthly_income > 0 && (
-          <div className="bg-green-50 dark:bg-green-900/20 p-4">
+          <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg">
             <h4 className="font-medium text-green-900 dark:text-green-300 mb-2">💡 Budget Recommendation</h4>
             <p className="text-sm text-green-800 dark:text-green-200">
               Based on your income of ${parseFloat(formData.monthly_income).toLocaleString()}, 
@@ -522,23 +518,23 @@ const FinancialSettings = () => {
         <div>
           <h4 className="font-medium text-gray-900 dark:text-white mb-3">Preferences</h4>
           <div className="space-y-3">
-            <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700">
+            <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
               <div>
                 <p className="font-medium text-gray-900 dark:text-white">Auto-categorize transactions</p>
                 <p className="text-sm text-gray-600 dark:text-gray-300">Automatically assign categories to new transactions</p>
               </div>
-              <button className="relative inline-flex h-6 w-11 items-center bg-blue-600 transition-colors">
-                <span className="inline-block h-4 w-4 transform bg-white transition-transform translate-x-6" />
+              <button className="relative inline-flex h-6 w-11 items-center rounded-full bg-blue-600 transition-colors">
+                <span className="inline-block h-4 w-4 transform rounded-full bg-white transition-transform translate-x-6" />
               </button>
             </div>
             
-            <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700">
+            <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
               <div>
                 <p className="font-medium text-gray-900 dark:text-white">Budget alerts</p>
                 <p className="text-sm text-gray-600 dark:text-gray-300">Get notified when approaching budget limits</p>
               </div>
-              <button className="relative inline-flex h-6 w-11 items-center bg-blue-600 transition-colors">
-                <span className="inline-block h-4 w-4 transform bg-white transition-transform translate-x-6" />
+              <button className="relative inline-flex h-6 w-11 items-center rounded-full bg-blue-600 transition-colors">
+                <span className="inline-block h-4 w-4 transform rounded-full bg-white transition-transform translate-x-6" />
               </button>
             </div>
           </div>
@@ -694,7 +690,7 @@ const SecuritySettings = () => {
         
         {!twoFactorEnabled ? (
           <div className="space-y-4">
-            <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700">
+            <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
               <div className="flex items-center space-x-3">
                 <Smartphone className="w-5 h-5 text-gray-600 dark:text-gray-300" />
                 <div>
@@ -708,7 +704,7 @@ const SecuritySettings = () => {
             </div>
 
             {showTwoFactorSetup && (
-              <div className="p-4 border border-blue-200 dark:border-blue-700 bg-blue-50 dark:bg-blue-900/20">
+              <div className="p-4 border border-blue-200 dark:border-blue-700 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                 <h4 className="font-medium text-blue-900 dark:text-blue-300 mb-3">Set Up SMS Authentication</h4>
                 <div className="space-y-3">
                   <Input
@@ -741,7 +737,7 @@ const SecuritySettings = () => {
           </div>
         ) : (
           <div className="space-y-4">
-            <div className="flex items-center justify-between p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700">
+            <div className="flex items-center justify-between p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-700">
               <div className="flex items-center space-x-3">
                 <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" />
                 <div>
@@ -767,11 +763,11 @@ const SecuritySettings = () => {
             { device: 'Safari on iPhone', location: 'New York, NY', current: false },
             { device: 'Chrome on Windows', location: 'Los Angeles, CA', current: false }
           ].map((session, index) => (
-            <div key={index} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700">
+            <div key={index} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
               <div>
                 <p className="font-medium text-gray-900 dark:text-white">
                   {session.device}
-                  {session.current && <span className="ml-2 text-xs bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-300 px-2 py-1">Current</span>}
+                  {session.current && <span className="ml-2 text-xs bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-300 px-2 py-1 rounded-full">Current</span>}
                 </p>
                 <p className="text-sm text-gray-600 dark:text-gray-300">{session.location}</p>
               </div>
@@ -835,19 +831,19 @@ const NotificationSettings = () => {
       
       <div className="space-y-4">
         {notificationOptions.map((option) => (
-          <div key={option.key} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700">
+          <div key={option.key} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
             <div>
               <p className="font-medium text-gray-900 dark:text-white">{option.label}</p>
               <p className="text-sm text-gray-600 dark:text-gray-300">{option.description}</p>
             </div>
             <button
               onClick={() => handleToggle(option.key)}
-              className={`relative inline-flex h-6 w-11 items-center transition-colors ${
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
                 notifications[option.key] ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-600'
               }`}
             >
               <span
-                className={`inline-block h-4 w-4 transform bg-white transition-transform ${
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
                   notifications[option.key] ? 'translate-x-6' : 'translate-x-1'
                 }`}
               />
@@ -940,9 +936,9 @@ const ConnectedAccounts = () => {
       
       <div className="space-y-3">
         {accounts.map((account) => (
-          <div key={account.id} className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-600">
+          <div key={account.id} className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-600 rounded-lg">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center">
+              <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/50 rounded-lg flex items-center justify-center">
                 <CreditCard className="w-5 h-5 text-blue-600 dark:text-blue-400" />
               </div>
               <div>
@@ -959,7 +955,7 @@ const ConnectedAccounts = () => {
             <div className="text-right">
               <p className="font-medium text-gray-900 dark:text-white">{account.balance}</p>
               <div className="flex items-center space-x-2">
-                <span className={`text-xs px-2 py-1 ${
+                <span className={`text-xs px-2 py-1 rounded-full ${
                   account.status === 'Connected' 
                     ? 'bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-300' 
                     : 'bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-300'
@@ -1185,7 +1181,7 @@ For questions or support, contact: support@financeapp.com
     <Card>
       <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Data & Privacy</h3>
       <div className="space-y-4">
-        <div className="p-4 bg-blue-50 dark:bg-blue-900/20">
+        <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
           <h4 className="font-medium text-blue-900 dark:text-blue-300 mb-2">Data Export</h4>
           <p className="text-sm text-blue-800 dark:text-blue-200 mb-3">Download a comprehensive report of all your financial data</p>
           <Button size="sm" variant="outline" onClick={handleExportData}>
@@ -1194,7 +1190,7 @@ For questions or support, contact: support@financeapp.com
           </Button>
         </div>
         
-        <div className="p-4 bg-red-50 dark:bg-red-900/20">
+        <div className="p-4 bg-red-50 dark:bg-red-900/20 rounded-lg">
           <h4 className="font-medium text-red-900 dark:text-red-300 mb-2">Delete Account</h4>
           <p className="text-sm text-red-800 dark:text-red-200 mb-3">Permanently delete your account and all data</p>
           <Button 
@@ -1216,14 +1212,14 @@ For questions or support, contact: support@financeapp.com
               <h3 className="text-lg font-semibold text-red-900 dark:text-red-300">Delete Account</h3>
               <button 
                 onClick={() => setShowDeleteConfirm(false)}
-                className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700"
+                className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
               >
                 <X className="w-5 h-5 text-gray-500 dark:text-gray-400" />
               </button>
             </div>
             
             <div className="space-y-4">
-              <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700">
+              <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg">
                 <p className="text-sm text-red-800 dark:text-red-200 font-medium mb-2">⚠️ This action cannot be undone!</p>
                 <p className="text-sm text-red-700 dark:text-red-300">
                   This will permanently delete:
@@ -1308,7 +1304,7 @@ const AdvancedSettings = () => {
       <Card>
         <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Advanced Settings</h3>
         <div className="space-y-4">
-          <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700">
+          <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
             <div className="flex items-center space-x-3">
               {isDarkMode ? <Moon className="w-5 h-5 text-blue-400" /> : <Sun className="w-5 h-5 text-gray-600" />}
               <div>
@@ -1327,27 +1323,27 @@ const AdvancedSettings = () => {
             </Button>
           </div>
           
-          <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700">
+          <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
             <div className="flex items-center space-x-3">
               <Sparkles className="w-5 h-5 text-purple-600 dark:text-purple-400" />
               <div>
                 <p className="font-medium text-gray-900 dark:text-white">Beta Features</p>
                 <p className="text-sm text-gray-600 dark:text-gray-300">
-                  Explore upcoming features and roadmap
+                  Preview upcoming features and roadmap
                 </p>
               </div>
             </div>
             <Button size="sm" variant="outline" onClick={handleBetaFeatures}>
-              <Sparkles className="w-4 h-4 mr-2" />
-              View Features
+              View Roadmap
             </Button>
           </div>
         </div>
       </Card>
 
-      <BetaFeaturesModal
-        isOpen={showBetaModal}
-        onClose={() => setShowBetaModal(false)}
+      {/* Beta Features Modal */}
+      <BetaFeaturesModal 
+        isOpen={showBetaModal} 
+        onClose={() => setShowBetaModal(false)} 
       />
     </>
   );
@@ -1413,7 +1409,7 @@ const Settings = () => {
                   <button
                     key={section.id}
                     onClick={() => setActiveSection(section.id)}
-                    className={`w-full flex items-center px-3 py-2 text-sm font-medium transition-colors ${
+                    className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
                       activeSection === section.id
                         ? 'bg-blue-50 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300'
                         : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white'
