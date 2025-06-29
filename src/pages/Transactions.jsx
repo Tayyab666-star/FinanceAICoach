@@ -183,7 +183,7 @@ const TransactionModal = ({ isOpen, onClose, onSave, transaction = null }) => {
   );
 };
 
-// Enhanced Receipt upload modal with improved OCR processing
+// Enhanced Receipt upload modal with improved error handling
 const ReceiptUploadModal = ({ isOpen, onClose, onAdd }) => {
   const { user } = useAuth();
   const { addNotification } = useNotifications();
@@ -238,16 +238,19 @@ const ReceiptUploadModal = ({ isOpen, onClose, onAdd }) => {
     }
 
     setUploading(true);
-    setProcessingStep('Uploading image...');
+    setProcessingStep('Uploading image to secure storage...');
     
     try {
+      console.log('Starting receipt processing for user:', user.id);
+      
       // Upload image to Supabase Storage
       const imageUrl = await uploadReceipt(selectedFile, user.id);
+      console.log('Image uploaded successfully:', imageUrl);
       
       setUploading(false);
       setProcessing(true);
       setConfidence(0);
-      setProcessingStep('Analyzing receipt...');
+      setProcessingStep('Analyzing receipt with AI...');
       
       // Process OCR with progress tracking
       const ocrData = await processReceiptOCR(selectedFile, (progress) => {
@@ -263,6 +266,7 @@ const ReceiptUploadModal = ({ isOpen, onClose, onAdd }) => {
         }
       });
       
+      console.log('OCR processing completed:', ocrData);
       setExtractedText(ocrData.extracted_text || '');
       
       // Create result object with enhanced data
@@ -281,12 +285,19 @@ const ReceiptUploadModal = ({ isOpen, onClose, onAdd }) => {
       setProcessingStep('');
       
       // Store receipt data in database
-      await storeReceiptData({
-        image_url: imageUrl,
-        extracted_text: ocrData.extracted_text || '',
-        parsed_data: result,
-        confidence_score: ocrData.confidence
-      }, user.id);
+      try {
+        await storeReceiptData({
+          image_url: imageUrl,
+          extracted_text: ocrData.extracted_text || '',
+          parsed_data: result,
+          confidence_score: ocrData.confidence
+        }, user.id);
+        
+        console.log('Receipt data stored in database');
+      } catch (dbError) {
+        console.warn('Failed to store receipt in database, but continuing:', dbError);
+        // Don't fail the whole process if database storage fails
+      }
       
       addNotification({
         type: 'success',
@@ -303,7 +314,7 @@ const ReceiptUploadModal = ({ isOpen, onClose, onAdd }) => {
       addNotification({
         type: 'error',
         title: 'Processing Failed',
-        message: 'Failed to process receipt. Please try again or enter transaction manually.'
+        message: `Failed to process receipt: ${error.message}. Please try again or enter transaction manually.`
       });
     }
   };

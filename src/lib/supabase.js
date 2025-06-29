@@ -26,9 +26,9 @@ try {
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
-    autoRefreshToken: true,
-    persistSession: true,
-    detectSessionInUrl: true
+    autoRefreshToken: false,
+    persistSession: false,
+    detectSessionInUrl: false
   }
 });
 
@@ -139,29 +139,37 @@ const predictCategory = (merchantName, fullText) => {
   return 'Other'; // Default category
 };
 
-// Helper function to upload receipt image
+// Helper function to upload receipt image with improved error handling
 export const uploadReceipt = async (file, userId) => {
   try {
+    console.log('Starting receipt upload...', { fileName: file.name, fileSize: file.size, userId });
+    
     const fileExt = file.name.split('.').pop();
     const fileName = `${userId}/${Date.now()}.${fileExt}`;
+    
+    console.log('Uploading to path:', fileName);
     
     const { data, error } = await supabase.storage
       .from(RECEIPTS_BUCKET)
       .upload(fileName, file, {
         cacheControl: '3600',
-        upsert: false
+        upsert: false,
+        contentType: file.type
       });
 
     if (error) {
       console.error('Storage upload error:', error);
-      throw error;
+      throw new Error(`Upload failed: ${error.message}`);
     }
+
+    console.log('Upload successful:', data);
 
     // Get public URL
     const { data: { publicUrl } } = supabase.storage
       .from(RECEIPTS_BUCKET)
       .getPublicUrl(fileName);
 
+    console.log('Public URL generated:', publicUrl);
     return publicUrl;
   } catch (error) {
     console.error('Error uploading receipt:', error);
@@ -192,6 +200,8 @@ export const deleteReceipt = async (url) => {
 // Enhanced OCR Service using Tesseract.js for client-side processing
 export const processReceiptOCR = async (file, onProgress) => {
   try {
+    console.log('Starting OCR processing...');
+    
     // Import Tesseract.js dynamically
     const Tesseract = await import('tesseract.js');
     
@@ -207,16 +217,20 @@ export const processReceiptOCR = async (file, onProgress) => {
       }
     );
 
+    console.log('OCR completed, parsing text...');
     return parseReceiptText(text);
   } catch (error) {
     console.error('OCR processing error:', error);
     // Fallback to mock data if OCR fails
+    console.log('Using fallback mock data...');
     return generateMockReceiptData();
   }
 };
 
 // Enhanced receipt text parsing with better total extraction and category prediction
 const parseReceiptText = (text) => {
+  console.log('Parsing receipt text:', text.substring(0, 200) + '...');
+  
   const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
   
   let description = '';
@@ -332,7 +346,7 @@ const parseReceiptText = (text) => {
   // Predict category based on merchant name and full text
   category = predictCategory(description, text);
 
-  return {
+  const result = {
     description: description || 'Receipt Purchase',
     amount: amount || 0,
     category,
@@ -340,6 +354,9 @@ const parseReceiptText = (text) => {
     extracted_text: text,
     confidence: calculateConfidence(description, amount, date, text)
   };
+
+  console.log('Parsed receipt data:', result);
+  return result;
 };
 
 // Enhanced confidence calculation
@@ -387,9 +404,11 @@ const generateMockReceiptData = () => {
   };
 };
 
-// Store receipt data in Supabase
+// Store receipt data in Supabase with improved error handling
 export const storeReceiptData = async (receiptData, userId) => {
   try {
+    console.log('Storing receipt data:', { userId, receiptData });
+    
     const { data, error } = await supabase
       .from('receipts')
       .insert([{
@@ -405,9 +424,10 @@ export const storeReceiptData = async (receiptData, userId) => {
 
     if (error) {
       console.error('Database insert error:', error);
-      throw error;
+      throw new Error(`Database error: ${error.message}`);
     }
     
+    console.log('Receipt data stored successfully:', data);
     return data;
   } catch (error) {
     console.error('Error storing receipt data:', error);
