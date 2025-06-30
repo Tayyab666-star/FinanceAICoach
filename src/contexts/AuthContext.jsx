@@ -12,18 +12,33 @@ export const AuthProvider = ({ children }) => {
   const [isInitialized, setIsInitialized] = useState(false);
   const [error, setError] = useState(null);
 
-  // Initialize auth state on mount with proper session validation
+  // Initialize auth state on mount with faster session validation
   useEffect(() => {
     let mounted = true;
+    let initializationTimeout;
 
-    // Get initial session with proper error handling
+    // Get initial session with timeout protection
     const getInitialSession = async () => {
       try {
         setIsLoading(true);
         setError(null);
         
-        // Check for existing session first
+        // Set a maximum timeout for initialization (3 seconds)
+        initializationTimeout = setTimeout(() => {
+          if (mounted) {
+            console.log('Auth initialization timeout - proceeding without session');
+            setIsLoading(false);
+            setIsInitialized(true);
+          }
+        }, 3000);
+        
+        // Check for existing session
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        // Clear timeout since we got a response
+        if (initializationTimeout) {
+          clearTimeout(initializationTimeout);
+        }
         
         if (sessionError) {
           console.error('Session error:', sessionError);
@@ -31,7 +46,7 @@ export const AuthProvider = ({ children }) => {
           await supabase.auth.signOut();
           setUser(null);
           setUserProfile(null);
-          setError(null); // Don't show error for expired sessions
+          setError(null);
         } else if (session?.user && mounted) {
           console.log('Found valid session for user:', session.user.email);
           await handleAuthUser(session.user);
@@ -45,7 +60,7 @@ export const AuthProvider = ({ children }) => {
         // Clear everything on any error
         setUser(null);
         setUserProfile(null);
-        setError(null); // Don't show error to user for session issues
+        setError(null);
       } finally {
         if (mounted) {
           setIsLoading(false);
@@ -67,13 +82,15 @@ export const AuthProvider = ({ children }) => {
           console.log('User signed in:', session.user.email);
           setIsLoading(true);
           await handleAuthUser(session.user);
+          setIsLoading(false);
         } else if (event === 'SIGNED_OUT') {
           console.log('User signed out');
           setUser(null);
           setUserProfile(null);
+          setIsLoading(false);
         } else if (event === 'TOKEN_REFRESHED' && session?.user) {
           console.log('Token refreshed for user:', session.user.email);
-          // Update user data if needed
+          // Update user data if needed without showing loading
           if (!user || user.id !== session.user.id) {
             await handleAuthUser(session.user);
           }
@@ -81,10 +98,7 @@ export const AuthProvider = ({ children }) => {
       } catch (error) {
         console.error('Error handling auth state change:', error);
         setError('Authentication error occurred. Please try again.');
-      } finally {
-        if (mounted) {
-          setIsLoading(false);
-        }
+        setIsLoading(false);
       }
     });
 
@@ -92,32 +106,32 @@ export const AuthProvider = ({ children }) => {
 
     return () => {
       mounted = false;
+      if (initializationTimeout) {
+        clearTimeout(initializationTimeout);
+      }
       subscription.unsubscribe();
     };
   }, []);
 
-  // Helper function to capitalize name properly and extract only alphabetic characters
+  // Helper function to capitalize name properly
   const capitalizeName = (name) => {
     if (!name) return '';
     
-    // Extract only alphabetic characters and spaces, remove numbers and special chars
     const cleanName = name.replace(/[^a-zA-Z\s]/g, '').trim();
+    if (!cleanName) return name;
     
-    if (!cleanName) return name; // Return original if nothing left after cleaning
-    
-    // Split by spaces and capitalize each word
     return cleanName
       .split(' ')
       .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
       .join(' ');
   };
 
-  // Enhanced auth user handler with persistent storage
+  // Optimized auth user handler - faster execution
   const handleAuthUser = async (authUser) => {
     try {
       console.log('Handling auth user:', authUser.email);
       
-      // Create basic user object immediately - no delays
+      // Create basic user object immediately
       const userData = { 
         id: authUser.id,
         email: authUser.email, 
@@ -127,13 +141,20 @@ export const AuthProvider = ({ children }) => {
       console.log('Setting user data immediately:', userData);
       setUser(userData);
       
-      // Try to get real profile from database
+      // Try to get profile quickly with timeout
+      const profilePromise = supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('id', authUser.id)
+        .maybeSingle();
+
+      // Set a timeout for profile fetch (1 second max)
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Profile fetch timeout')), 1000)
+      );
+
       try {
-        const { data: existingProfile, error: fetchError } = await supabase
-          .from('user_profiles')
-          .select('*')
-          .eq('id', authUser.id)
-          .maybeSingle();
+        const { data: existingProfile } = await Promise.race([profilePromise, timeoutPromise]);
 
         if (existingProfile) {
           console.log('Found existing profile:', existingProfile);
@@ -141,30 +162,29 @@ export const AuthProvider = ({ children }) => {
           return;
         }
       } catch (error) {
-        console.log('Error fetching existing profile:', error);
+        console.log('Profile fetch failed or timed out:', error.message);
       }
 
-      // Create new profile for new users - with setup_completed: false to trigger setup modal
-      const newProfile = {
+      // Create fallback profile immediately
+      const fallbackProfile = {
         id: authUser.id,
         email: authUser.email,
         name: capitalizeName(authUser.email.split('@')[0]),
         monthly_income: 0,
         monthly_budget: 0,
-        setup_completed: false, // This will trigger the setup modal
+        setup_completed: false,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       };
       
-      console.log('Setting new user profile with setup_completed: false:', newProfile);
-      setUserProfile(newProfile);
+      console.log('Setting fallback profile:', fallbackProfile);
+      setUserProfile(fallbackProfile);
       
-      // Create profile in database in background
+      // Create profile in database in background (non-blocking)
       createProfileInBackground(authUser.id, authUser.email);
       
     } catch (error) {
       console.error('Error handling auth user:', error);
-      setError('Failed to load user profile. Please try again.');
       
       // Still set basic user data even if profile fails
       const userData = { 
@@ -173,15 +193,24 @@ export const AuthProvider = ({ children }) => {
         name: capitalizeName(authUser.email.split('@')[0])
       };
       setUser(userData);
+      
+      // Set minimal profile to prevent blocking
+      setUserProfile({
+        id: authUser.id,
+        email: authUser.email,
+        name: userData.name,
+        monthly_income: 0,
+        monthly_budget: 0,
+        setup_completed: false
+      });
     }
   };
 
-  // Background profile creation - non-blocking and silent
+  // Background profile creation - completely non-blocking
   const createProfileInBackground = async (authUserId, email) => {
     try {
       console.log('Creating profile in background for:', email);
       
-      // Create new profile if it doesn't exist
       const { data, error } = await supabase
         .from('user_profiles')
         .upsert({
@@ -203,32 +232,27 @@ export const AuthProvider = ({ children }) => {
       }
     } catch (error) {
       console.log('Background profile creation failed (non-critical):', error);
-      // Don't update UI on failure - keep the fallback profile
     }
   };
 
-  // Enhanced send verification code
+  // Send verification code
   const sendVerificationCode = async (email) => {
     try {
       console.log('Sending OTP to:', email);
       setError(null);
       
-      // Use signInWithOtp with explicit options to force OTP codes
       const { data, error } = await supabase.auth.signInWithOtp({
         email: email,
         options: {
           shouldCreateUser: true,
-          emailRedirectTo: undefined, // Explicitly disable redirect
-          data: {
-            email: email
-          }
+          emailRedirectTo: undefined,
+          data: { email: email }
         }
       });
 
       if (error) {
         console.error('Supabase OTP error:', error);
         
-        // Handle specific error cases
         if (error.message?.includes('Email rate limit exceeded')) {
           throw new Error('Too many requests. Please wait a moment before trying again.');
         } else if (error.message?.includes('Invalid email')) {
@@ -249,7 +273,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Enhanced verify code
+  // Verify code
   const verifyCode = async (email, token) => {
     try {
       console.log('Verifying OTP for:', email, 'Token length:', token.length);
@@ -264,7 +288,6 @@ export const AuthProvider = ({ children }) => {
       if (error) {
         console.error('Verify OTP error:', error);
         
-        // Handle specific error cases
         if (error.message?.includes('Token has expired')) {
           throw new Error('Verification code has expired. Please request a new one.');
         } else if (error.message?.includes('Invalid token')) {
@@ -277,8 +300,6 @@ export const AuthProvider = ({ children }) => {
       }
 
       console.log('OTP verified successfully:', data);
-      
-      // The auth state change will be handled by the listener
       return { success: true, user: data.user };
     } catch (error) {
       console.error('Verify code error:', error);
@@ -287,12 +308,11 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Check if user exists (for returning users)
+  // Check if user exists
   const checkUserExists = async (email) => {
     try {
       setError(null);
       
-      // Try to get user profile by email
       const { data: profiles, error } = await supabase
         .from('user_profiles')
         .select('id, email, name')
@@ -315,16 +335,13 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Enhanced logout with proper cleanup
+  // Logout
   const logout = async () => {
     try {
       console.log('Logging out user');
       setError(null);
       
-      // Sign out from Supabase
       await supabase.auth.signOut();
-      
-      // Clear local state
       setUser(null);
       setUserProfile(null);
       
@@ -333,13 +350,12 @@ export const AuthProvider = ({ children }) => {
       console.error('Logout error:', error);
       setError('Failed to logout. Please try again.');
       
-      // Still clear local state even if signOut fails
       setUser(null);
       setUserProfile(null);
     }
   };
 
-  // Enhanced update user profile
+  // Update user profile
   const updateUserProfile = async (updates) => {
     if (!user?.id) {
       console.error('No user ID available for profile update');
@@ -350,7 +366,6 @@ export const AuthProvider = ({ children }) => {
     try {
       setError(null);
       
-      // Clean and capitalize name if provided
       let cleanedUpdates = { ...updates };
       if (updates.name) {
         cleanedUpdates.name = capitalizeName(updates.name);
@@ -358,18 +373,14 @@ export const AuthProvider = ({ children }) => {
       
       console.log('Updating profile with:', cleanedUpdates);
       
-      // Update local state immediately for responsive UI
       const updatedProfile = {
         ...userProfile,
         ...cleanedUpdates,
         updated_at: new Date().toISOString()
       };
       
-      console.log('Updated profile will be:', updatedProfile);
-      
       setUserProfile(updatedProfile);
       
-      // Update user object if name changed
       if (cleanedUpdates.name) {
         const updatedUser = {
           ...user,
@@ -378,7 +389,6 @@ export const AuthProvider = ({ children }) => {
         setUser(updatedUser);
       }
       
-      // Update database in background
       const { data, error } = await supabase
         .from('user_profiles')
         .update({
@@ -391,7 +401,6 @@ export const AuthProvider = ({ children }) => {
 
       if (error) {
         console.error('Error updating profile in database:', error);
-        // Revert local changes if database update fails
         setUserProfile(userProfile);
         if (cleanedUpdates.name) {
           setUser(user);
@@ -400,12 +409,10 @@ export const AuthProvider = ({ children }) => {
         throw error;
       }
       
-      // Update with database response
       if (data) {
         console.log('Profile updated successfully in database:', data);
         setUserProfile(data);
         
-        // Update user object with latest name
         if (data.name) {
           const updatedUser = {
             ...user,
@@ -423,7 +430,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Refresh user profile from database
+  // Refresh user profile
   const refreshUserProfile = async () => {
     if (!user?.id) return;
     
@@ -456,7 +463,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Get user display name with fallback logic and proper capitalization
+  // Get user display name
   const getUserDisplayName = () => {
     if (userProfile?.name) return capitalizeName(userProfile.name);
     if (user?.name) return capitalizeName(user.name);
@@ -467,29 +474,18 @@ export const AuthProvider = ({ children }) => {
     return 'User';
   };
 
-  // Clear error function
+  // Clear error
   const clearError = () => {
     setError(null);
   };
 
-  // Don't render children until auth is initialized
+  // Show loading screen only during initial load
   if (!isInitialized) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
         <div className="text-center">
           <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-gray-600 dark:text-gray-300">Initializing...</p>
-          {error && (
-            <div className="mt-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg max-w-md mx-auto">
-              <p className="text-red-800 dark:text-red-200 text-sm">{error}</p>
-              <button 
-                onClick={() => window.location.reload()} 
-                className="mt-2 px-4 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700 transition-colors"
-              >
-                Reload Page
-              </button>
-            </div>
-          )}
         </div>
       </div>
     );

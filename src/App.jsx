@@ -19,9 +19,9 @@ import ToastContainer from './components/ToastContainer';
 const ProtectedRoute = ({ children }) => {
   const { user, isLoading, error } = useAuth();
   
-  // Show loading spinner while checking auth state
+  // Show loading spinner only if actively loading (not just checking auth)
   if (isLoading) {
-    return <LoadingSpinner message="Checking authentication..." />;
+    return <LoadingSpinner message="Loading your dashboard..." />;
   }
   
   // Show error state if there's an authentication error
@@ -47,9 +47,9 @@ const ProtectedRoute = ({ children }) => {
 const PublicRoute = ({ children }) => {
   const { user, isLoading, error } = useAuth();
   
-  // Show loading spinner while checking auth state
+  // Show loading spinner only if actively loading
   if (isLoading) {
-    return <LoadingSpinner message="Loading application..." />;
+    return <LoadingSpinner message="Checking authentication..." />;
   }
   
   // Show error state if there's an authentication error
