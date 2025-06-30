@@ -27,7 +27,7 @@ import {
 import { supabase } from '../lib/supabase';
 import Navbar from '../components/Navbar';
 
-// Hero Slider Component with solid colors and sharp edges
+// Hero Slider Component with provided images and reduced brightness
 const HeroSlider = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const navigate = useNavigate();
@@ -36,19 +36,19 @@ const HeroSlider = () => {
     {
       title: "AI-Powered Financial Intelligence",
       subtitle: "Transform your financial future with intelligent insights and personalized recommendations",
-      image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80",
+      image: "/1.jpg",
       bgColor: "bg-purple-600"
     },
     {
       title: "Smart Budget Management",
       subtitle: "Take control of your spending with AI-driven budget optimization and real-time tracking",
-      image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2015&q=80",
+      image: "/2 (1).jpg",
       bgColor: "bg-emerald-600"
     },
     {
       title: "Achieve Your Financial Goals",
       subtitle: "Set, track, and achieve your financial milestones with personalized coaching and insights",
-      image: "https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80",
+      image: "/3 (1).jpg",
       bgColor: "bg-blue-600"
     }
   ];
@@ -73,7 +73,16 @@ const HeroSlider = () => {
             index < currentSlide ? '-translate-x-full' : 'translate-x-full'
           }`}
         >
-          <div className={`absolute inset-0 ${slide.bgColor}`} />
+          {/* Image with overlay to reduce brightness */}
+          <div className="absolute inset-0">
+            <img 
+              src={slide.image} 
+              alt={slide.title}
+              className="w-full h-full object-cover"
+            />
+            {/* Dark overlay to reduce brightness */}
+            <div className="absolute inset-0 bg-black opacity-60"></div>
+          </div>
           
           <div className="relative h-full flex items-center">
             <div className="container mx-auto px-6 lg:px-8">
@@ -98,21 +107,6 @@ const HeroSlider = () => {
                       Watch Demo
                     </button>
                   </div>
-                </div>
-                
-                <div className="relative">
-                  <div className="relative z-10">
-                    <img 
-                      src={slide.image} 
-                      alt="Finance AI Coach"
-                      className="w-full max-w-md mx-auto shadow-2xl"
-                      onError={(e) => {
-                        e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgdmlld0JveD0iMCAwIDQwMCAzMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0yMDAgMTUwQzIyMC45MTEgMTUwIDIzOCAxMzIuOTExIDIzOCAxMTJDMjM4IDkxLjA4OTYgMjIwLjkxMSA3NCAyMDAgNzRDMTc5LjA4OSA3NCAxNjIgOTEuMDg5NiAxNjIgMTEyQzE2MiAxMzIuOTExIDE3OS4wODkgMTUwIDIwMCAxNTBaIiBmaWxsPSIjOUI5QkEzIi8+CjxwYXRoIGQ9Ik0yMDAgMjI2QzI0NC4xODMgMjI2IDI4MCAyMDAuNzM0IDI4MCAxNzBIMTIwQzEyMCAyMDAuNzM0IDE1NS44MTcgMjI2IDIwMCAyMjZaIiBmaWxsPSIjOUI5QkEzIi8+Cjwvc3ZnPgo=';
-                      }}
-                    />
-                  </div>
-                  <div className="absolute -top-4 -right-4 w-72 h-72 bg-white/10 rounded-full blur-3xl" />
-                  <div className="absolute -bottom-4 -left-4 w-72 h-72 bg-white/10 rounded-full blur-3xl" />
                 </div>
               </div>
             </div>
