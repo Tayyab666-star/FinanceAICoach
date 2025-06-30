@@ -86,7 +86,7 @@ const Navbar = () => {
             onClick={handleLogoClick}
             className="flex items-center space-x-3 hover:opacity-80 transition-opacity"
           >
-            <div className="w-12 h-12 bg-purple-600 rounded-lg flex items-center justify-center">
+             
               <img 
                 src="/WhatsApp Image 2025-06-29 at 13.46.00_d292e4a6.jpg" 
                 alt="Finance AI Coach" 
@@ -97,7 +97,7 @@ const Navbar = () => {
                 }}
               />
               <span className="text-white font-bold text-lg hidden">F</span>
-            </div>
+            
             <span className="text-2xl font-bold text-purple-600">
               Finance AI Coach
             </span>
