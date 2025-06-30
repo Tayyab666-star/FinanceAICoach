@@ -41,7 +41,7 @@ const TeamPage = () => {
     {
       name: "Zeeshan",
       role: "CTO & Co-Founder",
-      image: "/zeeshan.jpg",
+      image: "/tayyab.jpg",
       bio: "AI researcher from Stanford with expertise in machine learning and financial algorithms. Zeeshan architected our core AI engine.",
       education: "PhD in Computer Science from Stanford",
       experience: "Former Senior Engineer at Google AI",
@@ -93,7 +93,7 @@ const TeamPage = () => {
     {
       name: "James Thompson",
       role: "Head of Customer Success",
-      image: "https://images.unsplash.com/photo-1560250097-0b93528c311a?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
+      image: "/zeeshan",
       bio: "Customer success expert dedicated to helping users achieve their financial goals. James leads our support and education initiatives.",
       education: "BA in Business from UC Berkeley",
       experience: "Former Customer Success Manager at Stripe",
