@@ -28,7 +28,7 @@ const TeamPage = () => {
     {
       name: "Tayyab",
       role: "CEO & Co-Founder",
-      image: "/tayyab.jpg",
+      image: "/WhatsApp Image 2024-09-24 at 21.24.53_adfd628d.jpg",
       bio: "Former Goldman Sachs analyst with 15+ years in fintech. Tayyab leads our vision to democratize financial intelligence.",
       education: "MBA from Harvard Business School",
       experience: "Previously VP at JPMorgan Chase",
