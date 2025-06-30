@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Users, Award, Globe, Target, CheckCircle, Mail } from 'lucide-react';
+import { ArrowLeft, Users, Award, Globe, Target, CheckCircle, Mail, Shield } from 'lucide-react';
 
 const AboutPage = () => {
   const navigate = useNavigate();
