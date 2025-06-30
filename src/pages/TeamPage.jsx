@@ -85,9 +85,9 @@ const TeamPage = () => {
       education: "MBA from Wharton",
       experience: " ",
       social: {
-        linkedin: "#",
+        linkedin: "https://www.linkedin.com/in/yousif-jamali",
         twitter: "#",
-        email: "yousaf@financeaicoach.com"
+         
       }
     },
     {
