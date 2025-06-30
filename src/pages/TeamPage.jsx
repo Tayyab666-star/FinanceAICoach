@@ -93,7 +93,7 @@ const TeamPage = () => {
     {
       name: "James Thompson",
       role: "Head of Customer Success",
-      image: "/zeeshan",
+      image: "/zeeshan.jpg",
       bio: "Customer success expert dedicated to helping users achieve their financial goals. James leads our support and education initiatives.",
       education: "BA in Business from UC Berkeley",
       experience: "Former Customer Success Manager at Stripe",
