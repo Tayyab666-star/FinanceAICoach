@@ -38,7 +38,15 @@ const Navbar = () => {
 
   const handleNavClick = (item) => {
     if (item.href.startsWith('/')) {
-      navigate(item.href);
+      // For page navigation, scroll to top smoothly
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+      // Small delay to ensure smooth scroll starts before navigation
+      setTimeout(() => {
+        navigate(item.href);
+      }, 100);
     } else {
       scrollToSection(item.href);
     }
@@ -46,7 +54,26 @@ const Navbar = () => {
   };
 
   const handleLogoClick = () => {
-    navigate('/');
+    // Smooth scroll to top before navigating to home
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+    setTimeout(() => {
+      navigate('/');
+    }, 100);
+    setIsMenuOpen(false);
+  };
+
+  const handleAuthNavigation = (path) => {
+    // Smooth scroll to top for auth pages
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+    setTimeout(() => {
+      navigate(path);
+    }, 100);
     setIsMenuOpen(false);
   };
 
@@ -59,7 +86,7 @@ const Navbar = () => {
             onClick={handleLogoClick}
             className="flex items-center space-x-3 hover:opacity-80 transition-opacity"
           >
-            <div className="w-12 h-12 bg-purple-600 flex items-center justify-center">
+            <div className="w-12 h-12 bg-purple-600 rounded-lg flex items-center justify-center">
               <img 
                 src="/WhatsApp Image 2025-06-29 at 13.46.00_d292e4a6.jpg" 
                 alt="Finance AI Coach" 
@@ -92,14 +119,14 @@ const Navbar = () => {
           {/* CTA Buttons */}
           <div className="hidden lg:flex items-center space-x-4">
             <button 
-              onClick={() => navigate('/login')}
+              onClick={() => handleAuthNavigation('/login')}
               className="text-purple-600 font-semibold hover:text-purple-700 transition-colors duration-300"
             >
               Sign In
             </button>
             <button 
-              onClick={() => navigate('/login')}
-              className="bg-purple-600 text-white px-6 py-3 font-semibold hover:bg-purple-700 transition-all duration-300 transform hover:scale-105"
+              onClick={() => handleAuthNavigation('/login')}
+              className="bg-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-purple-700 transition-all duration-300 transform hover:scale-105"
             >
               Get Started
             </button>
@@ -108,7 +135,7 @@ const Navbar = () => {
           {/* Mobile Menu Button */}
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="lg:hidden p-2 text-gray-700"
+            className="lg:hidden p-2 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors"
           >
             {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
@@ -129,20 +156,14 @@ const Navbar = () => {
               ))}
               <div className="pt-4 space-y-3">
                 <button 
-                  onClick={() => {
-                    navigate('/login');
-                    setIsMenuOpen(false);
-                  }}
+                  onClick={() => handleAuthNavigation('/login')}
                   className="block w-full text-left text-purple-600 font-semibold"
                 >
                   Sign In
                 </button>
                 <button 
-                  onClick={() => {
-                    navigate('/login');
-                    setIsMenuOpen(false);
-                  }}
-                  className="block w-full bg-purple-600 text-white px-6 py-3 font-semibold text-center"
+                  onClick={() => handleAuthNavigation('/login')}
+                  className="block w-full bg-purple-600 text-white px-6 py-3 rounded-lg font-semibold text-center"
                 >
                   Get Started
                 </button>
