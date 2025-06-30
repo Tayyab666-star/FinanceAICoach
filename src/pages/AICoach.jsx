@@ -18,7 +18,16 @@ import {
   X,
   History,
   Sparkles,
-  ChevronRight
+  ChevronRight,
+  Target,
+  DollarSign,
+  PieChart,
+  TrendingDown,
+  Shield,
+  Briefcase,
+  Home,
+  GraduationCap,
+  Heart
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTransactions, useGoals, useBudgetCategories } from '../hooks/useSupabaseData';
@@ -30,17 +39,42 @@ import Button from '../components/Button';
 import ResponsiveDropdown from '../components/ResponsiveDropdown';
 import ResponsiveModal from '../components/ResponsiveModal';
 
-// Finance-focused suggested questions
-const suggestedQuestions = [
-  'How can I reduce my monthly expenses based on my spending?',
-  'What\'s the best emergency fund strategy for my income?',
-  'Should I invest or pay off debt first with my current situation?',
-  'How can I improve my savings rate?',
-  'What investment options are best for my risk profile?',
-  'How much should I allocate to each budget category?',
-  'What are some passive income strategies I can start?',
-  'How can I optimize my budget for better financial health?'
-];
+// Enhanced finance-focused suggested questions with categories
+const suggestedQuestions = {
+  budgeting: [
+    'How can I create a realistic monthly budget with my current income?',
+    'What percentage of my income should I allocate to each expense category?',
+    'How do I stick to my budget when unexpected expenses come up?',
+    'Should I use the 50/30/20 rule or create a custom budget?'
+  ],
+  saving: [
+    'How much should I save for an emergency fund based on my expenses?',
+    'What are the best strategies to increase my savings rate?',
+    'Should I save or invest my extra money right now?',
+    'How can I automate my savings to make it effortless?'
+  ],
+  investing: [
+    'When should I start investing and how much should I begin with?',
+    'What\'s the difference between index funds and individual stocks?',
+    'Should I max out my 401(k) before investing in other accounts?',
+    'How do I choose the right investment portfolio for my age?'
+  ],
+  debt: [
+    'Should I pay off debt or build savings first?',
+    'What\'s the best strategy: debt snowball or debt avalanche?',
+    'How can I negotiate better terms on my existing debt?',
+    'When does it make sense to consolidate my debts?'
+  ],
+  goals: [
+    'How do I set realistic financial goals and actually achieve them?',
+    'Should I focus on one financial goal at a time or multiple?',
+    'How much should I save monthly to reach my financial goals?',
+    'What are the most important financial milestones by age?'
+  ]
+};
+
+// Get all questions in a flat array for random selection
+const allSuggestedQuestions = Object.values(suggestedQuestions).flat();
 
 // Dynamic insights based on user data
 const generateQuickInsights = (userProfile, transactions, budgets) => {
@@ -52,34 +86,48 @@ const generateQuickInsights = (userProfile, transactions, budgets) => {
   if (savingsRate > 20) {
     insights.push({
       icon: TrendingUp,
-      title: 'Great Savings Rate',
-      description: `Excellent ${savingsRate.toFixed(1)}% savings rate!`,
-      color: 'green'
+      title: 'Excellent Savings Rate',
+      description: `You're saving ${savingsRate.toFixed(1)}% - well above the 20% recommendation!`,
+      color: 'green',
+      action: 'Ask about investment strategies'
     });
   } else if (savingsRate < 10 && totalIncome > 0) {
     insights.push({
       icon: AlertCircle,
-      title: 'Savings Rate Alert',
-      description: `Your savings rate is ${savingsRate.toFixed(1)}%. Aim for 20%+`,
-      color: 'red'
+      title: 'Savings Opportunity',
+      description: `Your ${savingsRate.toFixed(1)}% savings rate has room for improvement`,
+      color: 'red',
+      action: 'Get personalized savings tips'
     });
   }
 
   if (Object.keys(budgets).length === 0) {
     insights.push({
-      icon: Lightbulb,
-      title: 'Budget Setup',
-      description: 'Set up budget categories to track spending better',
-      color: 'orange'
+      icon: PieChart,
+      title: 'Budget Setup Needed',
+      description: 'Create budget categories to track and optimize your spending',
+      color: 'orange',
+      action: 'Learn about budgeting strategies'
     });
   }
 
-  if (transactions.length > 10) {
+  if (transactions.length > 20) {
     insights.push({
       icon: Brain,
-      title: 'AI Analysis Ready',
-      description: `${transactions.length} transactions available for AI insights`,
-      color: 'blue'
+      title: 'Rich Data Available',
+      description: `${transactions.length} transactions ready for AI analysis and insights`,
+      color: 'blue',
+      action: 'Get spending analysis'
+    });
+  }
+
+  if (totalIncome > 0 && totalExpenses > totalIncome) {
+    insights.push({
+      icon: TrendingDown,
+      title: 'Spending Alert',
+      description: 'Your expenses exceed your income - let\'s create a plan',
+      color: 'red',
+      action: 'Get expense reduction tips'
     });
   }
 
@@ -407,7 +455,7 @@ const AICoach = () => {
     setIsTyping(true);
 
     try {
-      // Add user message to chat
+      // Add user message to chat (no notification)
       await addMessage(userMessageContent, 'user');
       
       // Generate AI response using AIService
@@ -416,28 +464,22 @@ const AICoach = () => {
       
       let aiResponse;
       try {
-        // Try to get AI response from Gemini
-        aiResponse = await AIService.getFinancialAdvice(userMessageContent, context, 'gemini');
+        // Try to get AI response from available providers
+        aiResponse = await AIService.getFinancialAdvice(userMessageContent, context, 'auto');
         setAiStatus('connected');
       } catch (error) {
         console.error('AI Service Error:', error);
         setAiStatus('error');
         
-        // Use fallback response if AI service fails
+        // Use enhanced fallback response if AI service fails
         aiResponse = AIService.generateFallbackResponse(userMessageContent, context);
       }
       
-      // Add AI response to chat
+      // Add AI response to chat (no notification)
       await addMessage(aiResponse, 'ai', {
-        model: 'gemini-pro',
+        model: 'ai-service',
         context_used: true,
         response_time: Date.now()
-      });
-      
-      addNotification({
-        type: 'success',
-        title: 'AI Financial Advice',
-        message: 'Your question has been answered and saved to chat history'
       });
       
     } catch (error) {
@@ -445,16 +487,10 @@ const AICoach = () => {
       
       // Add error message to chat
       await addMessage(
-        'I apologize, but I\'m having trouble connecting to my AI services right now. Please try again in a moment, or feel free to ask your question differently.',
+        'I apologize, but I\'m having trouble processing your request right now. Please try again in a moment, or feel free to ask your question differently.',
         'ai',
         { error: true, timestamp: Date.now() }
       );
-      
-      addNotification({
-        type: 'error',
-        title: 'AI Service Unavailable',
-        message: 'Unable to get AI response. Please try again.'
-      });
     } finally {
       setIsTyping(false);
     }
@@ -475,7 +511,7 @@ const AICoach = () => {
     }
   };
 
-  // Handle delete session with confirmation
+  // Handle delete session
   const handleDeleteSession = async (sessionId) => {
     try {
       await deleteSession(sessionId);
@@ -520,7 +556,7 @@ const AICoach = () => {
                    'Offline'}
                 </span>
                 <span>•</span>
-                <span>Powered by Google Gemini</span>
+                <span>Multi-AI Powered</span>
               </div>
             </div>
           </div>
@@ -558,58 +594,100 @@ const AICoach = () => {
                 Welcome to your AI Financial Coach!
               </h3>
               <p className="text-gray-600 dark:text-gray-300 mb-8 max-w-2xl mx-auto leading-relaxed">
-                I'm powered by Google Gemini AI and can provide personalized financial advice based on your actual financial data. Ask me anything about budgeting, investing, saving, or debt management!
+                I'm powered by advanced AI models and can provide personalized financial advice based on your actual financial data. Ask me anything about budgeting, investing, saving, or debt management!
               </p>
               
               {/* Quick Insights */}
               {quickInsights.length > 0 && (
                 <div className="mb-8">
-                  <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Quick Insights</h4>
+                  <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Your Financial Insights</h4>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-4xl mx-auto">
                     {quickInsights.map((insight, index) => {
                       const Icon = insight.icon;
                       return (
-                        <div key={index} className={`p-4 rounded-xl border-l-4 ${
-                          insight.color === 'green' ? 'bg-green-50 dark:bg-green-900/20 border-green-400' :
-                          insight.color === 'orange' ? 'bg-orange-50 dark:bg-orange-900/20 border-orange-400' : 
-                          insight.color === 'blue' ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-400' :
-                          'bg-red-50 dark:bg-red-900/20 border-red-400'
-                        }`}>
-                          <div className="flex items-center space-x-3">
-                            <Icon className={`w-5 h-5 ${
+                        <button
+                          key={index}
+                          onClick={() => handleSuggestedQuestion(insight.action)}
+                          className={`p-4 rounded-xl border-l-4 text-left hover:shadow-md transition-all duration-200 ${
+                            insight.color === 'green' ? 'bg-green-50 dark:bg-green-900/20 border-green-400 hover:bg-green-100 dark:hover:bg-green-900/30' :
+                            insight.color === 'orange' ? 'bg-orange-50 dark:bg-orange-900/20 border-orange-400 hover:bg-orange-100 dark:hover:bg-orange-900/30' : 
+                            insight.color === 'blue' ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30' :
+                            'bg-red-50 dark:bg-red-900/20 border-red-400 hover:bg-red-100 dark:hover:bg-red-900/30'
+                          }`}
+                        >
+                          <div className="flex items-start space-x-3">
+                            <Icon className={`w-5 h-5 mt-0.5 ${
                               insight.color === 'green' ? 'text-green-600 dark:text-green-400' :
                               insight.color === 'orange' ? 'text-orange-600 dark:text-orange-400' : 
                               insight.color === 'blue' ? 'text-blue-600 dark:text-blue-400' :
                               'text-red-600 dark:text-red-400'
                             }`} />
-                            <div>
+                            <div className="flex-1">
                               <h5 className="font-medium text-gray-900 dark:text-white text-sm">{insight.title}</h5>
-                              <p className="text-xs text-gray-600 dark:text-gray-300">{insight.description}</p>
+                              <p className="text-xs text-gray-600 dark:text-gray-300 mt-1">{insight.description}</p>
+                              <p className="text-xs text-blue-600 dark:text-blue-400 mt-2 font-medium">{insight.action} →</p>
                             </div>
                           </div>
-                        </div>
+                        </button>
                       );
                     })}
                   </div>
                 </div>
               )}
               
-              {/* Suggested Questions */}
-              <div className="max-w-4xl mx-auto">
-                <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Popular Questions</h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {suggestedQuestions.slice(0, 6).map((question, index) => (
-                    <button
-                      key={index}
-                      onClick={() => handleSuggestedQuestion(question)}
-                      className="text-left p-4 text-sm text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-white dark:hover:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 transition-all duration-200 hover:shadow-md group"
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="flex-1">{question}</span>
-                        <ChevronRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
+              {/* Categorized Suggested Questions */}
+              <div className="max-w-6xl mx-auto">
+                <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Popular Financial Questions</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {Object.entries(suggestedQuestions).map(([category, questions]) => {
+                    const categoryIcons = {
+                      budgeting: PieChart,
+                      saving: DollarSign,
+                      investing: TrendingUp,
+                      debt: Shield,
+                      goals: Target
+                    };
+                    const Icon = categoryIcons[category];
+                    
+                    return (
+                      <div key={category} className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700">
+                        <div className="flex items-center space-x-2 mb-3">
+                          <Icon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                          <h5 className="font-semibold text-gray-900 dark:text-white capitalize">{category}</h5>
+                        </div>
+                        <div className="space-y-2">
+                          {questions.slice(0, 2).map((question, index) => (
+                            <button
+                              key={index}
+                              onClick={() => handleSuggestedQuestion(question)}
+                              className="w-full text-left p-2 text-xs text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-all duration-200 group"
+                            >
+                              <div className="flex items-center justify-between">
+                                <span className="flex-1">{question}</span>
+                                <ChevronRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                              </div>
+                            </button>
+                          ))}
+                        </div>
                       </div>
-                    </button>
-                  ))}
+                    );
+                  })}
+                </div>
+                
+                {/* Random questions for variety */}
+                <div className="mt-6">
+                  <h5 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Or try these questions:</h5>
+                  <div className="flex flex-wrap gap-2">
+                    {allSuggestedQuestions.slice(0, 6).map((question, index) => (
+                      <button
+                        key={index}
+                        onClick={() => handleSuggestedQuestion(question)}
+                        className="px-3 py-2 text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-blue-100 dark:hover:bg-blue-900/20 hover:text-blue-700 dark:hover:text-blue-300 rounded-full transition-colors"
+                      >
+                        {question.length > 50 ? question.substring(0, 50) + '...' : question}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
@@ -661,7 +739,7 @@ const AICoach = () => {
               </div>
             </div>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 text-center">
-              🤖 Powered by Google Gemini AI • Your conversations are automatically saved
+              🤖 Powered by Advanced AI • Your conversations are automatically saved
             </p>
           </div>
         </div>
