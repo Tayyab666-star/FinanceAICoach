@@ -28,8 +28,9 @@ import LoadingSpinner from '../components/LoadingSpinner';
 import {
   LineChart,
   Line,
-  AreaChart,
-  Area,
+  PieChart as RechartsPieChart,
+  Pie,
+  Cell,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -637,32 +638,49 @@ const Dashboard = () => {
     [userProfile, transactions, budgetUsage, goals]
   );
 
-  // Prepare chart data
-  const monthlyData = useMemo(() => {
-    const last6Months = [];
+  // Prepare daily savings data (last 30 days)
+  const dailySavingsData = useMemo(() => {
+    const last30Days = [];
     const now = new Date();
     
-    for (let i = 5; i >= 0; i--) {
-      const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const monthTransactions = transactions.filter(t => {
+    for (let i = 29; i >= 0; i--) {
+      const date = new Date(now);
+      date.setDate(date.getDate() - i);
+      
+      const dayTransactions = transactions.filter(t => {
         const transactionDate = new Date(t.date);
-        return transactionDate.getMonth() === date.getMonth() && 
-               transactionDate.getFullYear() === date.getFullYear();
+        return transactionDate.toDateString() === date.toDateString();
       });
       
-      const income = monthTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
-      const expenses = monthTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + Math.abs(t.amount), 0);
+      const income = dayTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
+      const expenses = dayTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + Math.abs(t.amount), 0);
       
-      last6Months.push({
-        month: date.toLocaleDateString('en-US', { month: 'short' }),
-        income,
-        expenses,
+      last30Days.push({
+        day: date.getDate(),
         savings: income - expenses
       });
     }
     
-    return last6Months;
+    return last30Days;
   }, [transactions]);
+
+  // Prepare income vs expenses pie chart data
+  const incomeExpenseData = useMemo(() => {
+    if (totalIncome === 0 && totalExpenses === 0) return [];
+    
+    return [
+      {
+        name: 'Income',
+        value: totalIncome,
+        fill: '#10B981'
+      },
+      {
+        name: 'Expenses',
+        value: totalExpenses,
+        fill: '#EF4444'
+      }
+    ];
+  }, [totalIncome, totalExpenses]);
 
   const handleSetupSave = async (setupData) => {
     try {
@@ -731,56 +749,68 @@ const Dashboard = () => {
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Income vs Expenses Chart */}
+        {/* Income vs Expenses Pie Chart */}
         <Card>
           <div className="p-6">
             <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Income vs Expenses</h3>
-            <ResponsiveContainer width="100%" height={300}>
-              <AreaChart data={monthlyData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
-                <YAxis />
-                <Tooltip />
-                <Area 
-                  type="monotone" 
-                  dataKey="income" 
-                  stackId="1"
-                  stroke="#10B981" 
-                  fill="#10B981"
-                  fillOpacity={0.6}
-                />
-                <Area 
-                  type="monotone" 
-                  dataKey="expenses" 
-                  stackId="2"
-                  stroke="#EF4444" 
-                  fill="#EF4444"
-                  fillOpacity={0.6}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
+            {incomeExpenseData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={300}>
+                <RechartsPieChart>
+                  <Pie
+                    data={incomeExpenseData}
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={80}
+                    fill="#8884d8"
+                    dataKey="value"
+                    label={({ name, value }) => `${name}: $${value.toLocaleString()}`}
+                  >
+                    {incomeExpenseData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.fill} />
+                    ))}
+                  </Pie>
+                  <Tooltip formatter={(value) => [`$${value.toLocaleString()}`, 'Amount']} />
+                </RechartsPieChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-64 flex items-center justify-center text-gray-500 dark:text-gray-400">
+                <div className="text-center">
+                  <p>No financial data available</p>
+                  <p className="text-sm">Add transactions to see your income vs expenses</p>
+                </div>
+              </div>
+            )}
           </div>
         </Card>
 
-        {/* Savings Trend */}
+        {/* Daily Savings Trend */}
         <Card>
           <div className="p-6">
-            <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Savings Trend</h3>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={monthlyData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
-                <YAxis />
-                <Tooltip />
-                <Line 
-                  type="monotone" 
-                  dataKey="savings" 
-                  stroke="#3B82F6" 
-                  strokeWidth={3}
-                  dot={{ fill: '#3B82F6', strokeWidth: 2, r: 4 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
+            <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Daily Savings Trend (Last 30 Days)</h3>
+            {dailySavingsData.some(d => d.savings !== 0) ? (
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={dailySavingsData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="day" />
+                  <YAxis />
+                  <Tooltip />
+                  <Line 
+                    type="monotone" 
+                    dataKey="savings" 
+                    stroke="#3B82F6" 
+                    strokeWidth={3}
+                    dot={{ fill: '#3B82F6', strokeWidth: 2, r: 4 }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-64 flex items-center justify-center text-gray-500 dark:text-gray-400">
+                <div className="text-center">
+                  <p>No savings data available</p>
+                  <p className="text-sm">Add income and expense transactions to track daily savings</p>
+                </div>
+              </div>
+            )}
           </div>
         </Card>
       </div>

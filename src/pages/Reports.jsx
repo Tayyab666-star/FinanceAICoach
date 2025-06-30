@@ -1,9 +1,11 @@
 import React, { useState, useMemo } from 'react';
-import { Download, Calendar, FileText, TrendingUp, PieChart, BarChart3 } from 'lucide-react';
+import { Download, Calendar, FileText, TrendingUp, PieChart, BarChart3, Trash2, Eye } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTransactions, useGoals, useBudgetCategories } from '../hooks/useSupabaseData';
+import { useReports } from '../hooks/useReports';
 import { useNotifications } from '../contexts/NotificationContext';
 import { calculateBudgetUsage } from '../utils/calculations';
+import { generatePDF, downloadPDF } from '../utils/pdfGenerator';
 import Card from '../components/Card';
 import Button from '../components/Button';
 
@@ -55,7 +57,6 @@ const ReportModal = ({ isOpen, onClose, template, onGenerate }) => {
               <option value="last-6-months">Last 6 Months</option>
               <option value="year-to-date">Year to Date</option>
               <option value="last-year">Last Year</option>
-              <option value="custom">Custom Range</option>
             </select>
           </div>
 
@@ -82,16 +83,6 @@ const ReportModal = ({ isOpen, onClose, template, onGenerate }) => {
                   className="mr-2"
                 />
                 <span className="text-gray-900 dark:text-white">CSV</span>
-              </label>
-              <label className="flex items-center">
-                <input
-                  type="radio"
-                  value="excel"
-                  checked={format === 'excel'}
-                  onChange={(e) => setFormat(e.target.value)}
-                  className="mr-2"
-                />
-                <span className="text-gray-900 dark:text-white">Excel</span>
               </label>
             </div>
           </div>
@@ -138,10 +129,10 @@ const Reports = () => {
   const { transactions } = useTransactions();
   const { goals } = useGoals();
   const { budgets } = useBudgetCategories();
+  const { reports, loading: reportsLoading, addReport, deleteReport } = useReports();
   const { addNotification } = useNotifications();
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [showModal, setShowModal] = useState(false);
-  const [recentReports, setRecentReports] = useState([]);
 
   // Calculate real statistics
   const stats = useMemo(() => {
@@ -150,13 +141,13 @@ const Reports = () => {
     const budgetUsage = calculateBudgetUsage(transactions, budgets);
     
     return {
-      reportsGenerated: recentReports.length,
+      reportsGenerated: reports.length,
       dataPoints: transactions.length + goals.length + Object.keys(budgets).length,
       totalIncome,
       totalExpenses,
       budgetCategories: Object.keys(budgets).length
     };
-  }, [transactions, goals, budgets, recentReports]);
+  }, [transactions, goals, budgets, reports]);
 
   // Report templates with real data previews
   const reportTemplates = [
@@ -213,147 +204,140 @@ const Reports = () => {
   const generateRealReport = async (reportConfig) => {
     const { template, dateRange, format, includeCharts } = reportConfig;
     
-    // Filter transactions based on date range
-    const getDateRange = () => {
-      const now = new Date();
-      switch (dateRange) {
-        case 'current-month':
-          return { start: new Date(now.getFullYear(), now.getMonth(), 1), end: now };
-        case 'last-month':
-          return { 
-            start: new Date(now.getFullYear(), now.getMonth() - 1, 1), 
-            end: new Date(now.getFullYear(), now.getMonth(), 0) 
-          };
-        case 'last-3-months':
-          return { start: new Date(now.getFullYear(), now.getMonth() - 3, 1), end: now };
-        case 'last-6-months':
-          return { start: new Date(now.getFullYear(), now.getMonth() - 6, 1), end: now };
-        case 'year-to-date':
-          return { start: new Date(now.getFullYear(), 0, 1), end: now };
-        case 'last-year':
-          return { 
-            start: new Date(now.getFullYear() - 1, 0, 1), 
-            end: new Date(now.getFullYear() - 1, 11, 31) 
-          };
-        default:
-          return { start: new Date(now.getFullYear(), now.getMonth(), 1), end: now };
-      }
-    };
+    try {
+      // Filter transactions based on date range
+      const getDateRange = () => {
+        const now = new Date();
+        switch (dateRange) {
+          case 'current-month':
+            return { start: new Date(now.getFullYear(), now.getMonth(), 1), end: now };
+          case 'last-month':
+            return { 
+              start: new Date(now.getFullYear(), now.getMonth() - 1, 1), 
+              end: new Date(now.getFullYear(), now.getMonth(), 0) 
+            };
+          case 'last-3-months':
+            return { start: new Date(now.getFullYear(), now.getMonth() - 3, 1), end: now };
+          case 'last-6-months':
+            return { start: new Date(now.getFullYear(), now.getMonth() - 6, 1), end: now };
+          case 'year-to-date':
+            return { start: new Date(now.getFullYear(), 0, 1), end: now };
+          case 'last-year':
+            return { 
+              start: new Date(now.getFullYear() - 1, 0, 1), 
+              end: new Date(now.getFullYear() - 1, 11, 31) 
+            };
+          default:
+            return { start: new Date(now.getFullYear(), now.getMonth(), 1), end: now };
+        }
+      };
 
-    const { start, end } = getDateRange();
-    const filteredTransactions = transactions.filter(t => {
-      const transactionDate = new Date(t.date);
-      return transactionDate >= start && transactionDate <= end;
-    });
+      const { start, end } = getDateRange();
+      const filteredTransactions = transactions.filter(t => {
+        const transactionDate = new Date(t.date);
+        return transactionDate >= start && transactionDate <= end;
+      });
 
-    // Generate report content based on template
-    let reportContent = '';
-    const reportDate = new Date().toLocaleDateString();
-    
-    switch (template.id) {
-      case 'monthly-summary':
-        const income = filteredTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
-        const expenses = filteredTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + Math.abs(t.amount), 0);
-        reportContent = `Monthly Financial Summary - ${dateRange}
-Generated: ${reportDate}
+      // Prepare data for PDF generation
+      const reportData = {
+        transactions: filteredTransactions,
+        income: filteredTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0),
+        expenses: filteredTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + Math.abs(t.amount), 0),
+        budgetUsage: calculateBudgetUsage(filteredTransactions, budgets),
+        budgets,
+        goals,
+        categoryTotals: (() => {
+          const totals = {};
+          filteredTransactions.filter(t => t.type === 'expense').forEach(t => {
+            totals[t.category] = (totals[t.category] || 0) + Math.abs(t.amount);
+          });
+          return totals;
+        })(),
+        netWorth: stats.totalIncome - stats.totalExpenses,
+        totalIncome: stats.totalIncome,
+        totalExpenses: stats.totalExpenses
+      };
 
-INCOME SUMMARY
-Total Income: $${income.toLocaleString()}
-Number of Income Transactions: ${filteredTransactions.filter(t => t.type === 'income').length}
-
-EXPENSE SUMMARY
-Total Expenses: $${expenses.toLocaleString()}
-Number of Expense Transactions: ${filteredTransactions.filter(t => t.type === 'expense').length}
-
-NET SUMMARY
-Net Amount: $${(income - expenses).toLocaleString()}
-Savings Rate: ${income > 0 ? ((income - expenses) / income * 100).toFixed(1) : 0}%
-
-RECENT TRANSACTIONS
-${filteredTransactions.slice(0, 10).map(t => 
-  `${t.date} | ${t.type.toUpperCase()} | ${t.category} | $${Math.abs(t.amount).toFixed(2)} | ${t.description}`
-).join('\n')}`;
-        break;
-
-      case 'spending-analysis':
-        const categoryTotals = {};
-        filteredTransactions.filter(t => t.type === 'expense').forEach(t => {
-          categoryTotals[t.category] = (categoryTotals[t.category] || 0) + Math.abs(t.amount);
+      if (format === 'pdf') {
+        // Generate PDF
+        const doc = generatePDF(reportData, reportConfig);
+        const filename = `${template.id}-${dateRange}-${new Date().toISOString().split('T')[0]}.pdf`;
+        
+        // Download the PDF
+        downloadPDF(doc, filename);
+        
+        // Calculate file size (approximate)
+        const pdfBlob = doc.output('blob');
+        const fileSize = pdfBlob.size;
+        
+        // Store report in database
+        await addReport({
+          title: `${template.title} - ${dateRange}`,
+          template_id: template.id,
+          date_range: dateRange,
+          format: format.toUpperCase(),
+          file_size: fileSize
         });
-        reportContent = `Spending Category Analysis - ${dateRange}
-Generated: ${reportDate}
+        
+      } else if (format === 'csv') {
+        // Generate CSV
+        let csvContent = '';
+        
+        switch (template.id) {
+          case 'spending-analysis':
+            csvContent = `Category,Amount\n${Object.entries(reportData.categoryTotals).map(([cat, amt]) => `${cat},${amt}`).join('\n')}`;
+            break;
+          case 'budget-performance':
+            csvContent = `Category,Budgeted,Spent,Remaining\n${Object.entries(reportData.budgetUsage).map(([cat, usage]) => `${cat},${usage.budget},${usage.spent},${usage.remaining}`).join('\n')}`;
+            break;
+          default:
+            csvContent = `Date,Type,Category,Amount,Description\n${filteredTransactions.map(t => `${t.date},${t.type},${t.category},${t.amount},"${t.description}"`).join('\n')}`;
+        }
+        
+        // Download CSV
+        const blob = new Blob([csvContent], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${template.id}-${dateRange}-${new Date().toISOString().split('T')[0]}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+        
+        // Store report in database
+        await addReport({
+          title: `${template.title} - ${dateRange}`,
+          template_id: template.id,
+          date_range: dateRange,
+          format: format.toUpperCase(),
+          file_size: blob.size
+        });
+      }
 
-CATEGORY BREAKDOWN
-${Object.entries(categoryTotals).map(([category, amount]) => 
-  `${category}: $${amount.toFixed(2)}`
-).join('\n')}
-
-DETAILED TRANSACTIONS BY CATEGORY
-${Object.keys(categoryTotals).map(category => {
-  const categoryTransactions = filteredTransactions.filter(t => t.type === 'expense' && t.category === category);
-  return `\n${category.toUpperCase()}:\n${categoryTransactions.map(t => 
-    `  ${t.date} | $${Math.abs(t.amount).toFixed(2)} | ${t.description}`
-  ).join('\n')}`;
-}).join('\n')}`;
-        break;
-
-      case 'budget-performance':
-        const budgetUsage = calculateBudgetUsage(filteredTransactions, budgets);
-        reportContent = `Budget Performance Report - ${dateRange}
-Generated: ${reportDate}
-
-BUDGET VS ACTUAL
-${Object.entries(budgetUsage).map(([category, usage]) => 
-  `${category}: Budgeted $${usage.budget.toFixed(2)} | Spent $${usage.spent.toFixed(2)} | ${usage.isOverBudget ? 'OVER' : 'UNDER'} by $${Math.abs(usage.remaining).toFixed(2)}`
-).join('\n')}
-
-SUMMARY
-Total Budgeted: $${Object.values(budgets).reduce((sum, amount) => sum + amount, 0).toLocaleString()}
-Total Spent: $${Object.values(budgetUsage).reduce((sum, usage) => sum + usage.spent, 0).toLocaleString()}
-Categories Over Budget: ${Object.values(budgetUsage).filter(usage => usage.isOverBudget).length}`;
-        break;
-
-      default:
-        reportContent = `${template.title} - ${dateRange}
-Generated: ${reportDate}
-
-This report contains your financial data for the selected period.
-Total Transactions: ${filteredTransactions.length}
-Income Transactions: ${filteredTransactions.filter(t => t.type === 'income').length}
-Expense Transactions: ${filteredTransactions.filter(t => t.type === 'expense').length}`;
+      addNotification({
+        type: 'success',
+        title: 'Report Generated',
+        message: `${template.title} has been generated and downloaded successfully.`
+      });
+      
+    } catch (error) {
+      console.error('Error generating report:', error);
+      addNotification({
+        type: 'error',
+        title: 'Generation Failed',
+        message: 'Failed to generate report. Please try again.'
+      });
     }
-
-    // Create and download file
-    const blob = new Blob([reportContent], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${template.id}-${dateRange}-${reportDate.replace(/\//g, '-')}.${format}`;
-    a.click();
-    URL.revokeObjectURL(url);
-
-    // Add to recent reports
-    const newReport = {
-      id: Date.now(),
-      name: `${template.title} - ${dateRange}`,
-      date: reportDate,
-      size: `${Math.round(blob.size / 1024)} KB`,
-      format: format.toUpperCase(),
-      template: template.id
-    };
-
-    setRecentReports(prev => [newReport, ...prev.slice(0, 9)]); // Keep last 10 reports
-
-    addNotification({
-      type: 'success',
-      title: 'Report Generated',
-      message: `${template.title} has been generated and downloaded successfully.`
-    });
   };
 
   const handleGenerateReport = (template) => {
     setSelectedTemplate(template);
     setShowModal(true);
+  };
+
+  const handleDeleteReport = async (reportId) => {
+    if (confirm('Are you sure you want to delete this report?')) {
+      await deleteReport(reportId);
+    }
   };
 
   const handleQuickExport = async (exportType) => {
@@ -411,7 +395,7 @@ Expense Transactions: ${filteredTransactions.filter(t => t.type === 'expense').l
         <Card className="p-4 text-center">
           <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.reportsGenerated}</p>
           <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Reports Generated</p>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">This session</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Total count</p>
         </Card>
         <Card className="p-4 text-center">
           <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.dataPoints}</p>
@@ -419,9 +403,9 @@ Expense Transactions: ${filteredTransactions.filter(t => t.type === 'expense').l
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Across all accounts</p>
         </Card>
         <Card className="p-4 text-center">
-          <p className="text-2xl font-bold text-gray-900 dark:text-white">3</p>
+          <p className="text-2xl font-bold text-gray-900 dark:text-white">2</p>
           <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Export Formats</p>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">PDF, CSV, Excel</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">PDF, CSV</p>
         </Card>
         <Card className="p-4 text-center">
           <p className="text-2xl font-bold text-gray-900 dark:text-white">{transactions.length}</p>
@@ -441,8 +425,7 @@ Expense Transactions: ${filteredTransactions.filter(t => t.type === 'expense').l
               return (
                 <div 
                   key={template.id}
-                  className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:border-blue-300 dark:hover:border-blue-600 hover:shadow-md transition-all cursor-pointer"
-                  onClick={() => handleGenerateReport(template)}
+                  className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:border-blue-300 dark:hover:border-blue-600 hover:shadow-md transition-all"
                 >
                   <div className="flex items-start space-x-3 mb-3">
                     <div className="flex-shrink-0 w-10 h-10 bg-blue-100 dark:bg-blue-900/50 rounded-lg flex items-center justify-center">
@@ -460,7 +443,11 @@ Expense Transactions: ${filteredTransactions.filter(t => t.type === 'expense').l
                   
                   <div className="flex justify-between items-center">
                     <span className="text-xs text-gray-500 dark:text-gray-400">Format: <span className="text-gray-900 dark:text-white">{template.format}</span></span>
-                    <Button size="sm" variant="outline">
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      onClick={() => handleGenerateReport(template)}
+                    >
                       <Download className="w-3 h-3 mr-1" />
                       Generate
                     </Button>
@@ -477,15 +464,22 @@ Expense Transactions: ${filteredTransactions.filter(t => t.type === 'expense').l
         <div className="p-6">
           <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Recent Reports</h3>
           
-          {recentReports.length > 0 ? (
+          {reportsLoading ? (
+            <div className="text-center py-8">
+              <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
+              <p className="text-gray-500 dark:text-gray-400">Loading reports...</p>
+            </div>
+          ) : reports.length > 0 ? (
             <div className="space-y-3">
-              {recentReports.map((report) => (
+              {reports.map((report) => (
                 <div key={report.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
                   <div className="flex items-center space-x-3">
                     <FileText className="w-5 h-5 text-gray-600 dark:text-gray-300" />
                     <div>
-                      <p className="text-sm font-medium text-gray-900 dark:text-white">{report.name}</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">Generated {report.date} • {report.size}</p>
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">{report.title}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        Generated {new Date(report.created_at).toLocaleDateString()} • {Math.round(report.file_size / 1024)} KB
+                      </p>
                     </div>
                   </div>
                   
@@ -493,8 +487,12 @@ Expense Transactions: ${filteredTransactions.filter(t => t.type === 'expense').l
                     <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-200 dark:bg-gray-600 px-2 py-1 rounded">
                       {report.format}
                     </span>
-                    <Button size="sm" variant="outline">
-                      <Download className="w-3 h-3" />
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      onClick={() => handleDeleteReport(report.id)}
+                    >
+                      <Trash2 className="w-3 h-3" />
                     </Button>
                   </div>
                 </div>

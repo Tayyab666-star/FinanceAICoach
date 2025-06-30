@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Menu, Bell, User, LogOut, X, Check, Trash2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotifications } from '../contexts/NotificationContext';
 
@@ -126,12 +127,13 @@ const NotificationDropdown = ({ isOpen, onClose }) => {
   );
 };
 
-// Top header component with improved mobile layout
+// Top header component with improved mobile layout and logo navigation
 const Header = ({ onMenuClick }) => {
   const { user, userProfile, logout, getUserDisplayName } = useAuth();
   const { unreadCount } = useNotifications();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const navigate = useNavigate();
 
   const handleLogout = async () => {
     try {
@@ -140,6 +142,10 @@ const Header = ({ onMenuClick }) => {
     } catch (error) {
       console.error('Logout error:', error);
     }
+  };
+
+  const handleLogoClick = () => {
+    navigate('/dashboard');
   };
 
   // Get display name - use memoization to prevent unnecessary re-renders
@@ -163,9 +169,12 @@ const Header = ({ onMenuClick }) => {
           </h2>
         </div>
         
-        {/* Mobile/Tablet centered logo */}
+        {/* Mobile/Tablet centered logo with navigation */}
         <div className="lg:hidden flex-1 flex justify-center">
-          <div className="flex items-center space-x-2">
+          <button 
+            onClick={handleLogoClick}
+            className="flex items-center space-x-2 hover:opacity-80 transition-opacity"
+          >
             <img 
               src="/WhatsApp Image 2025-06-29 at 13.46.00_d292e4a6.jpg" 
               alt="Finance AI Coach" 
@@ -183,7 +192,7 @@ const Header = ({ onMenuClick }) => {
             <span className="text-base font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
               Finance AI
             </span>
-          </div>
+          </button>
         </div>
         
         {/* Right side actions */}
