@@ -132,12 +132,12 @@ const HeroSlider = () => {
                       <div className="flex flex-col sm:flex-row gap-4">
                         <button 
                           onClick={handleGetStarted}
-                          className="bg-white text-gray-900 px-8 py-4 rounded-lg font-semibold text-lg hover:bg-gray-100 transition-all duration-300 transform hover:scale-105 shadow-2xl"
+                          className="bg-white text-gray-900 px-8 py-4 font-semibold text-lg hover:bg-gray-100 transition-all duration-300 transform hover:scale-105 shadow-2xl"
                         >
                           Start Your Journey
                           <ArrowRight className="inline ml-2 w-5 h-5" />
                         </button>
-                        <button className="border-2 border-white text-white px-8 py-4 rounded-lg font-semibold text-lg hover:bg-white hover:text-gray-900 transition-all duration-300 flex items-center justify-center">
+                        <button className="border-2 border-white text-white px-8 py-4 font-semibold text-lg hover:bg-white hover:text-gray-900 transition-all duration-300 flex items-center justify-center">
                           <Play className="w-5 h-5 mr-2" />
                           Watch Demo
                         </button>
@@ -388,12 +388,12 @@ const CTASection = () => {
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <button 
             onClick={handleGetStarted}
-            className="bg-purple-600 text-white px-8 py-4 rounded-lg font-semibold text-lg hover:bg-purple-700 transition-all duration-300 transform hover:scale-105"
+            className="bg-purple-600 text-white px-8 py-4 font-semibold text-lg hover:bg-purple-700 transition-all duration-300 transform hover:scale-105"
           >
             Start Free Trial
             <ArrowRight className="inline ml-2 w-5 h-5" />
           </button>
-          <button className="border-2 border-white text-white px-8 py-4 rounded-lg font-semibold text-lg hover:bg-white hover:text-gray-900 transition-all duration-300">
+          <button className="border-2 border-white text-white px-8 py-4 font-semibold text-lg hover:bg-white hover:text-gray-900 transition-all duration-300">
             Schedule Demo
           </button>
         </div>
@@ -448,13 +448,13 @@ const NewsletterSection = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Enter your email address"
-                className="flex-1 px-6 py-4 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="flex-1 px-6 py-4 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 required
               />
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="bg-white text-blue-600 px-8 py-4 rounded-lg font-semibold text-lg hover:bg-gray-100 transition-all duration-300 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center"
+                className="bg-white text-blue-600 px-8 py-4 font-semibold text-lg hover:bg-gray-100 transition-all duration-300 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center"
               >
                 {isSubmitting ? (
                   <>
@@ -619,7 +619,7 @@ const ContactForm = () => {
                       value={formData.name}
                       onChange={handleChange}
                       required
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300"
+                      className="w-full px-4 py-3 border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300"
                       placeholder="Your full name"
                     />
                   </div>
@@ -634,7 +634,7 @@ const ContactForm = () => {
                       value={formData.email}
                       onChange={handleChange}
                       required
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300"
+                      className="w-full px-4 py-3 border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300"
                       placeholder="your@email.com"
                     />
                   </div>
@@ -651,7 +651,7 @@ const ContactForm = () => {
                     value={formData.subject}
                     onChange={handleChange}
                     required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300"
+                    className="w-full px-4 py-3 border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300"
                     placeholder="How can we help you?"
                   />
                 </div>
@@ -667,7 +667,7 @@ const ContactForm = () => {
                     onChange={handleChange}
                     required
                     rows={5}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 resize-none"
+                    className="w-full px-4 py-3 border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 resize-none"
                     placeholder="Tell us about your issue or question..."
                   />
                 </div>
@@ -675,7 +675,7 @@ const ContactForm = () => {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full bg-blue-600 text-white px-8 py-4 rounded-lg font-semibold hover:bg-blue-700 transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                  className="w-full bg-blue-600 text-white px-8 py-4 font-semibold hover:bg-blue-700 transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                 >
                   {isSubmitting ? (
                     <>
