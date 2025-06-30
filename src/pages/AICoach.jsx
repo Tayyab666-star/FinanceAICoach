@@ -18,63 +18,28 @@ import {
   X,
   History,
   Sparkles,
-  ChevronRight,
-  Target,
-  DollarSign,
-  PieChart,
-  TrendingDown,
-  Shield,
-  Briefcase,
-  Home,
-  GraduationCap,
-  Heart
+  ChevronRight
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTransactions, useGoals, useBudgetCategories } from '../hooks/useSupabaseData';
 import { useNotifications } from '../contexts/NotificationContext';
 import { useChatSessions } from '../hooks/useChatSessions';
-import AIService from '../utils/aiService';
 import Card from '../components/Card';
 import Button from '../components/Button';
 import ResponsiveDropdown from '../components/ResponsiveDropdown';
 import ResponsiveModal from '../components/ResponsiveModal';
 
-// Enhanced finance-focused suggested questions with categories
-const suggestedQuestions = {
-  budgeting: [
-    'How can I create a realistic monthly budget with my current income?',
-    'What percentage of my income should I allocate to each expense category?',
-    'How do I stick to my budget when unexpected expenses come up?',
-    'Should I use the 50/30/20 rule or create a custom budget?'
-  ],
-  saving: [
-    'How much should I save for an emergency fund based on my expenses?',
-    'What are the best strategies to increase my savings rate?',
-    'Should I save or invest my extra money right now?',
-    'How can I automate my savings to make it effortless?'
-  ],
-  investing: [
-    'When should I start investing and how much should I begin with?',
-    'What\'s the difference between index funds and individual stocks?',
-    'Should I max out my 401(k) before investing in other accounts?',
-    'How do I choose the right investment portfolio for my age?'
-  ],
-  debt: [
-    'Should I pay off debt or build savings first?',
-    'What\'s the best strategy: debt snowball or debt avalanche?',
-    'How can I negotiate better terms on my existing debt?',
-    'When does it make sense to consolidate my debts?'
-  ],
-  goals: [
-    'How do I set realistic financial goals and actually achieve them?',
-    'Should I focus on one financial goal at a time or multiple?',
-    'How much should I save monthly to reach my financial goals?',
-    'What are the most important financial milestones by age?'
-  ]
-};
-
-// Get all questions in a flat array for random selection
-const allSuggestedQuestions = Object.values(suggestedQuestions).flat();
+// Finance-focused suggested questions
+const suggestedQuestions = [
+  'How can I reduce my monthly expenses based on my spending?',
+  'What\'s the best emergency fund strategy for my income?',
+  'Should I invest or pay off debt first with my current situation?',
+  'How can I improve my savings rate?',
+  'What investment options are best for my risk profile?',
+  'How much should I allocate to each budget category?',
+  'What are some passive income strategies I can start?',
+  'How can I optimize my budget for better financial health?'
+];
 
 // Dynamic insights based on user data
 const generateQuickInsights = (userProfile, transactions, budgets) => {
@@ -86,48 +51,34 @@ const generateQuickInsights = (userProfile, transactions, budgets) => {
   if (savingsRate > 20) {
     insights.push({
       icon: TrendingUp,
-      title: 'Excellent Savings Rate',
-      description: `You're saving ${savingsRate.toFixed(1)}% - well above the 20% recommendation!`,
-      color: 'green',
-      action: 'Ask about investment strategies'
+      title: 'Great Savings Rate',
+      description: `Excellent ${savingsRate.toFixed(1)}% savings rate!`,
+      color: 'green'
     });
   } else if (savingsRate < 10 && totalIncome > 0) {
     insights.push({
       icon: AlertCircle,
-      title: 'Savings Opportunity',
-      description: `Your ${savingsRate.toFixed(1)}% savings rate has room for improvement`,
-      color: 'red',
-      action: 'Get personalized savings tips'
+      title: 'Savings Rate Alert',
+      description: `Your savings rate is ${savingsRate.toFixed(1)}%. Aim for 20%+`,
+      color: 'red'
     });
   }
 
   if (Object.keys(budgets).length === 0) {
     insights.push({
-      icon: PieChart,
-      title: 'Budget Setup Needed',
-      description: 'Create budget categories to track and optimize your spending',
-      color: 'orange',
-      action: 'Learn about budgeting strategies'
+      icon: Lightbulb,
+      title: 'Budget Setup',
+      description: 'Set up budget categories to track spending better',
+      color: 'orange'
     });
   }
 
-  if (transactions.length > 20) {
+  if (transactions.length > 10) {
     insights.push({
       icon: Brain,
-      title: 'Rich Data Available',
-      description: `${transactions.length} transactions ready for AI analysis and insights`,
-      color: 'blue',
-      action: 'Get spending analysis'
-    });
-  }
-
-  if (totalIncome > 0 && totalExpenses > totalIncome) {
-    insights.push({
-      icon: TrendingDown,
-      title: 'Spending Alert',
-      description: 'Your expenses exceed your income - let\'s create a plan',
-      color: 'red',
-      action: 'Get expense reduction tips'
+      title: 'AI Analysis Ready',
+      description: `${transactions.length} transactions available for AI insights`,
+      color: 'blue'
     });
   }
 
@@ -446,6 +397,117 @@ const AICoach = () => {
     };
   };
 
+  // Enhanced Gemini API call with your API key
+  const callGeminiAPI = async (userMessage, context) => {
+    try {
+      const API_KEY = 'AIzaSyB5Wa1QnphzMSTdxyHn7b67XcsWqFJTd-s';
+      
+      setAiStatus('thinking');
+
+      const prompt = `You are an expert financial advisor AI with deep knowledge of personal finance, investing, budgeting, and wealth building. You're helping a user with their specific financial situation.
+
+USER'S FINANCIAL PROFILE:
+• Monthly Income: $${context.monthlyIncome.toLocaleString()}
+• Monthly Budget: $${context.monthlyBudget.toLocaleString()}
+• Total Income (all time): $${context.totalIncome.toLocaleString()}
+• Total Expenses (all time): $${context.totalExpenses.toLocaleString()}
+• Net Worth: $${context.netWorth.toLocaleString()}
+• Savings Rate: ${context.savingsRate}%
+• Transaction History: ${context.transactionCount} transactions
+• Financial Goals: ${context.goalCount} active goals
+• Budget Categories: ${context.budgetCategories} categories set up
+
+SPENDING BREAKDOWN:
+${Object.entries(context.categorySpending).map(([cat, amount]) => `• ${cat}: $${amount.toLocaleString()}`).join('\n')}
+
+FINANCIAL GOALS:
+${context.goalProgress.map(goal => `• ${goal.title}: ${goal.progress.toFixed(1)}% complete ($${goal.remaining.toLocaleString()} remaining)`).join('\n')}
+
+USER QUESTION: "${userMessage}"
+
+Please provide specific, actionable financial advice based on their actual data. Include:
+1. Direct analysis of their financial situation
+2. Specific recommendations with dollar amounts when relevant
+3. Actionable steps they can take immediately
+4. How this relates to their goals and budget
+
+Keep your response conversational, encouraging, and under 300 words. Use their actual numbers to make it personal and relevant.`;
+
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${API_KEY}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          contents: [{
+            parts: [{
+              text: prompt
+            }]
+          }],
+          generationConfig: {
+            temperature: 0.7,
+            topK: 40,
+            topP: 0.95,
+            maxOutputTokens: 1024,
+          },
+          safetySettings: [
+            {
+              category: "HARM_CATEGORY_HARASSMENT",
+              threshold: "BLOCK_MEDIUM_AND_ABOVE"
+            },
+            {
+              category: "HARM_CATEGORY_HATE_SPEECH", 
+              threshold: "BLOCK_MEDIUM_AND_ABOVE"
+            },
+            {
+              category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+              threshold: "BLOCK_MEDIUM_AND_ABOVE"
+            },
+            {
+              category: "HARM_CATEGORY_DANGEROUS_CONTENT",
+              threshold: "BLOCK_MEDIUM_AND_ABOVE"
+            }
+          ]
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`API request failed: ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      if (data.candidates && data.candidates[0] && data.candidates[0].content) {
+        setAiStatus('connected');
+        return data.candidates[0].content.parts[0].text;
+      } else {
+        throw new Error('Invalid response format from API');
+      }
+    } catch (error) {
+      console.error('Gemini API Error:', error);
+      setAiStatus('error');
+      
+      // Enhanced fallback response
+      return generateEnhancedFallbackResponse(userMessage, context);
+    }
+  };
+
+  // Enhanced fallback response generator
+  const generateEnhancedFallbackResponse = (userMessage, context) => {
+    const lowerMessage = userMessage.toLowerCase();
+    
+    if (lowerMessage.includes('expense') || lowerMessage.includes('reduce') || lowerMessage.includes('save money')) {
+      return `Based on your spending of $${context.totalExpenses.toLocaleString()}, here are targeted ways to reduce expenses:\n\n**Top Opportunities:**\n• Your largest expense categories need attention\n• With ${context.savingsRate}% savings rate, aim for 20%+\n• Review subscriptions and recurring charges\n• Consider meal planning to reduce food costs\n\n**Action Steps:**\n1. Track expenses for one week\n2. Cancel unused subscriptions\n3. Set spending limits for top categories\n4. Automate savings to reach 20% rate`;
+    } else if (lowerMessage.includes('emergency') || lowerMessage.includes('fund')) {
+      const targetFund = context.totalExpenses * 6;
+      return `Emergency Fund Strategy for your situation:\n\n**Target:** $${targetFund.toLocaleString()} (6 months expenses)\n**Current Net Worth:** $${context.netWorth.toLocaleString()}\n\n**Build Strategy:**\n1. Start with $1,000 mini-emergency fund\n2. Save $${Math.round(targetFund / 12).toLocaleString()}/month for 1 year\n3. Keep in high-yield savings account\n4. Automate transfers on payday\n\nWith your ${context.savingsRate}% savings rate, ${context.savingsRate > 15 ? 'you can build this steadily' : 'focus on increasing savings first'}.`;
+    } else if (lowerMessage.includes('invest') || lowerMessage.includes('investment')) {
+      return `Investment Strategy for your profile:\n\n**Your Situation:**\n• Net Worth: $${context.netWorth.toLocaleString()}\n• Savings Rate: ${context.savingsRate}%\n• ${context.goalCount} financial goals\n\n**Recommendations:**\n1. ${context.savingsRate > 15 ? 'Start with index funds (low fees)' : 'Increase savings rate to 15% first'}\n2. Max out employer 401(k) match\n3. Consider Roth IRA for tax-free growth\n4. Target-date funds for simplicity\n\n**Next Steps:** ${context.savingsRate > 20 ? 'You\'re ready to invest!' : 'Build emergency fund first'}`;
+    } else {
+      return `Financial Analysis for "${userMessage}":\n\n**Your Current Position:**\n• Monthly Income: $${context.monthlyIncome.toLocaleString()}\n• Savings Rate: ${context.savingsRate}%\n• Net Worth: $${context.netWorth.toLocaleString()}\n• Active Goals: ${context.goalCount}\n\n**Key Recommendations:**\n${context.savingsRate < 20 ? '• Increase savings rate to 20%' : '• Maintain excellent savings habits'}\n${context.goalCount === 0 ? '• Set specific financial goals' : '• Stay focused on your goals'}\n${context.budgetCategories === 0 ? '• Create budget categories' : '• Review budget performance'}\n\nAsk me specific questions about any area for detailed guidance!`;
+    }
+  };
+
   // Handle sending message
   const handleSendMessage = async () => {
     if (!inputMessage.trim()) return;
@@ -455,31 +517,24 @@ const AICoach = () => {
     setIsTyping(true);
 
     try {
-      // Add user message to chat (no notification)
+      // Add user message to chat
       await addMessage(userMessageContent, 'user');
       
-      // Generate AI response using AIService
+      // Generate AI response
       const context = generateUserContext();
-      setAiStatus('thinking');
+      const aiResponse = await callGeminiAPI(userMessageContent, context);
       
-      let aiResponse;
-      try {
-        // Try to get AI response from available providers
-        aiResponse = await AIService.getFinancialAdvice(userMessageContent, context, 'auto');
-        setAiStatus('connected');
-      } catch (error) {
-        console.error('AI Service Error:', error);
-        setAiStatus('error');
-        
-        // Use enhanced fallback response if AI service fails
-        aiResponse = AIService.generateFallbackResponse(userMessageContent, context);
-      }
-      
-      // Add AI response to chat (no notification)
+      // Add AI response to chat
       await addMessage(aiResponse, 'ai', {
-        model: 'ai-service',
+        model: 'gemini-pro',
         context_used: true,
         response_time: Date.now()
+      });
+      
+      addNotification({
+        type: 'success',
+        title: 'AI Financial Advice',
+        message: 'Your question has been answered and saved to chat history'
       });
       
     } catch (error) {
@@ -487,10 +542,16 @@ const AICoach = () => {
       
       // Add error message to chat
       await addMessage(
-        'I apologize, but I\'m having trouble processing your request right now. Please try again in a moment, or feel free to ask your question differently.',
+        'I apologize, but I\'m having trouble connecting to my AI services right now. Please try again in a moment, or feel free to ask your question differently.',
         'ai',
         { error: true, timestamp: Date.now() }
       );
+      
+      addNotification({
+        type: 'error',
+        title: 'AI Service Unavailable',
+        message: 'Unable to get AI response. Please try again.'
+      });
     } finally {
       setIsTyping(false);
     }
@@ -511,7 +572,7 @@ const AICoach = () => {
     }
   };
 
-  // Handle delete session
+  // Handle delete session with confirmation
   const handleDeleteSession = async (sessionId) => {
     try {
       await deleteSession(sessionId);
@@ -556,7 +617,7 @@ const AICoach = () => {
                    'Offline'}
                 </span>
                 <span>•</span>
-                <span>Multi-AI Powered</span>
+                <span>Powered by Google Gemini</span>
               </div>
             </div>
           </div>
@@ -594,100 +655,58 @@ const AICoach = () => {
                 Welcome to your AI Financial Coach!
               </h3>
               <p className="text-gray-600 dark:text-gray-300 mb-8 max-w-2xl mx-auto leading-relaxed">
-                I'm powered by advanced AI models and can provide personalized financial advice based on your actual financial data. Ask me anything about budgeting, investing, saving, or debt management!
+                I'm powered by Google Gemini AI and can provide personalized financial advice based on your actual financial data. Ask me anything about budgeting, investing, saving, or debt management!
               </p>
               
               {/* Quick Insights */}
               {quickInsights.length > 0 && (
                 <div className="mb-8">
-                  <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Your Financial Insights</h4>
+                  <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Quick Insights</h4>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-4xl mx-auto">
                     {quickInsights.map((insight, index) => {
                       const Icon = insight.icon;
                       return (
-                        <button
-                          key={index}
-                          onClick={() => handleSuggestedQuestion(insight.action)}
-                          className={`p-4 rounded-xl border-l-4 text-left hover:shadow-md transition-all duration-200 ${
-                            insight.color === 'green' ? 'bg-green-50 dark:bg-green-900/20 border-green-400 hover:bg-green-100 dark:hover:bg-green-900/30' :
-                            insight.color === 'orange' ? 'bg-orange-50 dark:bg-orange-900/20 border-orange-400 hover:bg-orange-100 dark:hover:bg-orange-900/30' : 
-                            insight.color === 'blue' ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30' :
-                            'bg-red-50 dark:bg-red-900/20 border-red-400 hover:bg-red-100 dark:hover:bg-red-900/30'
-                          }`}
-                        >
-                          <div className="flex items-start space-x-3">
-                            <Icon className={`w-5 h-5 mt-0.5 ${
+                        <div key={index} className={`p-4 rounded-xl border-l-4 ${
+                          insight.color === 'green' ? 'bg-green-50 dark:bg-green-900/20 border-green-400' :
+                          insight.color === 'orange' ? 'bg-orange-50 dark:bg-orange-900/20 border-orange-400' : 
+                          insight.color === 'blue' ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-400' :
+                          'bg-red-50 dark:bg-red-900/20 border-red-400'
+                        }`}>
+                          <div className="flex items-center space-x-3">
+                            <Icon className={`w-5 h-5 ${
                               insight.color === 'green' ? 'text-green-600 dark:text-green-400' :
                               insight.color === 'orange' ? 'text-orange-600 dark:text-orange-400' : 
                               insight.color === 'blue' ? 'text-blue-600 dark:text-blue-400' :
                               'text-red-600 dark:text-red-400'
                             }`} />
-                            <div className="flex-1">
+                            <div>
                               <h5 className="font-medium text-gray-900 dark:text-white text-sm">{insight.title}</h5>
-                              <p className="text-xs text-gray-600 dark:text-gray-300 mt-1">{insight.description}</p>
-                              <p className="text-xs text-blue-600 dark:text-blue-400 mt-2 font-medium">{insight.action} →</p>
+                              <p className="text-xs text-gray-600 dark:text-gray-300">{insight.description}</p>
                             </div>
                           </div>
-                        </button>
+                        </div>
                       );
                     })}
                   </div>
                 </div>
               )}
               
-              {/* Categorized Suggested Questions */}
-              <div className="max-w-6xl mx-auto">
-                <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Popular Financial Questions</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {Object.entries(suggestedQuestions).map(([category, questions]) => {
-                    const categoryIcons = {
-                      budgeting: PieChart,
-                      saving: DollarSign,
-                      investing: TrendingUp,
-                      debt: Shield,
-                      goals: Target
-                    };
-                    const Icon = categoryIcons[category];
-                    
-                    return (
-                      <div key={category} className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700">
-                        <div className="flex items-center space-x-2 mb-3">
-                          <Icon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                          <h5 className="font-semibold text-gray-900 dark:text-white capitalize">{category}</h5>
-                        </div>
-                        <div className="space-y-2">
-                          {questions.slice(0, 2).map((question, index) => (
-                            <button
-                              key={index}
-                              onClick={() => handleSuggestedQuestion(question)}
-                              className="w-full text-left p-2 text-xs text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-all duration-200 group"
-                            >
-                              <div className="flex items-center justify-between">
-                                <span className="flex-1">{question}</span>
-                                <ChevronRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
-                              </div>
-                            </button>
-                          ))}
-                        </div>
+              {/* Suggested Questions */}
+              <div className="max-w-4xl mx-auto">
+                <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Popular Questions</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {suggestedQuestions.slice(0, 6).map((question, index) => (
+                    <button
+                      key={index}
+                      onClick={() => handleSuggestedQuestion(question)}
+                      className="text-left p-4 text-sm text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-white dark:hover:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 transition-all duration-200 hover:shadow-md group"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="flex-1">{question}</span>
+                        <ChevronRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
                       </div>
-                    );
-                  })}
-                </div>
-                
-                {/* Random questions for variety */}
-                <div className="mt-6">
-                  <h5 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Or try these questions:</h5>
-                  <div className="flex flex-wrap gap-2">
-                    {allSuggestedQuestions.slice(0, 6).map((question, index) => (
-                      <button
-                        key={index}
-                        onClick={() => handleSuggestedQuestion(question)}
-                        className="px-3 py-2 text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-blue-100 dark:hover:bg-blue-900/20 hover:text-blue-700 dark:hover:text-blue-300 rounded-full transition-colors"
-                      >
-                        {question.length > 50 ? question.substring(0, 50) + '...' : question}
-                      </button>
-                    ))}
-                  </div>
+                    </button>
+                  ))}
                 </div>
               </div>
             </div>
@@ -739,7 +758,7 @@ const AICoach = () => {
               </div>
             </div>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 text-center">
-              🤖 Powered by Advanced AI • Your conversations are automatically saved
+              🤖 Powered by Google Gemini AI • Your conversations are automatically saved
             </p>
           </div>
         </div>

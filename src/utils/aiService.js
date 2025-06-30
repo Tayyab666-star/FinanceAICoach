@@ -1,21 +1,14 @@
-// Enhanced AI Service utility with multiple providers including free options
+// AI Service utility for handling different AI providers
 class AIService {
   constructor() {
     this.providers = {
       gemini: {
         apiKey: import.meta.env.VITE_GEMINI_API_KEY,
-        endpoint: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent',
-        free: true
-      },
-      huggingface: {
-        apiKey: import.meta.env.VITE_HUGGINGFACE_API_KEY,
-        endpoint: 'https://api-inference.huggingface.co/models/microsoft/DialoGPT-large',
-        free: true
+        endpoint: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent'
       },
       openai: {
         apiKey: import.meta.env.VITE_OPENAI_API_KEY,
-        endpoint: 'https://api.openai.com/v1/chat/completions',
-        free: false
+        endpoint: 'https://api.openai.com/v1/chat/completions'
       }
     };
   }
@@ -24,7 +17,7 @@ class AIService {
     const { apiKey, endpoint } = this.providers.gemini;
     
     if (!apiKey) {
-      throw new Error('Gemini API key not configured. Please add VITE_GEMINI_API_KEY to your environment variables.');
+      throw new Error('Gemini API key not configured');
     }
 
     const response = await fetch(`${endpoint}?key=${apiKey}`, {
@@ -39,11 +32,10 @@ class AIService {
           }]
         }],
         generationConfig: {
-          temperature: 0.8,
+          temperature: 0.7,
           topK: 40,
           topP: 0.95,
-          maxOutputTokens: 2048,
-          candidateCount: 1
+          maxOutputTokens: 1024,
         },
         safetySettings: [
           {
@@ -53,67 +45,21 @@ class AIService {
           {
             category: "HARM_CATEGORY_HATE_SPEECH",
             threshold: "BLOCK_MEDIUM_AND_ABOVE"
-          },
-          {
-            category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
-            threshold: "BLOCK_MEDIUM_AND_ABOVE"
-          },
-          {
-            category: "HARM_CATEGORY_DANGEROUS_CONTENT",
-            threshold: "BLOCK_MEDIUM_AND_ABOVE"
           }
         ]
       })
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(`Gemini API request failed: ${response.status} - ${errorData.error?.message || 'Unknown error'}`);
+      throw new Error(`Gemini API request failed: ${response.status}`);
     }
 
     const data = await response.json();
     
-    if (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts) {
+    if (data.candidates && data.candidates[0] && data.candidates[0].content) {
       return data.candidates[0].content.parts[0].text;
     } else {
       throw new Error('Invalid response format from Gemini API');
-    }
-  }
-
-  async callHuggingFace(prompt) {
-    const { apiKey, endpoint } = this.providers.huggingface;
-    
-    if (!apiKey) {
-      throw new Error('HuggingFace API key not configured. Please add VITE_HUGGINGFACE_API_KEY to your environment variables.');
-    }
-
-    const response = await fetch(endpoint, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        inputs: prompt,
-        parameters: {
-          max_length: 1000,
-          temperature: 0.8,
-          do_sample: true,
-          top_p: 0.9
-        }
-      })
-    });
-
-    if (!response.ok) {
-      throw new Error(`HuggingFace API request failed: ${response.status}`);
-    }
-
-    const data = await response.json();
-    
-    if (data && data[0] && data[0].generated_text) {
-      return data[0].generated_text.replace(prompt, '').trim();
-    } else {
-      throw new Error('Invalid response format from HuggingFace API');
     }
   }
 
@@ -121,7 +67,7 @@ class AIService {
     const { apiKey, endpoint } = this.providers.openai;
     
     if (!apiKey) {
-      throw new Error('OpenAI API key not configured. Please add VITE_OPENAI_API_KEY to your environment variables.');
+      throw new Error('OpenAI API key not configured');
     }
 
     const response = await fetch(endpoint, {
@@ -160,28 +106,13 @@ class AIService {
     }
   }
 
-  async getFinancialAdvice(userMessage, userContext, provider = 'auto') {
-    const prompt = this.buildAdvancedFinancialPrompt(userMessage, userContext);
-    
-    // Auto-select provider based on availability
-    if (provider === 'auto') {
-      if (this.providers.gemini.apiKey) {
-        provider = 'gemini';
-      } else if (this.providers.huggingface.apiKey) {
-        provider = 'huggingface';
-      } else if (this.providers.openai.apiKey) {
-        provider = 'openai';
-      } else {
-        throw new Error('No AI provider configured. Please add at least one API key.');
-      }
-    }
+  async getFinancialAdvice(userMessage, userContext, provider = 'gemini') {
+    const prompt = this.buildFinancialPrompt(userMessage, userContext);
     
     try {
       switch (provider) {
         case 'gemini':
           return await this.callGemini(prompt);
-        case 'huggingface':
-          return await this.callHuggingFace(prompt);
         case 'openai':
           return await this.callOpenAI(prompt);
         default:
@@ -193,156 +124,38 @@ class AIService {
     }
   }
 
-  buildAdvancedFinancialPrompt(userMessage, context) {
-    return `You are an expert financial advisor AI with deep knowledge of personal finance, investing, budgeting, wealth building, and financial planning. You provide personalized, actionable advice based on real financial data.
+  buildFinancialPrompt(userMessage, context) {
+    return `You are a professional financial advisor AI assistant. The user has the following financial profile:
 
-**USER'S CURRENT FINANCIAL PROFILE:**
-• Monthly Income: $${context.monthlyIncome?.toLocaleString() || '0'}
-• Monthly Budget: $${context.monthlyBudget?.toLocaleString() || '0'}
-• Total Income (All Time): $${context.totalIncome?.toLocaleString() || '0'}
-• Total Expenses (All Time): $${context.totalExpenses?.toLocaleString() || '0'}
-• Current Net Worth: $${context.netWorth?.toLocaleString() || '0'}
-• Savings Rate: ${context.savingsRate || '0'}%
-• Transaction History: ${context.transactionCount || 0} transactions
-• Active Financial Goals: ${context.goalCount || 0} goals
-• Budget Categories Set Up: ${context.budgetCategories || 0} categories
-• Profile Setup Status: ${context.setupCompleted ? 'Complete' : 'Incomplete'}
+Monthly Income: $${context.monthlyIncome}
+Monthly Budget: $${context.monthlyBudget}
+Total Income (all time): $${context.totalIncome}
+Total Expenses (all time): $${context.totalExpenses}
+Savings Rate: ${context.savingsRate}%
+Number of Transactions: ${context.transactionCount}
+Number of Goals: ${context.goalCount}
+Budget Categories Set: ${context.budgetCategories}
+Setup Completed: ${context.setupCompleted}
 
-**SPENDING BREAKDOWN BY CATEGORY:**
-${Object.entries(context.categorySpending || {}).map(([category, amount]) => 
-  `• ${category}: $${amount.toLocaleString()}`
-).join('\n') || '• No spending data available'}
+User Question: ${userMessage}
 
-**FINANCIAL GOALS PROGRESS:**
-${context.goalProgress?.map(goal => 
-  `• ${goal.title}: ${goal.progress.toFixed(1)}% complete ($${goal.remaining.toLocaleString()} remaining)`
-).join('\n') || '• No active goals'}
-
-**BUDGET ALLOCATIONS:**
-${Object.entries(context.budgetAllocations || {}).map(([category, amount]) => 
-  `• ${category}: $${amount.toLocaleString()}`
-).join('\n') || '• No budget categories set'}
-
-**USER QUESTION:** "${userMessage}"
-
-**INSTRUCTIONS:**
-1. Analyze their specific financial situation using the data provided
-2. Give personalized, actionable advice with specific dollar amounts when relevant
-3. Address their question directly and comprehensively
-4. Include 2-3 specific action steps they can take immediately
-5. Mention how this relates to their current goals and budget if applicable
-6. Keep response conversational and encouraging
-7. Limit response to 250-300 words for readability
-8. Use their actual financial numbers to make recommendations personal
-
-Provide your financial advice now:`;
+Please provide helpful, personalized financial advice based on their profile. Keep responses concise but informative (2-3 paragraphs max). Include specific actionable recommendations when possible. If the user's financial data suggests areas for improvement, mention them tactfully. Use a friendly, professional tone.`;
   }
 
-  // Enhanced fallback responses with real financial calculations
+  // Fallback responses when AI APIs are unavailable
   generateFallbackResponse(userMessage, context) {
     const lowerMessage = userMessage.toLowerCase();
     
-    // Calculate some basic metrics for personalized responses
-    const monthlyExpenses = context.totalExpenses / Math.max(context.transactionCount / 30, 1);
-    const emergencyFundTarget = monthlyExpenses * 6;
-    const recommendedSavings = context.monthlyIncome * 0.2;
-    const currentSavings = context.monthlyIncome - monthlyExpenses;
-    
     const responses = {
-      expense: `Based on your spending of $${context.totalExpenses.toLocaleString()}, here are targeted ways to reduce expenses:
-
-**Your Situation:** With ${context.savingsRate}% savings rate, ${context.savingsRate > 20 ? 'you\'re doing great!' : 'there\'s room for improvement.'}
-
-**Top Opportunities:**
-1. **Review your largest categories** - Focus on where you spend the most
-2. **Automate savings** - Save $${Math.round(recommendedSavings - currentSavings)} more monthly to reach 20%
-3. **Track daily spending** - Use our transaction tracker for better awareness
-
-**Action Steps:**
-• Set spending alerts for your top 3 categories
-• Try the 24-hour rule before non-essential purchases over $50
-• Review and cancel unused subscriptions
-
-Your goal: Increase savings rate from ${context.savingsRate}% to 20% by reducing expenses by $${Math.round(recommendedSavings - currentSavings)}/month.`,
-
-      emergency: `Emergency Fund Strategy for your situation:
-
-**Your Target:** $${emergencyFundTarget.toLocaleString()} (6 months of expenses)
-**Monthly Expenses:** ~$${Math.round(monthlyExpenses).toLocaleString()}
-**Current Savings Capacity:** $${Math.round(currentSavings).toLocaleString()}/month
-
-**Build Strategy:**
-1. **Start with $1,000** - Achievable in ${Math.ceil(1000 / Math.max(currentSavings, 100))} months
-2. **Automate transfers** - Set up $${Math.round(currentSavings * 0.5)}/month to emergency fund
-3. **Use windfalls** - Direct tax refunds and bonuses here first
-
-**Timeline:** At your current savings rate, you could build your full emergency fund in ${Math.ceil(emergencyFundTarget / Math.max(currentSavings, 100))} months.
-
-**Pro Tip:** Keep it in a high-yield savings account earning 4-5% APY while staying liquid.`,
-
-      investment: `Investment Strategy based on your profile:
-
-**Your Foundation:** 
-• Net Worth: $${context.netWorth.toLocaleString()}
-• Savings Rate: ${context.savingsRate}%
-• Monthly Surplus: $${Math.round(currentSavings).toLocaleString()}
-
-**Recommendations:**
-${context.savingsRate > 15 ? 
-  '✅ **Ready to invest!** Your savings rate supports investing.' : 
-  '⚠️ **Build savings first** - Aim for 15%+ savings rate before investing.'
-}
-
-**Investment Priority:**
-1. **Emergency fund first** - ${emergencyFundTarget > currentSavings * 6 ? 'Build this before investing' : 'You\'re ready for step 2'}
-2. **401(k) match** - Free money from employer
-3. **Index funds** - Start with $${Math.round(currentSavings * 0.3)}/month in low-cost funds
-4. **Roth IRA** - $500/month if under income limits
-
-**Next Step:** ${context.savingsRate > 20 ? 'Start with $500/month in index funds' : 'Increase savings rate first'}`,
-
-      budget: `Budget Optimization for your income:
-
-**Current Allocation:**
-• Income: $${context.monthlyIncome.toLocaleString()}
-• Budget: $${context.monthlyBudget.toLocaleString()}
-• Actual Spending: ~$${Math.round(monthlyExpenses).toLocaleString()}
-
-**Recommended 50/30/20 Rule:**
-• **Needs (50%):** $${Math.round(context.monthlyIncome * 0.5).toLocaleString()}
-• **Wants (30%):** $${Math.round(context.monthlyIncome * 0.3).toLocaleString()}
-• **Savings (20%):** $${Math.round(context.monthlyIncome * 0.2).toLocaleString()}
-
-**Your Opportunity:** ${currentSavings < recommendedSavings ? 
-  `Increase savings by $${Math.round(recommendedSavings - currentSavings)}/month` : 
-  'You\'re exceeding the 20% savings recommendation!'
-}
-
-**Action Steps:**
-1. **Categorize expenses** - Use our budget tool to track spending
-2. **Automate savings** - Transfer $${Math.round(recommendedSavings)}/month immediately after payday
-3. **Review monthly** - Adjust categories based on actual spending`,
-
-      debt: `Debt Management Strategy:
-
-**Your Financial Position:**
-• Monthly Income: $${context.monthlyIncome.toLocaleString()}
-• Available for Debt Payment: $${Math.round(currentSavings).toLocaleString()}/month
-
-**Strategy Recommendations:**
-• **High-interest debt (>6%):** Pay minimums + extra $${Math.round(currentSavings * 0.7)}/month
-• **Low-interest debt (<4%):** Pay minimums, invest the difference
-• **Medium-interest (4-6%):** Split approach based on risk tolerance
-
-**Debt Avalanche Method:**
-1. List all debts by interest rate (highest first)
-2. Pay minimums on all debts
-3. Put extra $${Math.round(currentSavings * 0.7)}/month toward highest rate
-4. Repeat until debt-free
-
-**Timeline Estimate:** With $${Math.round(currentSavings * 0.7)}/month extra payments, most credit card debt can be eliminated in 2-3 years.
-
-**Emergency Fund:** Keep $1,000 minimum while paying off high-interest debt.`
+      expense: `Based on your current expenses of $${context.totalExpenses.toLocaleString()}, here are some strategies to reduce costs:\n\n1. **Review subscriptions**: Cancel unused services\n2. **Meal planning**: Cook at home more often\n3. **Energy efficiency**: Switch to LED bulbs and unplug devices\n4. **Transportation**: Consider carpooling or public transit\n\nWith your current savings rate of ${context.savingsRate}%, you're ${context.savingsRate > 20 ? 'doing well' : 'below the recommended 20%'}. Focus on the biggest expense categories first.`,
+      
+      emergency: `Building an emergency fund is crucial! Here's a step-by-step approach:\n\n1. **Start small**: Aim for $1,000 first\n2. **Automate savings**: Set up automatic transfers\n3. **Use windfalls**: Direct tax refunds and bonuses to the fund\n4. **Target**: Build up to 3-6 months of expenses\n\nWith your monthly expenses, aim for $${(context.totalExpenses * 3).toLocaleString()} to $${(context.totalExpenses * 6).toLocaleString()} in your emergency fund.`,
+      
+      investment: `Investment strategy depends on your goals and risk tolerance:\n\n**For beginners:**\n- Start with index funds (low fees, diversified)\n- Consider target-date funds for retirement\n- Use tax-advantaged accounts (401k, IRA) first\n\n**Your situation:** With a ${context.savingsRate}% savings rate, ${context.savingsRate > 15 ? 'you have good foundation for investing' : 'focus on increasing savings first'}. Ensure you have an emergency fund before investing.`,
+      
+      budget: `Creating an effective budget:\n\n1. **Track expenses**: Use the 50/30/20 rule (needs/wants/savings)\n2. **Automate**: Set up automatic transfers for savings\n3. **Review monthly**: Adjust categories based on actual spending\n4. **Emergency buffer**: Include unexpected expenses\n\nYour current budget of $${context.monthlyBudget.toLocaleString()} ${context.monthlyBudget < context.monthlyIncome ? 'leaves room for savings' : 'may need adjustment'}.`,
+      
+      debt: `Debt management strategies:\n\n**High-interest debt (>6%):** Pay off first\n**Low-interest debt (<4%):** Consider investing instead\n**Strategy:** Use debt avalanche (highest interest first) or snowball (smallest balance first)\n\nWith your current financial situation, ${context.savingsRate > 10 ? 'you have good cash flow to tackle debt' : 'focus on increasing income or reducing expenses first'}.`
     };
 
     // Match user message to appropriate response
@@ -357,34 +170,7 @@ ${context.savingsRate > 15 ?
     } else if (lowerMessage.includes('debt') || lowerMessage.includes('loan')) {
       return responses.debt;
     } else {
-      return `Thank you for your question: "${userMessage}"
-
-**Your Financial Snapshot:**
-• Monthly Income: $${context.monthlyIncome.toLocaleString()}
-• Savings Rate: ${context.savingsRate}%
-• Net Worth: $${context.netWorth.toLocaleString()}
-• Active Goals: ${context.goalCount}
-
-**Key Recommendations:**
-${context.savingsRate < 20 ? 
-  `• **Priority:** Increase savings rate to 20% (currently ${context.savingsRate}%)` : 
-  '• **Great job!** Your savings rate exceeds the 20% recommendation'
-}
-${context.goalCount === 0 ? 
-  '• **Set financial goals** - Having specific targets improves success by 42%' : 
-  `• **Stay focused** on your ${context.goalCount} active goals`
-}
-${context.budgetCategories === 0 ? 
-  '• **Create budget categories** - Track spending to optimize your finances' : 
-  '• **Review budget performance** - Adjust categories based on actual spending'
-}
-
-**Next Steps:**
-1. Use our AI coach for specific questions about investing, budgeting, or debt
-2. Set up automatic transfers for consistent saving
-3. Review your financial goals monthly
-
-Feel free to ask more specific questions about any aspect of your finances!`;
+      return `Thank you for your question about "${userMessage}". Based on your financial profile:\n\n• Monthly Income: $${context.monthlyIncome.toLocaleString()}\n• Savings Rate: ${context.savingsRate}%\n• Active Goals: ${context.goalCount}\n\nI'd recommend focusing on ${context.savingsRate < 20 ? 'increasing your savings rate to 20%' : 'maintaining your good financial habits'}. ${context.setupCompleted ? 'Your financial foundation looks solid!' : 'Complete your profile setup for more personalized advice.'}\n\nFeel free to ask more specific questions about budgeting, investing, or debt management!`;
     }
   }
 }
