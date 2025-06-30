@@ -22,10 +22,13 @@ import {
   DollarSign,
   Mail,
   Phone,
-  MapPin
+  MapPin,
+  Send,
+  MessageSquare
 } from 'lucide-react';
+import { supabase } from '../lib/supabase';
 
-// Hero Slider Component with solid colors and sharp edges
+// Hero Slider Component with solid colors and rounded elements
 const HeroSlider = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const navigate = useNavigate();
@@ -86,12 +89,12 @@ const HeroSlider = () => {
                   <div className="flex flex-col sm:flex-row gap-4">
                     <button 
                       onClick={() => navigate('/login')}
-                      className="bg-white text-gray-900 px-8 py-4 font-semibold text-lg hover:bg-gray-100 transition-all duration-300 transform hover:scale-105 shadow-2xl"
+                      className="bg-white text-gray-900 px-8 py-4 rounded-xl font-semibold text-lg hover:bg-gray-100 transition-all duration-300 transform hover:scale-105 shadow-2xl"
                     >
                       Start Your Journey
                       <ArrowRight className="inline ml-2 w-5 h-5" />
                     </button>
-                    <button className="border-2 border-white text-white px-8 py-4 font-semibold text-lg hover:bg-white hover:text-gray-900 transition-all duration-300 flex items-center justify-center">
+                    <button className="border-2 border-white text-white px-8 py-4 rounded-xl font-semibold text-lg hover:bg-white hover:text-gray-900 transition-all duration-300 flex items-center justify-center">
                       <Play className="w-5 h-5 mr-2" />
                       Watch Demo
                     </button>
@@ -103,14 +106,14 @@ const HeroSlider = () => {
                     <img 
                       src={slide.image} 
                       alt="Finance AI Coach"
-                      className="w-full max-w-md mx-auto shadow-2xl"
+                      className="w-full max-w-md mx-auto rounded-2xl shadow-2xl"
                       onError={(e) => {
                         e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgdmlld0JveD0iMCAwIDQwMCAzMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0yMDAgMTUwQzIyMC45MTEgMTUwIDIzOCAxMzIuOTExIDIzOCAxMTJDMjM4IDkxLjA4OTYgMjIwLjkxMSA3NCAyMDAgNzRDMTc5LjA4OSA3NCAxNjIgOTEuMDg5NiAxNjIgMTEyQzE2MiAxMzIuOTExIDE3OS4wODkgMTUwIDIwMCAxNTBaIiBmaWxsPSIjOUI5QkEzIi8+CjxwYXRoIGQ9Ik0yMDAgMjI2QzI0NC4xODMgMjI2IDI4MCAyMDAuNzM0IDI4MCAxNzBIMTIwQzEyMCAyMDAuNzM0IDE1NS44MTcgMjI2IDIwMCAyMjZaIiBmaWxsPSIjOUI5QkEzIi8+Cjwvc3ZnPgo=';
                       }}
                     />
                   </div>
-                  <div className="absolute -top-4 -right-4 w-72 h-72 bg-white/10 blur-3xl" />
-                  <div className="absolute -bottom-4 -left-4 w-72 h-72 bg-white/10 blur-3xl" />
+                  <div className="absolute -top-4 -right-4 w-72 h-72 bg-white/10 rounded-full blur-3xl" />
+                  <div className="absolute -bottom-4 -left-4 w-72 h-72 bg-white/10 rounded-full blur-3xl" />
                 </div>
               </div>
             </div>
@@ -121,13 +124,13 @@ const HeroSlider = () => {
       {/* Navigation */}
       <button 
         onClick={prevSlide}
-        className="absolute left-6 top-1/2 transform -translate-y-1/2 bg-white/20 hover:bg-white/30 text-white p-3 transition-all duration-300"
+        className="absolute left-6 top-1/2 transform -translate-y-1/2 bg-white/20 hover:bg-white/30 text-white p-3 rounded-full transition-all duration-300"
       >
         <ChevronLeft className="w-6 h-6" />
       </button>
       <button 
         onClick={nextSlide}
-        className="absolute right-6 top-1/2 transform -translate-y-1/2 bg-white/20 hover:bg-white/30 text-white p-3 transition-all duration-300"
+        className="absolute right-6 top-1/2 transform -translate-y-1/2 bg-white/20 hover:bg-white/30 text-white p-3 rounded-full transition-all duration-300"
       >
         <ChevronRight className="w-6 h-6" />
       </button>
@@ -138,7 +141,7 @@ const HeroSlider = () => {
           <button
             key={index}
             onClick={() => setCurrentSlide(index)}
-            className={`w-3 h-3 transition-all duration-300 ${
+            className={`w-3 h-3 rounded-full transition-all duration-300 ${
               index === currentSlide ? 'bg-white scale-125' : 'bg-white/50'
             }`}
           />
@@ -149,23 +152,25 @@ const HeroSlider = () => {
 };
 
 // Navigation Component with actual logo
-const Navigation = ({ activeSection, setActiveSection }) => {
+const Navigation = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const navigate = useNavigate();
+
+  const scrollToSection = (sectionId) => {
+    const element = document.getElementById(sectionId);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    }
+    setIsMenuOpen(false);
+  };
 
   const navItems = [
     { label: 'Features', href: 'features' },
     { label: 'Solutions', href: 'solutions' },
-    { label: 'Pricing', href: 'pricing' },
     { label: 'About Us', href: 'about' },
-    { label: 'Privacy Policy', href: 'privacy' },
-    { label: 'Team', href: 'team' }
+    { label: 'Team', href: 'team' },
+    { label: 'Contact', href: 'contact' }
   ];
-
-  const handleNavClick = (section) => {
-    setActiveSection(section);
-    setIsMenuOpen(false);
-  };
 
   return (
     <nav className="fixed top-0 w-full z-50 bg-white/95 backdrop-blur-lg border-b border-gray-200/50">
@@ -173,19 +178,17 @@ const Navigation = ({ activeSection, setActiveSection }) => {
         <div className="flex items-center justify-between h-20">
           {/* Logo */}
           <div className="flex items-center space-x-3">
-            <img 
-              src="/WhatsApp Image 2025-06-29 at 13.46.00_d292e4a6.jpg" 
-              alt="Finance AI Coach" 
-              className="h-12 w-auto object-contain"
-              onError={(e) => {
-                e.target.style.display = 'none';
-                e.target.nextSibling.style.display = 'flex';
-              }}
-            />
-            <div 
-              className="w-12 h-12 bg-purple-600 flex items-center justify-center hidden"
-            >
-              <span className="text-white font-bold text-lg">F</span>
+            <div className="w-12 h-12 bg-purple-600 rounded-xl flex items-center justify-center">
+              <img 
+                src="/WhatsApp Image 2025-06-29 at 13.46.00_d292e4a6.jpg" 
+                alt="Finance AI Coach" 
+                className="h-8 w-8 object-contain rounded-lg"
+                onError={(e) => {
+                  e.target.style.display = 'none';
+                  e.target.nextSibling.style.display = 'block';
+                }}
+              />
+              <span className="text-white font-bold text-lg hidden">F</span>
             </div>
             <span className="text-2xl font-bold text-purple-600">
               Finance AI Coach
@@ -197,10 +200,8 @@ const Navigation = ({ activeSection, setActiveSection }) => {
             {navItems.map((item) => (
               <button
                 key={item.label}
-                onClick={() => handleNavClick(item.href)}
-                className={`font-medium transition-colors duration-300 ${
-                  activeSection === item.href ? 'text-purple-600' : 'text-gray-700 hover:text-purple-600'
-                }`}
+                onClick={() => scrollToSection(item.href)}
+                className="font-medium text-gray-700 hover:text-purple-600 transition-colors duration-300"
               >
                 {item.label}
               </button>
@@ -217,7 +218,7 @@ const Navigation = ({ activeSection, setActiveSection }) => {
             </button>
             <button 
               onClick={() => navigate('/login')}
-              className="bg-purple-600 text-white px-6 py-3 font-semibold hover:bg-purple-700 transition-all duration-300 transform hover:scale-105"
+              className="bg-purple-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-purple-700 transition-all duration-300 transform hover:scale-105"
             >
               Get Started
             </button>
@@ -226,7 +227,7 @@ const Navigation = ({ activeSection, setActiveSection }) => {
           {/* Mobile Menu Button */}
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="lg:hidden p-2 text-gray-700"
+            className="lg:hidden p-2 text-gray-700 rounded-lg"
           >
             {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
@@ -239,7 +240,7 @@ const Navigation = ({ activeSection, setActiveSection }) => {
               {navItems.map((item) => (
                 <button
                   key={item.label}
-                  onClick={() => handleNavClick(item.href)}
+                  onClick={() => scrollToSection(item.href)}
                   className="block text-gray-700 hover:text-purple-600 font-medium transition-colors duration-300"
                 >
                   {item.label}
@@ -254,7 +255,7 @@ const Navigation = ({ activeSection, setActiveSection }) => {
                 </button>
                 <button 
                   onClick={() => navigate('/login')}
-                  className="block w-full bg-purple-600 text-white px-6 py-3 font-semibold text-center"
+                  className="block w-full bg-purple-600 text-white px-6 py-3 rounded-xl font-semibold text-center"
                 >
                   Get Started
                 </button>
@@ -267,7 +268,7 @@ const Navigation = ({ activeSection, setActiveSection }) => {
   );
 };
 
-// Features Section with sharp edges
+// Features Section with rounded elements
 const FeaturesSection = () => {
   const features = [
     {
@@ -331,15 +332,15 @@ const FeaturesSection = () => {
           {features.map((feature, index) => (
             <div
               key={index}
-              className="bg-white p-8 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 group"
+              className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 group"
             >
               <div className="relative mb-6">
                 <img 
                   src={feature.image} 
                   alt={feature.title}
-                  className="w-full h-48 object-cover mb-4"
+                  className="w-full h-48 object-cover rounded-xl mb-4"
                 />
-                <div className={`w-16 h-16 ${feature.color} flex items-center justify-center absolute -bottom-2 left-4 group-hover:scale-110 transition-transform duration-300`}>
+                <div className={`w-16 h-16 ${feature.color} rounded-2xl flex items-center justify-center absolute -bottom-2 left-4 group-hover:scale-110 transition-transform duration-300`}>
                   <feature.icon className="w-8 h-8 text-white" />
                 </div>
               </div>
@@ -396,9 +397,9 @@ const SolutionsSection = () => {
           {solutions.map((solution, index) => (
             <div
               key={index}
-              className="bg-gray-50 p-8 border border-gray-200 hover:border-purple-300 transition-all duration-300 group"
+              className="bg-gray-50 p-8 rounded-2xl border border-gray-200 hover:border-purple-300 transition-all duration-300 group"
             >
-              <div className={`w-16 h-16 ${solution.color} flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300`}>
+              <div className={`w-16 h-16 ${solution.color} rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300`}>
                 <solution.icon className="w-8 h-8 text-white" />
               </div>
               <h3 className="text-2xl font-bold text-gray-900 mb-4">{solution.title}</h3>
@@ -419,128 +420,10 @@ const SolutionsSection = () => {
   );
 };
 
-// Pricing Section
-const PricingSection = () => {
-  const navigate = useNavigate();
-  
-  const plans = [
-    {
-      name: "Starter",
-      price: "Free",
-      period: "forever",
-      description: "Perfect for getting started with personal finance management",
-      features: [
-        "Basic expense tracking",
-        "Simple budgeting tools",
-        "Monthly reports",
-        "Mobile app access",
-        "Email support"
-      ],
-      popular: false
-    },
-    {
-      name: "Pro",
-      price: "$9.99",
-      period: "per month",
-      description: "Advanced features for serious financial planning",
-      features: [
-        "AI-powered insights",
-        "Advanced analytics",
-        "Goal tracking",
-        "Investment advice",
-        "Priority support",
-        "Custom categories",
-        "Export capabilities"
-      ],
-      popular: true
-    },
-    {
-      name: "Business",
-      price: "$29.99",
-      period: "per month",
-      description: "Comprehensive solution for businesses and teams",
-      features: [
-        "Everything in Pro",
-        "Team collaboration",
-        "Advanced reporting",
-        "API access",
-        "Custom integrations",
-        "Dedicated support",
-        "White-label options"
-      ],
-      popular: false
-    }
-  ];
-
-  return (
-    <section id="pricing" className="py-24 bg-purple-50">
-      <div className="container mx-auto px-6 lg:px-8">
-        <div className="text-center mb-16">
-          <h2 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-6">
-            Simple, Transparent
-            <span className="text-purple-600"> Pricing</span>
-          </h2>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Choose the plan that fits your needs. Start free and upgrade as you grow.
-          </p>
-        </div>
-
-        <div className="grid lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
-          {plans.map((plan, index) => (
-            <div
-              key={index}
-              className={`relative bg-white p-8 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 ${
-                plan.popular ? 'ring-2 ring-purple-600 scale-105' : ''
-              }`}
-            >
-              {plan.popular && (
-                <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                  <span className="bg-purple-600 text-white px-6 py-2 text-sm font-semibold">
-                    Most Popular
-                  </span>
-                </div>
-              )}
-              
-              <div className="text-center mb-8">
-                <h3 className="text-2xl font-bold text-gray-900 mb-2">{plan.name}</h3>
-                <div className="mb-4">
-                  <span className="text-4xl font-bold text-gray-900">{plan.price}</span>
-                  <span className="text-gray-600 ml-2">{plan.period}</span>
-                </div>
-                <p className="text-gray-600">{plan.description}</p>
-              </div>
-
-              <ul className="space-y-4 mb-8">
-                {plan.features.map((feature, featureIndex) => (
-                  <li key={featureIndex} className="flex items-center">
-                    <CheckCircle className="w-5 h-5 text-emerald-500 mr-3 flex-shrink-0" />
-                    <span className="text-gray-700">{feature}</span>
-                  </li>
-                ))}
-              </ul>
-
-              <button 
-                onClick={() => navigate('/login')}
-                className={`w-full py-4 font-semibold transition-all duration-300 ${
-                  plan.popular
-                    ? 'bg-purple-600 text-white hover:bg-purple-700 transform hover:scale-105'
-                    : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
-                }`}
-              >
-                Get Started
-              </button>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-};
-
 // About Us Section
 const AboutSection = () => {
   return (
-    <section id="about" className="py-24 bg-white">
+    <section id="about" className="py-24 bg-gray-50">
       <div className="container mx-auto px-6 lg:px-8">
         <div className="text-center mb-16">
           <h2 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-6">
@@ -578,7 +461,7 @@ const AboutSection = () => {
             <img 
               src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80" 
               alt="Team collaboration"
-              className="w-full shadow-2xl"
+              className="w-full rounded-2xl shadow-2xl"
             />
           </div>
         </div>
@@ -617,7 +500,7 @@ const TeamSection = () => {
   ];
 
   return (
-    <section id="team" className="py-24 bg-gray-50">
+    <section id="team" className="py-24 bg-white">
       <div className="container mx-auto px-6 lg:px-8">
         <div className="text-center mb-16">
           <h2 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-6">
@@ -630,97 +513,17 @@ const TeamSection = () => {
 
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
           {team.map((member, index) => (
-            <div key={index} className="bg-white p-6 shadow-lg hover:shadow-2xl transition-all duration-300 text-center">
+            <div key={index} className="bg-white p-6 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 text-center">
               <img 
                 src={member.image} 
                 alt={member.name}
-                className="w-32 h-32 object-cover mx-auto mb-4"
+                className="w-32 h-32 object-cover rounded-2xl mx-auto mb-4"
               />
               <h3 className="text-xl font-bold text-gray-900 mb-2">{member.name}</h3>
               <p className="text-purple-600 font-semibold mb-3">{member.role}</p>
               <p className="text-gray-600 text-sm">{member.bio}</p>
             </div>
           ))}
-        </div>
-      </div>
-    </section>
-  );
-};
-
-// Privacy Policy Section
-const PrivacySection = () => {
-  return (
-    <section id="privacy" className="py-24 bg-white">
-      <div className="container mx-auto px-6 lg:px-8 max-w-4xl">
-        <div className="text-center mb-16">
-          <h2 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-6">
-            Privacy <span className="text-purple-600">Policy</span>
-          </h2>
-          <p className="text-xl text-gray-600">
-            Your privacy and data security are our top priorities. Here's how we protect your information.
-          </p>
-        </div>
-
-        <div className="space-y-8">
-          <div>
-            <h3 className="text-2xl font-bold text-gray-900 mb-4">How We Work</h3>
-            <p className="text-gray-600 leading-relaxed mb-4">
-              Finance AI Coach uses advanced artificial intelligence to analyze your financial data and provide 
-              personalized insights. Our AI algorithms process your transaction history, spending patterns, and 
-              financial goals to generate tailored recommendations.
-            </p>
-            <p className="text-gray-600 leading-relaxed">
-              All data processing happens securely in the cloud with bank-level encryption. We never sell your 
-              personal information to third parties, and you maintain full control over your data at all times.
-            </p>
-          </div>
-
-          <div>
-            <h3 className="text-2xl font-bold text-gray-900 mb-4">Data Collection</h3>
-            <ul className="space-y-2 text-gray-600">
-              <li className="flex items-start">
-                <CheckCircle className="w-5 h-5 text-emerald-500 mr-3 mt-0.5 flex-shrink-0" />
-                Financial transaction data (with your explicit consent)
-              </li>
-              <li className="flex items-start">
-                <CheckCircle className="w-5 h-5 text-emerald-500 mr-3 mt-0.5 flex-shrink-0" />
-                Account information and preferences
-              </li>
-              <li className="flex items-start">
-                <CheckCircle className="w-5 h-5 text-emerald-500 mr-3 mt-0.5 flex-shrink-0" />
-                Usage analytics to improve our service
-              </li>
-              <li className="flex items-start">
-                <CheckCircle className="w-5 h-5 text-emerald-500 mr-3 mt-0.5 flex-shrink-0" />
-                Communication preferences and support interactions
-              </li>
-            </ul>
-          </div>
-
-          <div>
-            <h3 className="text-2xl font-bold text-gray-900 mb-4">Data Protection</h3>
-            <div className="grid md:grid-cols-2 gap-6">
-              <div className="bg-gray-50 p-6">
-                <Shield className="w-8 h-8 text-purple-600 mb-3" />
-                <h4 className="font-bold text-gray-900 mb-2">Encryption</h4>
-                <p className="text-gray-600 text-sm">256-bit SSL encryption for all data transmission and storage</p>
-              </div>
-              <div className="bg-gray-50 p-6">
-                <Globe className="w-8 h-8 text-purple-600 mb-3" />
-                <h4 className="font-bold text-gray-900 mb-2">Compliance</h4>
-                <p className="text-gray-600 text-sm">GDPR, CCPA, and SOC 2 Type II compliant</p>
-              </div>
-            </div>
-          </div>
-
-          <div>
-            <h3 className="text-2xl font-bold text-gray-900 mb-4">Your Rights</h3>
-            <p className="text-gray-600 leading-relaxed">
-              You have the right to access, update, or delete your personal information at any time. 
-              You can also opt out of data collection or request a copy of all data we have about you. 
-              Contact our privacy team at privacy@financeaicoach.com for any privacy-related requests.
-            </p>
-          </div>
         </div>
       </div>
     </section>
@@ -742,7 +545,7 @@ const StatsSection = () => {
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
           {stats.map((stat, index) => (
             <div key={index} className="text-center text-white">
-              <div className="w-16 h-16 bg-white/20 flex items-center justify-center mx-auto mb-4">
+              <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
                 <stat.icon className="w-8 h-8 text-white" />
               </div>
               <div className="text-4xl font-bold mb-2">{stat.number}</div>
@@ -755,31 +558,223 @@ const StatsSection = () => {
   );
 };
 
-// CTA Section
-const CTASection = () => {
-  const navigate = useNavigate();
+// Contact Form Component
+const ContactForm = () => {
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    subject: '',
+    message: ''
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState(null);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setSubmitStatus(null);
+
+    try {
+      // Store contact form submission in Supabase
+      const { error } = await supabase
+        .from('contact_submissions')
+        .insert([{
+          name: formData.name,
+          email: formData.email,
+          subject: formData.subject,
+          message: formData.message,
+          created_at: new Date().toISOString()
+        }]);
+
+      if (error) {
+        console.error('Error submitting contact form:', error);
+        setSubmitStatus('error');
+      } else {
+        setSubmitStatus('success');
+        setFormData({ name: '', email: '', subject: '', message: '' });
+      }
+    } catch (error) {
+      console.error('Error submitting contact form:', error);
+      setSubmitStatus('error');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    });
+  };
 
   return (
-    <section className="py-24 bg-gray-900">
-      <div className="container mx-auto px-6 lg:px-8 text-center">
-        <h2 className="text-4xl lg:text-5xl font-bold text-white mb-6">
-          Ready to Transform Your
-          <span className="text-purple-400"> Financial Future?</span>
-        </h2>
-        <p className="text-xl text-gray-300 mb-8 max-w-3xl mx-auto">
-          Join thousands of users who have already taken control of their finances with our AI-powered platform.
-        </p>
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <button 
-            onClick={() => navigate('/login')}
-            className="bg-purple-600 text-white px-8 py-4 font-semibold text-lg hover:bg-purple-700 transition-all duration-300 transform hover:scale-105"
-          >
-            Start Free Today
-            <ArrowRight className="inline ml-2 w-5 h-5" />
-          </button>
-          <button className="border-2 border-white text-white px-8 py-4 font-semibold text-lg hover:bg-white hover:text-gray-900 transition-all duration-300">
-            Schedule Demo
-          </button>
+    <section id="contact" className="py-24 bg-gray-50">
+      <div className="container mx-auto px-6 lg:px-8">
+        <div className="text-center mb-16">
+          <h2 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-6">
+            Ready to Transform Your
+            <span className="text-purple-600"> Financial Future?</span>
+          </h2>
+          <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
+            Join thousands of users who have already taken control of their finances with our AI-powered platform.
+          </p>
+        </div>
+
+        <div className="max-w-4xl mx-auto">
+          <div className="grid lg:grid-cols-2 gap-12">
+            {/* Contact Information */}
+            <div className="space-y-8">
+              <div>
+                <h3 className="text-2xl font-bold text-gray-900 mb-6">Get in Touch</h3>
+                <p className="text-gray-600 leading-relaxed mb-8">
+                  Have questions about our platform? Need help getting started? Our team is here to help you succeed on your financial journey.
+                </p>
+              </div>
+
+              <div className="space-y-6">
+                <div className="flex items-center space-x-4">
+                  <div className="w-12 h-12 bg-purple-100 rounded-2xl flex items-center justify-center">
+                    <Mail className="w-6 h-6 text-purple-600" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-gray-900">Email Us</h4>
+                    <p className="text-gray-600">hello@financeaicoach.com</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center space-x-4">
+                  <div className="w-12 h-12 bg-blue-100 rounded-2xl flex items-center justify-center">
+                    <Phone className="w-6 h-6 text-blue-600" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-gray-900">Call Us</h4>
+                    <p className="text-gray-600">+1 (555) 123-4567</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center space-x-4">
+                  <div className="w-12 h-12 bg-emerald-100 rounded-2xl flex items-center justify-center">
+                    <MessageSquare className="w-6 h-6 text-emerald-600" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-gray-900">Live Chat</h4>
+                    <p className="text-gray-600">Available 24/7 for support</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Contact Form */}
+            <div className="bg-white p-8 rounded-2xl shadow-lg">
+              <h3 className="text-2xl font-bold text-gray-900 mb-6">Send us a Message</h3>
+              
+              {submitStatus === 'success' && (
+                <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-xl">
+                  <div className="flex items-center">
+                    <CheckCircle className="w-5 h-5 text-green-600 mr-2" />
+                    <p className="text-green-800 font-medium">Message sent successfully!</p>
+                  </div>
+                  <p className="text-green-700 text-sm mt-1">We'll get back to you within 24 hours.</p>
+                </div>
+              )}
+
+              {submitStatus === 'error' && (
+                <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl">
+                  <div className="flex items-center">
+                    <X className="w-5 h-5 text-red-600 mr-2" />
+                    <p className="text-red-800 font-medium">Failed to send message.</p>
+                  </div>
+                  <p className="text-red-700 text-sm mt-1">Please try again or email us directly.</p>
+                </div>
+              )}
+
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div>
+                    <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
+                      Full Name
+                    </label>
+                    <input
+                      type="text"
+                      id="name"
+                      name="name"
+                      value={formData.name}
+                      onChange={handleChange}
+                      required
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300"
+                      placeholder="Your full name"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                      Email Address
+                    </label>
+                    <input
+                      type="email"
+                      id="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleChange}
+                      required
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300"
+                      placeholder="your@email.com"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label htmlFor="subject" className="block text-sm font-medium text-gray-700 mb-2">
+                    Subject
+                  </label>
+                  <input
+                    type="text"
+                    id="subject"
+                    name="subject"
+                    value={formData.subject}
+                    onChange={handleChange}
+                    required
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300"
+                    placeholder="How can we help you?"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-2">
+                    Message
+                  </label>
+                  <textarea
+                    id="message"
+                    name="message"
+                    value={formData.message}
+                    onChange={handleChange}
+                    required
+                    rows={5}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 resize-none"
+                    placeholder="Tell us about your issue or question..."
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-full bg-purple-600 text-white px-8 py-4 rounded-xl font-semibold hover:bg-purple-700 transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      Send Message
+                      <Send className="w-5 h-5 ml-2" />
+                    </>
+                  )}
+                </button>
+              </form>
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -790,25 +785,30 @@ const CTASection = () => {
 const Footer = () => {
   const navigate = useNavigate();
 
+  const scrollToSection = (sectionId) => {
+    const element = document.getElementById(sectionId);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   return (
     <footer className="bg-gray-900 text-white py-16">
       <div className="container mx-auto px-6 lg:px-8">
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
           <div>
             <div className="flex items-center space-x-3 mb-6">
-              <img 
-                src="/WhatsApp Image 2025-06-29 at 13.46.00_d292e4a6.jpg" 
-                alt="Finance AI Coach" 
-                className="h-10 w-auto object-contain"
-                onError={(e) => {
-                  e.target.style.display = 'none';
-                  e.target.nextSibling.style.display = 'flex';
-                }}
-              />
-              <div 
-                className="w-10 h-10 bg-purple-600 flex items-center justify-center hidden"
-              >
-                <span className="text-white font-bold text-sm">F</span>
+              <div className="w-10 h-10 bg-purple-600 rounded-xl flex items-center justify-center">
+                <img 
+                  src="/WhatsApp Image 2025-06-29 at 13.46.00_d292e4a6.jpg" 
+                  alt="Finance AI Coach" 
+                  className="h-6 w-6 object-contain rounded-lg"
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                    e.target.nextSibling.style.display = 'block';
+                  }}
+                />
+                <span className="text-white font-bold text-sm hidden">F</span>
               </div>
               <span className="text-xl font-bold">Finance AI Coach</span>
             </div>
@@ -826,9 +826,8 @@ const Footer = () => {
           <div>
             <h3 className="font-semibold mb-4">Product</h3>
             <ul className="space-y-2 text-gray-400">
-              <li><a href="#features" className="hover:text-white transition-colors">Features</a></li>
-              <li><a href="#pricing" className="hover:text-white transition-colors">Pricing</a></li>
-              <li><a href="#solutions" className="hover:text-white transition-colors">Solutions</a></li>
+              <li><button onClick={() => scrollToSection('features')} className="hover:text-white transition-colors">Features</button></li>
+              <li><button onClick={() => scrollToSection('solutions')} className="hover:text-white transition-colors">Solutions</button></li>
               <li><a href="#" className="hover:text-white transition-colors">API</a></li>
             </ul>
           </div>
@@ -836,17 +835,17 @@ const Footer = () => {
           <div>
             <h3 className="font-semibold mb-4">Company</h3>
             <ul className="space-y-2 text-gray-400">
-              <li><a href="#about" className="hover:text-white transition-colors">About Us</a></li>
-              <li><a href="#team" className="hover:text-white transition-colors">Team</a></li>
+              <li><button onClick={() => scrollToSection('about')} className="hover:text-white transition-colors">About Us</button></li>
+              <li><button onClick={() => scrollToSection('team')} className="hover:text-white transition-colors">Team</button></li>
               <li><a href="#" className="hover:text-white transition-colors">Careers</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Contact</a></li>
+              <li><button onClick={() => scrollToSection('contact')} className="hover:text-white transition-colors">Contact</button></li>
             </ul>
           </div>
           
           <div>
             <h3 className="font-semibold mb-4">Legal</h3>
             <ul className="space-y-2 text-gray-400">
-              <li><a href="#privacy" className="hover:text-white transition-colors">Privacy Policy</a></li>
+              <li><a href="#" className="hover:text-white transition-colors">Privacy Policy</a></li>
               <li><a href="#" className="hover:text-white transition-colors">Terms of Service</a></li>
               <li><a href="#" className="hover:text-white transition-colors">Security</a></li>
               <li><a href="#" className="hover:text-white transition-colors">Compliance</a></li>
@@ -864,34 +863,16 @@ const Footer = () => {
 
 // Main Landing Page Component
 const LandingPage = () => {
-  const [activeSection, setActiveSection] = useState('features');
-
-  const renderSection = () => {
-    switch (activeSection) {
-      case 'features':
-        return <FeaturesSection />;
-      case 'solutions':
-        return <SolutionsSection />;
-      case 'pricing':
-        return <PricingSection />;
-      case 'about':
-        return <AboutSection />;
-      case 'privacy':
-        return <PrivacySection />;
-      case 'team':
-        return <TeamSection />;
-      default:
-        return <FeaturesSection />;
-    }
-  };
-
   return (
     <div className="min-h-screen">
-      <Navigation activeSection={activeSection} setActiveSection={setActiveSection} />
+      <Navigation />
       <HeroSlider />
-      {renderSection()}
+      <FeaturesSection />
+      <SolutionsSection />
+      <AboutSection />
+      <TeamSection />
       <StatsSection />
-      <CTASection />
+      <ContactForm />
       <Footer />
     </div>
   );
