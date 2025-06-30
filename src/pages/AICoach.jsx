@@ -15,10 +15,7 @@ import {
   Edit3,
   MoreVertical,
   RefreshCw,
-  X,
-  History,
-  Sparkles,
-  ChevronRight
+  X
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTransactions, useGoals, useBudgetCategories } from '../hooks/useSupabaseData';
@@ -48,19 +45,19 @@ const generateQuickInsights = (userProfile, transactions, budgets) => {
   const totalIncome = transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
   const savingsRate = totalIncome > 0 ? ((totalIncome - totalExpenses) / totalIncome) * 100 : 0;
 
-  if (savingsRate > 20) {
-    insights.push({
-      icon: TrendingUp,
-      title: 'Great Savings Rate',
-      description: `Excellent ${savingsRate.toFixed(1)}% savings rate!`,
-      color: 'green'
-    });
-  } else if (savingsRate < 10 && totalIncome > 0) {
+  if (savingsRate < 20) {
     insights.push({
       icon: AlertCircle,
       title: 'Savings Rate Alert',
       description: `Your savings rate is ${savingsRate.toFixed(1)}%. Aim for 20%+`,
       color: 'red'
+    });
+  } else {
+    insights.push({
+      icon: TrendingUp,
+      title: 'Great Savings Rate',
+      description: `Excellent ${savingsRate.toFixed(1)}% savings rate!`,
+      color: 'green'
     });
   }
 
@@ -85,16 +82,16 @@ const generateQuickInsights = (userProfile, transactions, budgets) => {
   return insights;
 };
 
-// Chat History Modal Component
-const ChatHistoryModal = ({ 
-  isOpen, 
-  onClose, 
+// Chat Session Sidebar Component
+const ChatSessionSidebar = ({ 
   sessions, 
   currentSession, 
   onLoadSession, 
   onNewSession, 
   onDeleteSession, 
-  onRenameSession 
+  onRenameSession,
+  isOpen,
+  onClose 
 }) => {
   const [editingSession, setEditingSession] = useState(null);
   const [newTitle, setNewTitle] = useState('');
@@ -117,34 +114,46 @@ const ChatHistoryModal = ({
     setNewTitle('');
   };
 
-  const handleDeleteWithConfirm = async (sessionId) => {
-    if (confirm('Are you sure you want to delete this chat session? This action cannot be undone.')) {
-      await onDeleteSession(sessionId);
-    }
-  };
-
   return (
-    <ResponsiveModal
-      isOpen={isOpen}
-      onClose={onClose}
-      title="Chat History"
-      size="lg"
-    >
-      <div className="space-y-4">
-        {/* New Chat Button */}
-        <Button
-          onClick={() => {
-            onNewSession();
-            onClose();
-          }}
-          className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Start New Chat
-        </Button>
-
+    <>
+      {/* Mobile overlay */}
+      {isOpen && (
+        <div 
+          className="fixed inset-0 bg-gray-600 bg-opacity-75 z-40 lg:hidden"
+          onClick={onClose}
+        />
+      )}
+      
+      {/* Sidebar */}
+      <div className={`
+        fixed inset-y-0 left-0 z-50 w-80 bg-white dark:bg-gray-800 shadow-lg transform transition-transform duration-300 ease-in-out border-r border-gray-200 dark:border-gray-700
+        lg:translate-x-0 lg:static lg:inset-0
+        ${isOpen ? 'translate-x-0' : '-translate-x-full'}
+      `}>
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Chat History</h3>
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onNewSession}
+              className="flex items-center"
+            >
+              <Plus className="w-4 h-4 mr-1" />
+              New
+            </Button>
+            <button 
+              onClick={onClose}
+              className="lg:hidden p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+            >
+              <X className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+            </button>
+          </div>
+        </div>
+        
         {/* Sessions List */}
-        <div className="max-h-96 overflow-y-auto space-y-2">
+        <div className="flex-1 overflow-y-auto p-2">
           {sessions.length === 0 ? (
             <div className="text-center py-8 text-gray-500 dark:text-gray-400">
               <MessageSquare className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-2" />
@@ -152,147 +161,133 @@ const ChatHistoryModal = ({
               <p className="text-xs">Start a conversation to create your first chat</p>
             </div>
           ) : (
-            sessions.map((session) => (
-              <div
-                key={session.id}
-                className={`group relative p-4 rounded-xl cursor-pointer transition-all duration-200 ${
-                  currentSession?.id === session.id
-                    ? 'bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border-2 border-blue-200 dark:border-blue-700 shadow-md'
-                    : 'bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 border border-gray-200 dark:border-gray-600'
-                }`}
-                onClick={() => {
-                  onLoadSession(session.id);
-                  onClose();
-                }}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex-1 min-w-0">
-                    {editingSession === session.id ? (
-                      <div className="flex items-center space-x-2">
-                        <input
-                          type="text"
-                          value={newTitle}
-                          onChange={(e) => setNewTitle(e.target.value)}
-                          onKeyPress={(e) => {
-                            if (e.key === 'Enter') handleSaveRename();
-                            if (e.key === 'Escape') handleCancelRename();
-                          }}
-                          className="flex-1 px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                          autoFocus
-                          onClick={(e) => e.stopPropagation()}
-                        />
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleSaveRename();
-                          }}
-                          className="text-green-600 hover:text-green-700 p-1"
-                        >
-                          ✓
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleCancelRename();
-                          }}
-                          className="text-red-600 hover:text-red-700 p-1"
-                        >
-                          ✕
-                        </button>
-                      </div>
-                    ) : (
-                      <>
+            <div className="space-y-1">
+              {sessions.map((session) => (
+                <div
+                  key={session.id}
+                  className={`group relative p-3 rounded-lg cursor-pointer transition-colors ${
+                    currentSession?.id === session.id
+                      ? 'bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700'
+                      : 'hover:bg-gray-50 dark:hover:bg-gray-700'
+                  }`}
+                  onClick={() => onLoadSession(session.id)}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1 min-w-0">
+                      {editingSession === session.id ? (
                         <div className="flex items-center space-x-2">
-                          <MessageSquare className="w-4 h-4 text-blue-600 dark:text-blue-400 flex-shrink-0" />
+                          <input
+                            type="text"
+                            value={newTitle}
+                            onChange={(e) => setNewTitle(e.target.value)}
+                            onKeyPress={(e) => {
+                              if (e.key === 'Enter') handleSaveRename();
+                              if (e.key === 'Escape') handleCancelRename();
+                            }}
+                            className="flex-1 px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                            autoFocus
+                          />
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleSaveRename();
+                            }}
+                            className="text-green-600 hover:text-green-700"
+                          >
+                            ✓
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleCancelRename();
+                            }}
+                            className="text-red-600 hover:text-red-700"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      ) : (
+                        <>
                           <h4 className="text-sm font-medium text-gray-900 dark:text-white truncate">
                             {session.title}
                           </h4>
-                          {currentSession?.id === session.id && (
-                            <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 text-xs rounded-full">
-                              Active
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                          {new Date(session.updated_at).toLocaleDateString()} • {new Date(session.updated_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </p>
-                      </>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                            {new Date(session.updated_at).toLocaleDateString()}
+                          </p>
+                        </>
+                      )}
+                    </div>
+                    
+                    {editingSession !== session.id && (
+                      <ResponsiveDropdown
+                        trigger={
+                          <button
+                            onClick={(e) => e.stopPropagation()}
+                            className="opacity-0 group-hover:opacity-100 p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-opacity"
+                          >
+                            <MoreVertical className="w-4 h-4 text-gray-600 dark:text-gray-300" />
+                          </button>
+                        }
+                        align="right"
+                      >
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleRename(session);
+                          }}
+                          className="flex items-center w-full px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600"
+                        >
+                          <Edit3 className="w-4 h-4 mr-2" />
+                          Rename
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onDeleteSession(session.id);
+                          }}
+                          className="flex items-center w-full px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-600"
+                        >
+                          <Trash2 className="w-4 h-4 mr-2" />
+                          Delete
+                        </button>
+                      </ResponsiveDropdown>
                     )}
                   </div>
-                  
-                  {editingSession !== session.id && (
-                    <ResponsiveDropdown
-                      trigger={
-                        <button
-                          onClick={(e) => e.stopPropagation()}
-                          className="opacity-0 group-hover:opacity-100 p-2 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-all"
-                        >
-                          <MoreVertical className="w-4 h-4 text-gray-600 dark:text-gray-300" />
-                        </button>
-                      }
-                      align="right"
-                    >
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleRename(session);
-                        }}
-                        className="flex items-center w-full px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600"
-                      >
-                        <Edit3 className="w-4 h-4 mr-2" />
-                        Rename
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteWithConfirm(session.id);
-                        }}
-                        className="flex items-center w-full px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-600"
-                      >
-                        <Trash2 className="w-4 h-4 mr-2" />
-                        Delete
-                      </button>
-                    </ResponsiveDropdown>
-                  )}
                 </div>
-              </div>
-            ))
+              ))}
+            </div>
           )}
         </div>
       </div>
-    </ResponsiveModal>
+    </>
   );
 };
 
-// Enhanced Message component with better styling
+// Message component
 const Message = ({ message }) => {
   const isAI = message.type === 'ai';
   
   return (
-    <div className={`flex ${isAI ? 'justify-start' : 'justify-end'} mb-6`}>
-      <div className={`flex items-start space-x-3 max-w-[85%] sm:max-w-4xl ${isAI ? 'flex-row' : 'flex-row-reverse space-x-reverse'}`}>
+    <div className={`flex ${isAI ? 'justify-start' : 'justify-end'} mb-4`}>
+      <div className={`flex items-start space-x-3 max-w-[85%] sm:max-w-3xl ${isAI ? 'flex-row' : 'flex-row-reverse space-x-reverse'}`}>
         {/* Avatar */}
-        <div className={`flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-xl shadow-lg ${
-          isAI 
-            ? 'bg-gradient-to-br from-blue-500 to-purple-600' 
-            : 'bg-gradient-to-br from-gray-600 to-gray-700 dark:from-gray-500 dark:to-gray-600'
+        <div className={`flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-full ${
+          isAI ? 'bg-gradient-to-r from-blue-500 to-purple-600' : 'bg-gray-100 dark:bg-gray-700'
         }`}>
           {isAI ? (
-            <Sparkles className="w-5 h-5 text-white" />
+            <Brain className="w-4 h-4 text-white" />
           ) : (
-            <User className="w-5 h-5 text-white" />
+            <User className="w-4 h-4 text-gray-600 dark:text-gray-300" />
           )}
         </div>
         
         {/* Message content */}
-        <div className={`px-4 py-3 rounded-2xl shadow-sm ${
+        <div className={`px-3 sm:px-4 py-2 sm:py-3 rounded-lg ${
           isAI 
-            ? 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700' 
+            ? 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm' 
             : 'bg-gradient-to-r from-blue-600 to-blue-700 text-white'
         }`}>
-          <p className={`text-sm leading-relaxed whitespace-pre-wrap break-words ${
-            isAI ? 'text-gray-900 dark:text-white' : 'text-white'
-          }`}>
+          <p className={`text-sm whitespace-pre-wrap break-words ${isAI ? 'text-gray-900 dark:text-white' : 'text-white'}`}>
             {message.content}
           </p>
           <p className={`text-xs mt-2 ${
@@ -308,12 +303,12 @@ const Message = ({ message }) => {
 
 // Enhanced typing indicator
 const TypingIndicator = () => (
-  <div className="flex justify-start mb-6">
-    <div className="flex items-start space-x-3 max-w-4xl">
-      <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-        <Sparkles className="w-5 h-5 text-white" />
+  <div className="flex justify-start mb-4">
+    <div className="flex items-start space-x-3 max-w-3xl">
+      <div className="flex-shrink-0 w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+        <Brain className="w-4 h-4 text-white" />
       </div>
-      <div className="px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm rounded-2xl">
+      <div className="px-3 sm:px-4 py-2 sm:py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm rounded-lg">
         <div className="flex items-center space-x-2">
           <div className="flex space-x-1">
             <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"></div>
@@ -349,7 +344,8 @@ const AICoach = () => {
 
   const [inputMessage, setInputMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [showSidebar, setShowSidebar] = useState(false);
+  const [showChatSidebar, setShowChatSidebar] = useState(false);
   const [aiStatus, setAiStatus] = useState('connected');
   const messagesEndRef = useRef(null);
 
@@ -560,13 +556,14 @@ Keep your response conversational, encouraging, and under 300 words. Use their a
   // Handle suggested question click
   const handleSuggestedQuestion = (question) => {
     setInputMessage(question);
+    setShowSidebar(false);
   };
 
   // Handle new chat session
   const handleNewSession = async () => {
     try {
       await createNewSession();
-      setShowHistoryModal(false);
+      setShowChatSidebar(false);
     } catch (error) {
       console.error('Error creating new session:', error);
     }
@@ -574,10 +571,12 @@ Keep your response conversational, encouraging, and under 300 words. Use their a
 
   // Handle delete session with confirmation
   const handleDeleteSession = async (sessionId) => {
-    try {
-      await deleteSession(sessionId);
-    } catch (error) {
-      console.error('Error deleting session:', error);
+    if (confirm('Are you sure you want to delete this chat session? This action cannot be undone.')) {
+      try {
+        await deleteSession(sessionId);
+      } catch (error) {
+        console.error('Error deleting session:', error);
+      }
     }
   };
 
@@ -593,188 +592,197 @@ Keep your response conversational, encouraging, and under 300 words. Use their a
   }
 
   return (
-    <div className="h-full flex flex-col bg-gradient-to-br from-blue-50/50 to-purple-50/50 dark:from-gray-900 dark:to-gray-800">
-      {/* Enhanced Header */}
-      <div className="flex-shrink-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-b border-gray-200 dark:border-gray-700 p-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
-              <Sparkles className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-                {currentSession?.title || 'AI Financial Coach'}
-              </h1>
-              <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-300">
-                <div className={`w-2 h-2 rounded-full ${
-                  aiStatus === 'connected' ? 'bg-green-500 animate-pulse' :
-                  aiStatus === 'thinking' ? 'bg-yellow-500 animate-pulse' :
-                  'bg-red-500'
-                }`}></div>
-                <span>
-                  {aiStatus === 'connected' ? 'AI Ready' :
-                   aiStatus === 'thinking' ? 'Thinking' :
-                   'Offline'}
-                </span>
-                <span>•</span>
-                <span>Powered by Google Gemini</span>
-              </div>
-            </div>
-          </div>
-          
-          <div className="flex items-center space-x-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowHistoryModal(true)}
-              className="flex items-center"
-            >
-              <History className="w-4 h-4 mr-2" />
-              <span className="hidden sm:inline">Chat History</span>
-              <span className="sm:hidden">History</span>
-              {sessions.length > 0 && (
-                <span className="ml-2 px-2 py-1 bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 text-xs rounded-full">
-                  {sessions.length}
-                </span>
-              )}
-            </Button>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col min-h-0">
-        {/* Messages area */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
-          {messages.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-xl">
-                <Sparkles className="w-10 h-10 text-white" />
-              </div>
-              <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">
-                Welcome to your AI Financial Coach!
-              </h3>
-              <p className="text-gray-600 dark:text-gray-300 mb-8 max-w-2xl mx-auto leading-relaxed">
-                I'm powered by Google Gemini AI and can provide personalized financial advice based on your actual financial data. Ask me anything about budgeting, investing, saving, or debt management!
-              </p>
-              
-              {/* Quick Insights */}
-              {quickInsights.length > 0 && (
-                <div className="mb-8">
-                  <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Quick Insights</h4>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-4xl mx-auto">
-                    {quickInsights.map((insight, index) => {
-                      const Icon = insight.icon;
-                      return (
-                        <div key={index} className={`p-4 rounded-xl border-l-4 ${
-                          insight.color === 'green' ? 'bg-green-50 dark:bg-green-900/20 border-green-400' :
-                          insight.color === 'orange' ? 'bg-orange-50 dark:bg-orange-900/20 border-orange-400' : 
-                          insight.color === 'blue' ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-400' :
-                          'bg-red-50 dark:bg-red-900/20 border-red-400'
-                        }`}>
-                          <div className="flex items-center space-x-3">
-                            <Icon className={`w-5 h-5 ${
-                              insight.color === 'green' ? 'text-green-600 dark:text-green-400' :
-                              insight.color === 'orange' ? 'text-orange-600 dark:text-orange-400' : 
-                              insight.color === 'blue' ? 'text-blue-600 dark:text-blue-400' :
-                              'text-red-600 dark:text-red-400'
-                            }`} />
-                            <div>
-                              <h5 className="font-medium text-gray-900 dark:text-white text-sm">{insight.title}</h5>
-                              <p className="text-xs text-gray-600 dark:text-gray-300">{insight.description}</p>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-              
-              {/* Suggested Questions */}
-              <div className="max-w-4xl mx-auto">
-                <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Popular Questions</h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {suggestedQuestions.slice(0, 6).map((question, index) => (
-                    <button
-                      key={index}
-                      onClick={() => handleSuggestedQuestion(question)}
-                      className="text-left p-4 text-sm text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-white dark:hover:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 transition-all duration-200 hover:shadow-md group"
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="flex-1">{question}</span>
-                        <ChevronRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          ) : (
-            <>
-              {messages.map((message) => (
-                <Message key={message.id} message={message} />
-              ))}
-              {isTyping && <TypingIndicator />}
-            </>
-          )}
-          <div ref={messagesEndRef} />
-        </div>
-
-        {/* Enhanced Input area */}
-        <div className="flex-shrink-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-t border-gray-200 dark:border-gray-700 p-4">
-          <div className="max-w-4xl mx-auto">
-            <div className="flex space-x-3">
-              <div className="flex-1 relative">
-                <textarea
-                  value={inputMessage}
-                  onChange={(e) => setInputMessage(e.target.value)}
-                  onKeyPress={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault();
-                      handleSendMessage();
-                    }
-                  }}
-                  placeholder="Ask me anything about your finances..."
-                  className="w-full px-4 py-3 pr-12 border border-gray-300 dark:border-gray-600 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 resize-none"
-                  rows="1"
-                  style={{ minHeight: '48px', maxHeight: '120px' }}
-                  disabled={isTyping}
-                />
-                <div className="absolute right-3 bottom-3">
-                  <Button 
-                    onClick={handleSendMessage}
-                    disabled={!inputMessage.trim() || isTyping}
-                    className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 rounded-xl p-2 min-w-0"
-                    size="sm"
-                  >
-                    {isTyping ? (
-                      <Loader className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <Send className="w-4 h-4" />
-                    )}
-                  </Button>
-                </div>
-              </div>
-            </div>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 text-center">
-              🤖 Powered by Google Gemini AI • Your conversations are automatically saved
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Chat History Modal */}
-      <ChatHistoryModal
-        isOpen={showHistoryModal}
-        onClose={() => setShowHistoryModal(false)}
+    <div className="h-full flex">
+      {/* Chat Sessions Sidebar */}
+      <ChatSessionSidebar
         sessions={sessions}
         currentSession={currentSession}
         onLoadSession={loadSession}
         onNewSession={handleNewSession}
         onDeleteSession={handleDeleteSession}
         onRenameSession={updateSessionTitle}
+        isOpen={showChatSidebar}
+        onClose={() => setShowChatSidebar(false)}
       />
+
+      {/* Main Chat Area */}
+      <div className="flex-1 flex flex-col min-h-0">
+        {/* Header */}
+        <div className="flex-shrink-0 p-4 border-b border-gray-200 dark:border-gray-700">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowChatSidebar(true)}
+                className="lg:hidden"
+              >
+                <MessageSquare className="w-4 h-4" />
+              </Button>
+              
+              <div>
+                <h1 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white flex items-center">
+                  <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center mr-3">
+                    <Brain className="w-5 h-5 text-white" />
+                  </div>
+                  {currentSession?.title || 'AI Financial Coach'}
+                </h1>
+                <p className="text-sm text-gray-600 dark:text-gray-300">
+                  Powered by Google Gemini AI • {sessions.length} chat{sessions.length !== 1 ? 's' : ''}
+                </p>
+              </div>
+            </div>
+            
+            <div className="flex items-center space-x-2">
+              {/* AI Status */}
+              <div className="flex items-center space-x-2">
+                <div className={`w-2 h-2 rounded-full ${
+                  aiStatus === 'connected' ? 'bg-green-500 animate-pulse' :
+                  aiStatus === 'thinking' ? 'bg-yellow-500 animate-pulse' :
+                  'bg-red-500'
+                }`}></div>
+                <span className="text-xs text-gray-600 dark:text-gray-300">
+                  {aiStatus === 'connected' ? 'AI Ready' :
+                   aiStatus === 'thinking' ? 'Thinking' :
+                   'Offline'}
+                </span>
+              </div>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowSidebar(!showSidebar)}
+                className="hidden lg:flex items-center"
+              >
+                <Lightbulb className="w-4 h-4 mr-2" />
+                Insights
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex-1 flex min-h-0">
+          {/* Chat Messages */}
+          <div className="flex-1 flex flex-col min-h-0">
+            {/* Messages area */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+              {messages.length === 0 ? (
+                <div className="text-center py-12">
+                  <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Brain className="w-8 h-8 text-white" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                    Welcome to your AI Financial Coach!
+                  </h3>
+                  <p className="text-gray-600 dark:text-gray-300 mb-6 max-w-md mx-auto">
+                    I'm powered by Google Gemini AI and can provide personalized financial advice based on your actual financial data. Ask me anything about budgeting, investing, saving, or debt management!
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-w-2xl mx-auto">
+                    {suggestedQuestions.slice(0, 4).map((question, index) => (
+                      <button
+                        key={index}
+                        onClick={() => handleSuggestedQuestion(question)}
+                        className="text-left p-3 text-sm text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg border border-gray-200 dark:border-gray-700 transition-colors"
+                      >
+                        {question}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <>
+                  {messages.map((message) => (
+                    <Message key={message.id} message={message} />
+                  ))}
+                  {isTyping && <TypingIndicator />}
+                </>
+              )}
+              <div ref={messagesEndRef} />
+            </div>
+
+            {/* Input area */}
+            <div className="border-t border-gray-200 dark:border-gray-700 p-4">
+              <div className="flex space-x-3">
+                <input
+                  type="text"
+                  value={inputMessage}
+                  onChange={(e) => setInputMessage(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && handleSendMessage()}
+                  placeholder="Ask me anything about your finances..."
+                  className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
+                  disabled={isTyping}
+                />
+                <Button 
+                  onClick={handleSendMessage}
+                  disabled={!inputMessage.trim() || isTyping}
+                  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 px-6"
+                >
+                  {isTyping ? (
+                    <Loader className="w-5 h-5 animate-spin" />
+                  ) : (
+                    <Send className="w-5 h-5" />
+                  )}
+                </Button>
+              </div>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                🤖 Powered by Google Gemini AI • Your conversations are automatically saved
+              </p>
+            </div>
+          </div>
+
+          {/* Insights Sidebar */}
+          {showSidebar && (
+            <div className="w-80 border-l border-gray-200 dark:border-gray-700 p-4 space-y-4 overflow-y-auto">
+              {/* Quick Insights */}
+              <Card className="p-4">
+                <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Financial Insights</h3>
+                <div className="space-y-3">
+                  {quickInsights.map((insight, index) => {
+                    const Icon = insight.icon;
+                    return (
+                      <div key={index} className="flex items-start space-x-3">
+                        <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
+                          insight.color === 'green' ? 'bg-green-100 dark:bg-green-900/50' :
+                          insight.color === 'orange' ? 'bg-orange-100 dark:bg-orange-900/50' : 
+                          insight.color === 'blue' ? 'bg-blue-100 dark:bg-blue-900/50' :
+                          'bg-red-100 dark:bg-red-900/50'
+                        }`}>
+                          <Icon className={`w-4 h-4 ${
+                            insight.color === 'green' ? 'text-green-600 dark:text-green-400' :
+                            insight.color === 'orange' ? 'text-orange-600 dark:text-orange-400' : 
+                            insight.color === 'blue' ? 'text-blue-600 dark:text-blue-400' :
+                            'text-red-600 dark:text-red-400'
+                          }`} />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <h4 className="text-sm font-medium text-gray-900 dark:text-white">{insight.title}</h4>
+                          <p className="text-xs text-gray-600 dark:text-gray-300 break-words">{insight.description}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </Card>
+
+              {/* Suggested Questions */}
+              <Card className="p-4">
+                <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Ask the AI</h3>
+                <div className="space-y-2">
+                  {suggestedQuestions.map((question, index) => (
+                    <button
+                      key={index}
+                      onClick={() => handleSuggestedQuestion(question)}
+                      className="w-full text-left text-sm text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 p-2 rounded transition-colors break-words"
+                    >
+                      {question}
+                    </button>
+                  ))}
+                </div>
+              </Card>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 };
