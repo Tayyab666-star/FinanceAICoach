@@ -29,7 +29,7 @@ const TeamPage = () => {
       name: "Ahmad Raza",
       role: "Frontend Developer",
       image: "/WhatsApp Image 2024-09-24 at 21.24.53_adfd628d.jpg",
-      bio: "Former Goldman Sachs analyst with 15+ years in fintech. Tayyab leads our vision to democratize financial intelligence.",
+      bio: "Expert in Frontend stacks, responsible for building responsive and dynamic user interfaces.",
       education: "BS in Computer Scienc from GCUF",
       experience: " ",
       social: {
@@ -42,7 +42,7 @@ const TeamPage = () => {
       name: "Tayyab Nasir",
       role: "Team Leader/Manager",
       image: "/tayyab.jpg",
-      bio: "AI researcher from Stanford with expertise in machine learning and financial algorithms. Zeeshan architected our core AI engine.",
+      bio: "Led the team, managed tasks, and ensured timely execution of the project during the hackathon.",
       education: "BS in Computer Science from Stanford",
        experience: " ",
       social: {
@@ -55,7 +55,7 @@ const TeamPage = () => {
       name: "Usama Ali",
       role: "UI/UX Designer",
       image: "/usama.jpg",
-      bio: "Product leader with expertise in financial UX design. Usama ensures our platform is intuitive and user-friendly.",
+      bio: "Designed user-friendly interfaces and wireframes with a strong focus on visual consistency and UX.",
       education: "MS in Design from RISD",
       experience: "Former Product Manager at Mint",
       social: {
@@ -68,7 +68,7 @@ const TeamPage = () => {
       name: "Izzah Khursheed",
       role: "Content & Media Lead",
       image: "/izza.jpg",
-      bio: "Cybersecurity expert with government and private sector experience. Izza ensures your financial data is always protected.",
+      bio: "Created the pitch deck, video demo, and project storyline to effectively present our solution.",
       education: "MS in Cybersecurity from MIT",
       experience: " ",
       social: {
@@ -81,7 +81,7 @@ const TeamPage = () => {
       name: "M Yousaf",
       role: "Backend Developer",
       image: "/yousaf.jpg",
-      bio: "Marketing strategist with a passion for financial education. Yousaf leads our mission to make financial literacy accessible to all.",
+      bio: "Developed secure and scalable backend services, including APIs and database integration.",
       education: "MBA from Wharton",
       experience: " ",
       social: {
@@ -94,7 +94,7 @@ const TeamPage = () => {
       name: "Zeeshan Younas",
       role: "Ai/Ml developer",
       image: "/zeeshan.jpg",
-      bio: "Customer success expert dedicated to helping users achieve their financial goals. James leads our support and education initiatives.",
+      bio: "Built and integrated machine learning models to enable intelligent and predictive features.",
       education: "BA in Business from UC Berkeley",
       experience: "Former Customer Success Manager at Stripe",
       social: {
