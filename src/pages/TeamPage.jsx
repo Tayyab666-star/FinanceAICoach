@@ -26,64 +26,64 @@ const TeamPage = () => {
 
   const team = [
     {
-      name: "Tayyab",
-      role: "CEO & Co-Founder",
+      name: "Ahmad Raza",
+      role: "Frontend Developer",
       image: "/WhatsApp Image 2024-09-24 at 21.24.53_adfd628d.jpg",
       bio: "Former Goldman Sachs analyst with 15+ years in fintech. Tayyab leads our vision to democratize financial intelligence.",
-      education: "MBA from Harvard Business School",
-      experience: "Previously VP at JPMorgan Chase",
+      education: "BS in Computer Scienc from GCUF",
+      experience: " ",
       social: {
-        linkedin: "#",
-        twitter: "#",
-        email: "tayyab@financeaicoach.com"
+        linkedin: "https://www.linkedin.com/in/ahmadraza161",
+        github: "https://github.com/382ahmadraza",
+         
       }
     },
     {
-      name: "Zeeshan",
-      role: "CTO & Co-Founder",
+      name: "Tayyab Nasir",
+      role: "Team Lead",
       image: "/tayyab.jpg",
       bio: "AI researcher from Stanford with expertise in machine learning and financial algorithms. Zeeshan architected our core AI engine.",
-      education: "PhD in Computer Science from Stanford",
-      experience: "Former Senior Engineer at Google AI",
+      education: "BS in Computer Science from Stanford",
+       experience: " ",
       social: {
-        linkedin: "#",
-        github: "#",
-        email: "zeeshan@financeaicoach.com"
+        linkedin: "https://github.com/Tayyab666-star",
+        github: "https://github.com/Tayyab666-star",
+         
       }
     },
     {
-      name: "Usama",
-      role: "Head of Product",
+      name: "Usama Ali",
+      role: "UI/UX Designer",
       image: "/usama.jpg",
       bio: "Product leader with expertise in financial UX design. Usama ensures our platform is intuitive and user-friendly.",
       education: "MS in Design from RISD",
       experience: "Former Product Manager at Mint",
       social: {
-        linkedin: "#",
-        twitter: "#",
-        email: "usama@financeaicoach.com"
+        linkedin: "https://linkedin.com/in/usamaalipk",
+        github: "https://github.com/UsamaAli-PK",
+         
       }
     },
     {
-      name: "Izza",
+      name: "Izzah Khursheed",
       role: "Head of Security",
       image: "/izza.jpg",
       bio: "Cybersecurity expert with government and private sector experience. Izza ensures your financial data is always protected.",
       education: "MS in Cybersecurity from MIT",
-      experience: "Former Security Analyst at NSA",
+      experience: " ",
       social: {
-        linkedin: "#",
-        github: "#",
-        email: "izza@financeaicoach.com"
+        linkedin: "https://www.linkedin.com/in/izzah-khursheed/",
+        github: "https://github.com/Izzah-Khursheed",
+        
       }
     },
     {
-      name: "Yousaf",
+      name: "M Yousaf",
       role: "Head of Marketing",
       image: "/yousaf.jpg",
       bio: "Marketing strategist with a passion for financial education. Yousaf leads our mission to make financial literacy accessible to all.",
       education: "MBA from Wharton",
-      experience: "Former Marketing Director at Robinhood",
+      experience: " ",
       social: {
         linkedin: "#",
         twitter: "#",
@@ -91,16 +91,16 @@ const TeamPage = () => {
       }
     },
     {
-      name: "James Thompson",
+      name: "Zeeshan Younas",
       role: "Head of Customer Success",
       image: "/zeeshan.jpg",
       bio: "Customer success expert dedicated to helping users achieve their financial goals. James leads our support and education initiatives.",
       education: "BA in Business from UC Berkeley",
       experience: "Former Customer Success Manager at Stripe",
       social: {
-        linkedin: "#",
-        twitter: "#",
-        email: "james@financeaicoach.com"
+        linkedin: "https://www.linkedin.com/in/zeeshan-younas-919a09253",
+        github: "https://github.com/Zeeshan5932",
+         
       }
     }
   ];
@@ -156,21 +156,13 @@ const TeamPage = () => {
                         <Linkedin className="w-4 h-4 text-blue-600" />
                       </a>
                     )}
-                    {member.social.twitter && (
-                      <a href={member.social.twitter} className="w-8 h-8 bg-sky-100 rounded-lg flex items-center justify-center hover:bg-sky-200 transition-colors">
-                        <Twitter className="w-4 h-4 text-sky-600" />
-                      </a>
-                    )}
+                    
                     {member.social.github && (
                       <a href={member.social.github} className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200 transition-colors">
                         <Github className="w-4 h-4 text-gray-600" />
                       </a>
                     )}
-                    {member.social.email && (
-                      <a href={`mailto:${member.social.email}`} className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center hover:bg-green-200 transition-colors">
-                        <Mail className="w-4 h-4 text-green-600" />
-                      </a>
-                    )}
+                    
                   </div>
                 </div>
               </div>
