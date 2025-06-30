@@ -5,7 +5,7 @@ import { useNotifications } from '../contexts/NotificationContext';
 import Card from '../components/Card';
 import Input from '../components/Input';
 import Button from '../components/Button';
-import { Mail, Shield, ArrowRight, CheckCircle, AlertCircle, ExternalLink, RefreshCw, LogIn } from 'lucide-react';
+import { Mail, Shield, ArrowRight, CheckCircle, AlertCircle, ExternalLink, RefreshCw, LogIn, Clock } from 'lucide-react';
 
 const Login = () => {
   const [step, setStep] = useState('email'); // 'email' or 'verification'
@@ -40,6 +40,17 @@ const Login = () => {
     const timeSinceLastSent = Date.now() - lastCodeSentAt;
     const cooldownRemaining = 30000 - timeSinceLastSent;
     return Math.max(0, Math.ceil(cooldownRemaining / 1000));
+  };
+
+  const getTimeRemaining = () => {
+    if (!lastCodeSentAt) return null;
+    const timeSinceLastSent = Date.now() - lastCodeSentAt;
+    const timeRemaining = 600000 - timeSinceLastSent; // 10 minutes in milliseconds
+    if (timeRemaining <= 0) return null;
+    
+    const minutes = Math.floor(timeRemaining / 60000);
+    const seconds = Math.floor((timeRemaining % 60000) / 1000);
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   };
 
   const handleEmailSubmit = async (e) => {
@@ -119,7 +130,13 @@ const Login = () => {
       }
     } catch (error) {
       console.error('Code verification error:', error);
-      setError(error.message || 'Failed to verify code. Please try again.');
+      
+      // Check if it's an expiration error and suggest resending
+      if (error.message?.includes('expired') || error.message?.includes('invalid')) {
+        setError(`${error.message} Click "Get New Code" below to receive a fresh verification code.`);
+      } else {
+        setError(error.message || 'Failed to verify code. Please try again.');
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -143,7 +160,7 @@ const Login = () => {
         addNotification({
           type: 'success',
           title: 'New Code Sent',
-          message: 'A new verification code has been sent to your email'
+          message: 'A new verification code has been sent to your email. Previous codes are now invalid.'
         });
       }
     } catch (error) {
@@ -294,6 +311,23 @@ const Login = () => {
                 </p>
               </div>
 
+              {/* Code expiration warning - more prominent */}
+              {lastCodeSentAt && getTimeRemaining() && (
+                <div className="bg-orange-50 dark:bg-orange-900/20 p-3 sm:p-4 rounded-lg border border-orange-200 dark:border-orange-700">
+                  <div className="flex items-center">
+                    <Clock className="w-5 h-5 text-orange-600 dark:text-orange-400 mr-2 flex-shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-orange-800 dark:text-orange-200">
+                        Code expires in {getTimeRemaining()}
+                      </p>
+                      <p className="text-xs text-orange-700 dark:text-orange-300 mt-1">
+                        Enter your code quickly or request a new one if it expires.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Code input */}
               <Input
                 label="6-Digit Verification Code"
@@ -322,6 +356,7 @@ const Login = () => {
                     <div className="text-xs text-yellow-700 dark:text-yellow-300 mt-1 space-y-1">
                       <p>• Check your spam/junk folder if you don't see it</p>
                       <p>• The code expires in 10 minutes</p>
+                      <p>• Requesting a new code will invalidate previous ones</p>
                       <p>• Make sure to enter all 6 digits</p>
                     </div>
                     <div className="mt-2">
@@ -369,7 +404,7 @@ const Login = () => {
                     }`}
                   >
                     <RefreshCw className="w-4 h-4 mr-1" />
-                    {canResendCode() ? 'Resend Code' : `Resend in ${getResendCooldown()}s`}
+                    {canResendCode() ? 'Get New Code' : `Wait ${getResendCooldown()}s`}
                   </button>
                   
                   <span className="text-gray-300 dark:text-gray-600 hidden sm:inline">|</span>
@@ -382,6 +417,14 @@ const Login = () => {
                   >
                     Use Different Email
                   </button>
+                </div>
+                
+                {/* Important note about code invalidation */}
+                <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg">
+                  <p className="text-xs text-gray-600 dark:text-gray-400">
+                    <strong>Important:</strong> Requesting a new code will make any previous codes invalid. 
+                    Only use the most recent code you received.
+                  </p>
                 </div>
               </div>
             </form>
