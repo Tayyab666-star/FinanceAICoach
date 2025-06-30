@@ -66,7 +66,7 @@ const TeamPage = () => {
     },
     {
       name: "Izzah Khursheed",
-      role: "Head of Security",
+      role: "Content & Media Lead",
       image: "/izza.jpg",
       bio: "Cybersecurity expert with government and private sector experience. Izza ensures your financial data is always protected.",
       education: "MS in Cybersecurity from MIT",
