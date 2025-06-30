@@ -24,6 +24,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useTransactions, useGoals, useBudgetCategories } from '../hooks/useSupabaseData';
 import { useNotifications } from '../contexts/NotificationContext';
 import { useChatSessions } from '../hooks/useChatSessions';
+import AIService from '../utils/aiService';
 import Card from '../components/Card';
 import Button from '../components/Button';
 import ResponsiveDropdown from '../components/ResponsiveDropdown';
@@ -397,117 +398,6 @@ const AICoach = () => {
     };
   };
 
-  // Enhanced Gemini API call with your API key
-  const callGeminiAPI = async (userMessage, context) => {
-    try {
-      const API_KEY = 'AIzaSyB5Wa1QnphzMSTdxyHn7b67XcsWqFJTd-s';
-      
-      setAiStatus('thinking');
-
-      const prompt = `You are an expert financial advisor AI with deep knowledge of personal finance, investing, budgeting, and wealth building. You're helping a user with their specific financial situation.
-
-USER'S FINANCIAL PROFILE:
-• Monthly Income: $${context.monthlyIncome.toLocaleString()}
-• Monthly Budget: $${context.monthlyBudget.toLocaleString()}
-• Total Income (all time): $${context.totalIncome.toLocaleString()}
-• Total Expenses (all time): $${context.totalExpenses.toLocaleString()}
-• Net Worth: $${context.netWorth.toLocaleString()}
-• Savings Rate: ${context.savingsRate}%
-• Transaction History: ${context.transactionCount} transactions
-• Financial Goals: ${context.goalCount} active goals
-• Budget Categories: ${context.budgetCategories} categories set up
-
-SPENDING BREAKDOWN:
-${Object.entries(context.categorySpending).map(([cat, amount]) => `• ${cat}: $${amount.toLocaleString()}`).join('\n')}
-
-FINANCIAL GOALS:
-${context.goalProgress.map(goal => `• ${goal.title}: ${goal.progress.toFixed(1)}% complete ($${goal.remaining.toLocaleString()} remaining)`).join('\n')}
-
-USER QUESTION: "${userMessage}"
-
-Please provide specific, actionable financial advice based on their actual data. Include:
-1. Direct analysis of their financial situation
-2. Specific recommendations with dollar amounts when relevant
-3. Actionable steps they can take immediately
-4. How this relates to their goals and budget
-
-Keep your response conversational, encouraging, and under 300 words. Use their actual numbers to make it personal and relevant.`;
-
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${API_KEY}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          contents: [{
-            parts: [{
-              text: prompt
-            }]
-          }],
-          generationConfig: {
-            temperature: 0.7,
-            topK: 40,
-            topP: 0.95,
-            maxOutputTokens: 1024,
-          },
-          safetySettings: [
-            {
-              category: "HARM_CATEGORY_HARASSMENT",
-              threshold: "BLOCK_MEDIUM_AND_ABOVE"
-            },
-            {
-              category: "HARM_CATEGORY_HATE_SPEECH", 
-              threshold: "BLOCK_MEDIUM_AND_ABOVE"
-            },
-            {
-              category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
-              threshold: "BLOCK_MEDIUM_AND_ABOVE"
-            },
-            {
-              category: "HARM_CATEGORY_DANGEROUS_CONTENT",
-              threshold: "BLOCK_MEDIUM_AND_ABOVE"
-            }
-          ]
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error(`API request failed: ${response.status}`);
-      }
-
-      const data = await response.json();
-      
-      if (data.candidates && data.candidates[0] && data.candidates[0].content) {
-        setAiStatus('connected');
-        return data.candidates[0].content.parts[0].text;
-      } else {
-        throw new Error('Invalid response format from API');
-      }
-    } catch (error) {
-      console.error('Gemini API Error:', error);
-      setAiStatus('error');
-      
-      // Enhanced fallback response
-      return generateEnhancedFallbackResponse(userMessage, context);
-    }
-  };
-
-  // Enhanced fallback response generator
-  const generateEnhancedFallbackResponse = (userMessage, context) => {
-    const lowerMessage = userMessage.toLowerCase();
-    
-    if (lowerMessage.includes('expense') || lowerMessage.includes('reduce') || lowerMessage.includes('save money')) {
-      return `Based on your spending of $${context.totalExpenses.toLocaleString()}, here are targeted ways to reduce expenses:\n\n**Top Opportunities:**\n• Your largest expense categories need attention\n• With ${context.savingsRate}% savings rate, aim for 20%+\n• Review subscriptions and recurring charges\n• Consider meal planning to reduce food costs\n\n**Action Steps:**\n1. Track expenses for one week\n2. Cancel unused subscriptions\n3. Set spending limits for top categories\n4. Automate savings to reach 20% rate`;
-    } else if (lowerMessage.includes('emergency') || lowerMessage.includes('fund')) {
-      const targetFund = context.totalExpenses * 6;
-      return `Emergency Fund Strategy for your situation:\n\n**Target:** $${targetFund.toLocaleString()} (6 months expenses)\n**Current Net Worth:** $${context.netWorth.toLocaleString()}\n\n**Build Strategy:**\n1. Start with $1,000 mini-emergency fund\n2. Save $${Math.round(targetFund / 12).toLocaleString()}/month for 1 year\n3. Keep in high-yield savings account\n4. Automate transfers on payday\n\nWith your ${context.savingsRate}% savings rate, ${context.savingsRate > 15 ? 'you can build this steadily' : 'focus on increasing savings first'}.`;
-    } else if (lowerMessage.includes('invest') || lowerMessage.includes('investment')) {
-      return `Investment Strategy for your profile:\n\n**Your Situation:**\n• Net Worth: $${context.netWorth.toLocaleString()}\n• Savings Rate: ${context.savingsRate}%\n• ${context.goalCount} financial goals\n\n**Recommendations:**\n1. ${context.savingsRate > 15 ? 'Start with index funds (low fees)' : 'Increase savings rate to 15% first'}\n2. Max out employer 401(k) match\n3. Consider Roth IRA for tax-free growth\n4. Target-date funds for simplicity\n\n**Next Steps:** ${context.savingsRate > 20 ? 'You\'re ready to invest!' : 'Build emergency fund first'}`;
-    } else {
-      return `Financial Analysis for "${userMessage}":\n\n**Your Current Position:**\n• Monthly Income: $${context.monthlyIncome.toLocaleString()}\n• Savings Rate: ${context.savingsRate}%\n• Net Worth: $${context.netWorth.toLocaleString()}\n• Active Goals: ${context.goalCount}\n\n**Key Recommendations:**\n${context.savingsRate < 20 ? '• Increase savings rate to 20%' : '• Maintain excellent savings habits'}\n${context.goalCount === 0 ? '• Set specific financial goals' : '• Stay focused on your goals'}\n${context.budgetCategories === 0 ? '• Create budget categories' : '• Review budget performance'}\n\nAsk me specific questions about any area for detailed guidance!`;
-    }
-  };
-
   // Handle sending message
   const handleSendMessage = async () => {
     if (!inputMessage.trim()) return;
@@ -520,9 +410,22 @@ Keep your response conversational, encouraging, and under 300 words. Use their a
       // Add user message to chat
       await addMessage(userMessageContent, 'user');
       
-      // Generate AI response
+      // Generate AI response using AIService
       const context = generateUserContext();
-      const aiResponse = await callGeminiAPI(userMessageContent, context);
+      setAiStatus('thinking');
+      
+      let aiResponse;
+      try {
+        // Try to get AI response from Gemini
+        aiResponse = await AIService.getFinancialAdvice(userMessageContent, context, 'gemini');
+        setAiStatus('connected');
+      } catch (error) {
+        console.error('AI Service Error:', error);
+        setAiStatus('error');
+        
+        // Use fallback response if AI service fails
+        aiResponse = AIService.generateFallbackResponse(userMessageContent, context);
+      }
       
       // Add AI response to chat
       await addMessage(aiResponse, 'ai', {
