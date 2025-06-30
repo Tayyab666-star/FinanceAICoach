@@ -1,9 +1,28 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Check, Star, Zap, Crown, Mail } from 'lucide-react';
+import React, { useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { Check, Star, Zap, Crown, Mail } from 'lucide-react';
+import Navbar from '../components/Navbar';
 
 const PricingPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Handle scroll to section if coming from landing page
+  useEffect(() => {
+    if (location.state?.scrollTo) {
+      const element = document.getElementById(location.state.scrollTo);
+      if (element) {
+        const headerOffset = 80;
+        const elementPosition = element.getBoundingClientRect().top;
+        const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+        
+        window.scrollTo({
+          top: offsetPosition,
+          behavior: 'smooth'
+        });
+      }
+    }
+  }, [location]);
 
   const plans = [
     {
@@ -106,38 +125,10 @@ const PricingPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white shadow-sm">
-        <div className="container mx-auto px-6 lg:px-8 py-6">
-          <div className="flex items-center space-x-4">
-            <button
-              onClick={() => navigate('/')}
-              className="flex items-center text-gray-600 hover:text-gray-900 transition-colors"
-            >
-              <ArrowLeft className="w-5 h-5 mr-2" />
-              Back to Home
-            </button>
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-purple-600 rounded-xl flex items-center justify-center">
-                <img 
-                  src="/WhatsApp Image 2025-06-29 at 13.46.00_d292e4a6.jpg" 
-                  alt="Finance AI Coach" 
-                  className="h-6 w-6 object-contain rounded-lg"
-                  onError={(e) => {
-                    e.target.style.display = 'none';
-                    e.target.nextSibling.style.display = 'block';
-                  }}
-                />
-                <span className="text-white font-bold text-sm hidden">F</span>
-              </div>
-              <span className="text-xl font-bold text-purple-600">Finance AI Coach</span>
-            </div>
-          </div>
-        </div>
-      </div>
+      <Navbar />
 
       {/* Hero Section */}
-      <section className="py-24 bg-gradient-to-br from-green-600 to-blue-600 text-white">
+      <section className="pt-32 pb-24 bg-gradient-to-br from-green-600 to-blue-600 text-white">
         <div className="container mx-auto px-6 lg:px-8 text-center">
           <h1 className="text-5xl lg:text-6xl font-bold mb-6">
             Simple, <span className="text-green-200">Transparent</span> Pricing
@@ -335,7 +326,10 @@ const PricingPage = () => {
       <footer className="bg-gray-900 text-white py-12">
         <div className="container mx-auto px-6 lg:px-8">
           <div className="flex flex-col md:flex-row justify-between items-center">
-            <div className="flex items-center space-x-3 mb-4 md:mb-0">
+            <button 
+              onClick={() => navigate('/')}
+              className="flex items-center space-x-3 mb-4 md:mb-0 hover:opacity-80 transition-opacity"
+            >
               <div className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center">
                 <img 
                   src="/WhatsApp Image 2025-06-29 at 13.46.00_d292e4a6.jpg" 
@@ -349,7 +343,7 @@ const PricingPage = () => {
                 <span className="text-white font-bold text-xs hidden">F</span>
               </div>
               <span className="text-lg font-bold">Finance AI Coach</span>
-            </div>
+            </button>
             <div className="flex items-center space-x-6 text-gray-400">
               <button onClick={() => navigate('/')} className="hover:text-white transition-colors">Home</button>
               <button onClick={() => navigate('/about')} className="hover:text-white transition-colors">About</button>
