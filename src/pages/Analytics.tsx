@@ -25,10 +25,14 @@ import LoadingSpinner from '../components/LoadingSpinner';
 import ResponsiveModal from '../components/ResponsiveModal';
 
 // Learn More Modal component
-const LearnMoreModal = ({ isOpen, onClose, insight }) => {
+const LearnMoreModal = ({ isOpen, onClose, insight }: {
+  isOpen: boolean;
+  onClose: () => void;
+  insight: any;
+}) => {
   if (!insight) return null;
 
-  const getDetailedInfo = (insight) => {
+  const getDetailedInfo = (insight: any) => {
     switch (insight.type) {
       case 'warning':
         return {
@@ -142,11 +146,11 @@ const LearnMoreModal = ({ isOpen, onClose, insight }) => {
 };
 
 // AI Insights component with Learn More functionality
-const AIInsights = ({ insights }) => {
-  const [selectedInsight, setSelectedInsight] = useState(null);
+const AIInsights = ({ insights }: { insights: any[] }) => {
+  const [selectedInsight, setSelectedInsight] = useState<any>(null);
   const [showModal, setShowModal] = useState(false);
 
-  const handleLearnMore = (insight) => {
+  const handleLearnMore = (insight: any) => {
     setSelectedInsight(insight);
     setShowModal(true);
   };
@@ -202,7 +206,13 @@ const AIInsights = ({ insights }) => {
 };
 
 // Metric card component
-const MetricCard = ({ title, value, change, icon: Icon, trend }) => (
+const MetricCard = ({ title, value, change, icon: Icon, trend }: {
+  title: string;
+  value: number | string;
+  change?: string;
+  icon: React.ComponentType<any>;
+  trend?: 'up' | 'down';
+}) => (
   <Card className="p-4 sm:p-6">
     <div className="flex items-center justify-between">
       <div>
@@ -292,7 +302,7 @@ const Analytics = () => {
 
   // Generate category spending data from actual transactions
   const categorySpending = useMemo(() => {
-    const categoryTotals = {};
+    const categoryTotals: Record<string, number> = {};
     const expenseTransactions = transactions.filter(t => t.type === 'expense');
     
     expenseTransactions.forEach(transaction => {
@@ -318,7 +328,7 @@ const Analytics = () => {
 
   // Generate daily spending pattern from actual transactions
   const dailySpending = useMemo(() => {
-    const dayTotals = {
+    const dayTotals: Record<string, number> = {
       'Mon': 0, 'Tue': 0, 'Wed': 0, 'Thu': 0, 'Fri': 0, 'Sat': 0, 'Sun': 0
     };
     
@@ -361,7 +371,7 @@ const Analytics = () => {
     }
 
     // Budget insights
-    Object.entries(budgetUsage).forEach(([category, usage]) => {
+    Object.entries(budgetUsage).forEach(([category, usage]: [string, any]) => {
       if (usage.isOverBudget) {
         insights.push({
           type: 'warning',
