@@ -393,15 +393,11 @@ const AICoach = () => {
     };
   };
 
-  // Enhanced Gemini API call
+  // Enhanced Gemini API call with your API key
   const callGeminiAPI = async (userMessage, context) => {
     try {
-      const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
+      const API_KEY = 'AIzaSyB5Wa1QnphzMSTdxyHn7b67XcsWqFJTd-s';
       
-      if (!API_KEY) {
-        throw new Error('Gemini API key not configured');
-      }
-
       setAiStatus('thinking');
 
       const prompt = `You are an expert financial advisor AI with deep knowledge of personal finance, investing, budgeting, and wealth building. You're helping a user with their specific financial situation.
