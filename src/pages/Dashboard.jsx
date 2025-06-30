@@ -226,25 +226,25 @@ const QuickActionCard = ({ title, description, icon: Icon, color = 'blue', path,
     <div 
       className={`
         ${colors.bg} ${colors.hover} ${colors.border}
-        border rounded-xl p-4 cursor-pointer transition-all duration-300 
+        border rounded-xl p-3 sm:p-4 cursor-pointer transition-all duration-300 
         hover:shadow-lg hover:scale-105 transform
         group
       `}
       onClick={handleClick}
     >
-      <div className="flex items-center space-x-4">
+      <div className="flex items-center space-x-3 sm:space-x-4">
         <div className={`
-          w-12 h-12 rounded-xl flex items-center justify-center 
+          w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center 
           ${colors.icon} shadow-lg
           group-hover:scale-110 transition-transform duration-300
         `}>
-          <Icon className="w-6 h-6" />
+          <Icon className="w-5 h-5 sm:w-6 sm:h-6" />
         </div>
-        <div className="flex-1">
-          <h3 className="font-semibold text-gray-900 dark:text-white group-hover:text-gray-800 dark:group-hover:text-gray-100 transition-colors">
+        <div className="flex-1 min-w-0">
+          <h3 className="text-sm sm:text-base font-semibold text-gray-900 dark:text-white group-hover:text-gray-800 dark:group-hover:text-gray-100 transition-colors">
             {title}
           </h3>
-          <p className="text-sm text-gray-600 dark:text-gray-300 group-hover:text-gray-700 dark:group-hover:text-gray-200 transition-colors">
+          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 group-hover:text-gray-700 dark:group-hover:text-gray-200 transition-colors">
             {description}
           </p>
         </div>
@@ -255,27 +255,27 @@ const QuickActionCard = ({ title, description, icon: Icon, color = 'blue', path,
 
 // Metric card component
 const MetricCard = ({ title, value, change, icon: Icon, trend, prefix = '$', onEdit }) => (
-  <Card className="p-6">
+  <Card className="p-4 sm:p-6">
     <div className="flex items-center justify-between">
-      <div>
-        <p className="text-sm font-medium text-gray-600 dark:text-gray-300">{title}</p>
-        <p className="text-2xl font-bold text-gray-900 dark:text-white">
+      <div className="min-w-0 flex-1">
+        <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-300">{title}</p>
+        <p className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-white truncate">
           {prefix}{typeof value === 'number' ? value.toLocaleString() : value}
         </p>
         {change && (
-          <div className={`flex items-center mt-1 text-sm ${
+          <div className={`flex items-center mt-1 text-xs sm:text-sm ${
             trend === 'up' ? 'text-green-600 dark:text-green-400' : 
             trend === 'down' ? 'text-red-600 dark:text-red-400' : 'text-gray-600 dark:text-gray-300'
           }`}>
-            {trend === 'up' && <TrendingUp className="w-4 h-4 mr-1" />}
-            {trend === 'down' && <TrendingDown className="w-4 h-4 mr-1" />}
+            {trend === 'up' && <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />}
+            {trend === 'down' && <TrendingDown className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />}
             {change}
           </div>
         )}
       </div>
-      <div className="flex flex-col items-end space-y-2">
-        <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/50 rounded-lg flex items-center justify-center">
-          <Icon className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+      <div className="flex flex-col items-end space-y-2 ml-3">
+        <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 dark:bg-blue-900/50 rounded-lg flex items-center justify-center">
+          <Icon className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600 dark:text-blue-400" />
         </div>
         {onEdit && (
           <button
@@ -283,7 +283,7 @@ const MetricCard = ({ title, value, change, icon: Icon, trend, prefix = '$', onE
             className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
             title="Edit"
           >
-            <Edit className="w-4 h-4 text-gray-600 dark:text-gray-300" />
+            <Edit className="w-3 h-3 sm:w-4 sm:h-4 text-gray-600 dark:text-gray-300" />
           </button>
         )}
       </div>
@@ -298,9 +298,9 @@ const RecentTransactions = ({ transactions }) => {
 
   return (
     <Card>
-      <div className="p-6">
+      <div className="p-4 sm:p-6">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Recent Transactions</h3>
+          <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">Recent Transactions</h3>
           <Button 
             variant="outline" 
             size="sm"
@@ -314,23 +314,23 @@ const RecentTransactions = ({ transactions }) => {
           <div className="space-y-3">
             {recentTransactions.map((transaction) => (
               <div key={transaction.id} className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                <div className="flex items-center space-x-3 min-w-0 flex-1">
+                  <div className={`w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center ${
                     transaction.type === 'income' ? 'bg-green-100 dark:bg-green-900/50' : 'bg-red-100 dark:bg-red-900/50'
                   }`}>
                     {transaction.type === 'income' ? (
-                      <TrendingUp className="w-4 h-4 text-green-600 dark:text-green-400" />
+                      <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 text-green-600 dark:text-green-400" />
                     ) : (
-                      <TrendingDown className="w-4 h-4 text-red-600 dark:text-red-400" />
+                      <TrendingDown className="w-3 h-3 sm:w-4 sm:h-4 text-red-600 dark:text-red-400" />
                     )}
                   </div>
-                  <div>
-                    <p className="font-medium text-gray-900 dark:text-white text-sm">{transaction.description}</p>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium text-gray-900 dark:text-white truncate text-xs sm:text-sm">{transaction.description}</p>
                     <p className="text-xs text-gray-500 dark:text-gray-400">{transaction.category}</p>
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className={`font-semibold text-sm ${
+                <div className="text-right ml-2">
+                  <p className={`font-semibold text-xs sm:text-sm ${
                     transaction.type === 'income' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
                   }`}>
                     {transaction.type === 'income' ? '+' : '-'}${Math.abs(transaction.amount).toFixed(2)}
@@ -341,10 +341,10 @@ const RecentTransactions = ({ transactions }) => {
             ))}
           </div>
         ) : (
-          <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-            <CreditCard className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-2" />
-            <p>No transactions yet</p>
-            <p className="text-sm">Add your first transaction to get started!</p>
+          <div className="text-center py-6 sm:py-8 text-gray-500 dark:text-gray-400">
+            <CreditCard className="w-10 h-10 sm:w-12 sm:h-12 text-gray-300 dark:text-gray-600 mx-auto mb-2" />
+            <p className="text-sm">No transactions yet</p>
+            <p className="text-xs">Add your first transaction to get started!</p>
           </div>
         )}
       </div>
@@ -359,9 +359,9 @@ const BudgetOverview = ({ budgetUsage }) => {
 
   return (
     <Card>
-      <div className="p-6">
+      <div className="p-4 sm:p-6">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Budget Overview</h3>
+          <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">Budget Overview</h3>
           <Button 
             variant="outline" 
             size="sm"
@@ -375,9 +375,9 @@ const BudgetOverview = ({ budgetUsage }) => {
           <div className="space-y-4">
             {categories.map(([category, usage]) => (
               <div key={category}>
-                <div className="flex justify-between text-sm mb-1">
-                  <span className="font-medium text-gray-900 dark:text-white">{category}</span>
-                  <span className="text-gray-600 dark:text-gray-300">
+                <div className="flex justify-between text-xs sm:text-sm mb-1">
+                  <span className="font-medium text-gray-900 dark:text-white truncate">{category}</span>
+                  <span className="text-gray-600 dark:text-gray-300 ml-2">
                     ${usage.spent.toFixed(2)} / ${usage.budget.toFixed(2)}
                   </span>
                 </div>
@@ -397,10 +397,10 @@ const BudgetOverview = ({ budgetUsage }) => {
             ))}
           </div>
         ) : (
-          <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-            <PieChart className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-2" />
-            <p>No budget categories set</p>
-            <p className="text-sm">Set up your budget to track spending!</p>
+          <div className="text-center py-6 sm:py-8 text-gray-500 dark:text-gray-400">
+            <PieChart className="w-10 h-10 sm:w-12 sm:h-12 text-gray-300 dark:text-gray-600 mx-auto mb-2" />
+            <p className="text-sm">No budget categories set</p>
+            <p className="text-xs">Set up your budget to track spending!</p>
           </div>
         )}
       </div>
@@ -415,9 +415,9 @@ const ConnectedAccountsOverview = ({ accounts }) => {
 
   return (
     <Card>
-      <div className="p-6">
+      <div className="p-4 sm:p-6">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Connected Accounts</h3>
+          <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">Connected Accounts</h3>
           <Button 
             variant="outline" 
             size="sm"
@@ -431,17 +431,17 @@ const ConnectedAccountsOverview = ({ accounts }) => {
           <div className="space-y-3">
             {activeAccounts.map((account) => (
               <div key={account.id} className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/50 rounded-full flex items-center justify-center">
-                    <CreditCard className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                <div className="flex items-center space-x-3 min-w-0 flex-1">
+                  <div className="w-6 h-6 sm:w-8 sm:h-8 bg-blue-100 dark:bg-blue-900/50 rounded-full flex items-center justify-center">
+                    <CreditCard className="w-3 h-3 sm:w-4 sm:h-4 text-blue-600 dark:text-blue-400" />
                   </div>
-                  <div>
-                    <p className="font-medium text-gray-900 dark:text-white text-sm">{account.account_name}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">{account.bank_name}</p>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium text-gray-900 dark:text-white text-xs sm:text-sm truncate">{account.account_name}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{account.bank_name}</p>
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className="font-semibold text-sm text-gray-900 dark:text-white">
+                <div className="text-right ml-2">
+                  <p className="font-semibold text-xs sm:text-sm text-gray-900 dark:text-white">
                     ${parseFloat(account.balance).toFixed(2)}
                   </p>
                   <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -452,10 +452,10 @@ const ConnectedAccountsOverview = ({ accounts }) => {
             ))}
           </div>
         ) : (
-          <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-            <CreditCard className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-2" />
-            <p>No accounts connected</p>
-            <p className="text-sm">Connect your bank accounts and cards!</p>
+          <div className="text-center py-6 sm:py-8 text-gray-500 dark:text-gray-400">
+            <CreditCard className="w-10 h-10 sm:w-12 sm:h-12 text-gray-300 dark:text-gray-600 mx-auto mb-2" />
+            <p className="text-sm">No accounts connected</p>
+            <p className="text-xs">Connect your bank accounts and cards!</p>
           </div>
         )}
       </div>
@@ -470,9 +470,9 @@ const GoalsProgress = ({ goals }) => {
 
   return (
     <Card>
-      <div className="p-6">
+      <div className="p-4 sm:p-6">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Goals Progress</h3>
+          <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">Goals Progress</h3>
           <Button 
             variant="outline" 
             size="sm"
@@ -491,8 +491,8 @@ const GoalsProgress = ({ goals }) => {
               return (
                 <div key={goal.id}>
                   <div className="flex justify-between items-center mb-2">
-                    <span className="font-medium text-gray-900 dark:text-white text-sm">{goal.title}</span>
-                    {isCompleted && <CheckCircle className="w-4 h-4 text-green-500" />}
+                    <span className="font-medium text-gray-900 dark:text-white text-xs sm:text-sm truncate">{goal.title}</span>
+                    {isCompleted && <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 text-green-500 ml-2" />}
                   </div>
                   <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                     <div 
@@ -511,10 +511,10 @@ const GoalsProgress = ({ goals }) => {
             })}
           </div>
         ) : (
-          <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-            <Target className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-2" />
-            <p>No goals set yet</p>
-            <p className="text-sm">Create your first financial goal!</p>
+          <div className="text-center py-6 sm:py-8 text-gray-500 dark:text-gray-400">
+            <Target className="w-10 h-10 sm:w-12 sm:h-12 text-gray-300 dark:text-gray-600 mx-auto mb-2" />
+            <p className="text-sm">No goals set yet</p>
+            <p className="text-xs">Create your first financial goal!</p>
           </div>
         )}
       </div>
@@ -529,9 +529,9 @@ const AIInsights = ({ insights }) => {
 
   return (
     <Card>
-      <div className="p-6">
+      <div className="p-4 sm:p-6">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">AI Insights</h3>
+          <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">AI Insights</h3>
           <Button 
             variant="outline" 
             size="sm"
@@ -554,14 +554,14 @@ const AIInsights = ({ insights }) => {
               >
                 <div className="flex items-start space-x-2">
                   {insight.type === 'warning' ? (
-                    <AlertCircle className="w-4 h-4 text-orange-500 mt-0.5" />
+                    <AlertCircle className="w-3 h-3 sm:w-4 sm:h-4 text-orange-500 mt-0.5 flex-shrink-0" />
                   ) : insight.type === 'success' ? (
-                    <CheckCircle className="w-4 h-4 text-green-500 mt-0.5" />
+                    <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 text-green-500 mt-0.5 flex-shrink-0" />
                   ) : (
-                    <AlertCircle className="w-4 h-4 text-blue-500 mt-0.5" />
+                    <AlertCircle className="w-3 h-3 sm:w-4 sm:h-4 text-blue-500 mt-0.5 flex-shrink-0" />
                   )}
-                  <div>
-                    <h4 className="font-medium text-gray-900 dark:text-white text-sm">{insight.title}</h4>
+                  <div className="min-w-0 flex-1">
+                    <h4 className="font-medium text-gray-900 dark:text-white text-xs sm:text-sm">{insight.title}</h4>
                     <p className="text-xs text-gray-600 dark:text-gray-300 mt-1">{insight.message}</p>
                   </div>
                 </div>
@@ -569,10 +569,10 @@ const AIInsights = ({ insights }) => {
             ))}
           </div>
         ) : (
-          <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-            <AlertCircle className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-2" />
-            <p>No insights available</p>
-            <p className="text-sm">Add transactions to get AI insights!</p>
+          <div className="text-center py-6 sm:py-8 text-gray-500 dark:text-gray-400">
+            <AlertCircle className="w-10 h-10 sm:w-12 sm:h-12 text-gray-300 dark:text-gray-600 mx-auto mb-2" />
+            <p className="text-sm">No insights available</p>
+            <p className="text-xs">Add transactions to get AI insights!</p>
           </div>
         )}
       </div>
@@ -703,17 +703,17 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
           Welcome back, {getUserDisplayName()}!
         </h1>
-        <p className="text-gray-600 dark:text-gray-300">Here's your financial overview</p>
+        <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300">Here's your financial overview</p>
       </div>
 
       {/* Key metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
         <MetricCard
           title="Net Worth"
           value={netWorth}
@@ -748,35 +748,37 @@ const Dashboard = () => {
       </div>
 
       {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         {/* Income vs Expenses Pie Chart */}
         <Card>
-          <div className="p-6">
-            <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Income vs Expenses</h3>
+          <div className="p-4 sm:p-6">
+            <h3 className="text-base sm:text-lg font-semibold mb-4 text-gray-900 dark:text-white">Income vs Expenses</h3>
             {incomeExpenseData.length > 0 ? (
-              <ResponsiveContainer width="100%" height={300}>
-                <RechartsPieChart>
-                  <Pie
-                    data={incomeExpenseData}
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="value"
-                    label={({ name, value }) => `${name}: $${value.toLocaleString()}`}
-                  >
-                    {incomeExpenseData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.fill} />
-                    ))}
-                  </Pie>
-                  <Tooltip formatter={(value) => [`$${value.toLocaleString()}`, 'Amount']} />
-                </RechartsPieChart>
-              </ResponsiveContainer>
+              <div className="w-full h-64 sm:h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <RechartsPieChart>
+                    <Pie
+                      data={incomeExpenseData}
+                      cx="50%"
+                      cy="50%"
+                      outerRadius="80%"
+                      fill="#8884d8"
+                      dataKey="value"
+                      label={({ name, value }) => `${name}: $${value.toLocaleString()}`}
+                    >
+                      {incomeExpenseData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.fill} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(value) => [`$${value.toLocaleString()}`, 'Amount']} />
+                  </RechartsPieChart>
+                </ResponsiveContainer>
+              </div>
             ) : (
-              <div className="h-64 flex items-center justify-center text-gray-500 dark:text-gray-400">
+              <div className="h-64 sm:h-80 flex items-center justify-center text-gray-500 dark:text-gray-400">
                 <div className="text-center">
-                  <p>No financial data available</p>
-                  <p className="text-sm">Add transactions to see your income vs expenses</p>
+                  <p className="text-sm">No financial data available</p>
+                  <p className="text-xs">Add transactions to see your income vs expenses</p>
                 </div>
               </div>
             )}
@@ -785,29 +787,31 @@ const Dashboard = () => {
 
         {/* Daily Savings Trend */}
         <Card>
-          <div className="p-6">
-            <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Daily Savings Trend (Last 30 Days)</h3>
+          <div className="p-4 sm:p-6">
+            <h3 className="text-base sm:text-lg font-semibold mb-4 text-gray-900 dark:text-white">Daily Savings Trend (Last 30 Days)</h3>
             {dailySavingsData.some(d => d.savings !== 0) ? (
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={dailySavingsData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="day" />
-                  <YAxis />
-                  <Tooltip />
-                  <Line 
-                    type="monotone" 
-                    dataKey="savings" 
-                    stroke="#3B82F6" 
-                    strokeWidth={3}
-                    dot={{ fill: '#3B82F6', strokeWidth: 2, r: 4 }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
+              <div className="w-full h-64 sm:h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={dailySavingsData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="day" />
+                    <YAxis />
+                    <Tooltip />
+                    <Line 
+                      type="monotone" 
+                      dataKey="savings" 
+                      stroke="#3B82F6" 
+                      strokeWidth={3}
+                      dot={{ fill: '#3B82F6', strokeWidth: 2, r: 4 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
             ) : (
-              <div className="h-64 flex items-center justify-center text-gray-500 dark:text-gray-400">
+              <div className="h-64 sm:h-80 flex items-center justify-center text-gray-500 dark:text-gray-400">
                 <div className="text-center">
-                  <p>No savings data available</p>
-                  <p className="text-sm">Add income and expense transactions to track daily savings</p>
+                  <p className="text-sm">No savings data available</p>
+                  <p className="text-xs">Add income and expense transactions to track daily savings</p>
                 </div>
               </div>
             )}
@@ -817,9 +821,9 @@ const Dashboard = () => {
 
       {/* Enhanced Quick actions with navigation and beautiful colors */}
       <Card>
-        <div className="p-6">
-          <h3 className="text-lg font-semibold mb-6 text-gray-900 dark:text-white">Quick Actions</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="p-4 sm:p-6">
+          <h3 className="text-base sm:text-lg font-semibold mb-4 sm:mb-6 text-gray-900 dark:text-white">Quick Actions</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             <QuickActionCard
               title="Add Transaction"
               description="Record income or expense"
@@ -881,7 +885,7 @@ const Dashboard = () => {
       </Card>
 
       {/* Dashboard widgets with navigation */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         <RecentTransactions transactions={transactions} />
         <BudgetOverview budgetUsage={budgetUsage} />
         {accounts.length > 0 ? (
