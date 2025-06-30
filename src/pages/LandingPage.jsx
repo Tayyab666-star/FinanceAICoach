@@ -28,7 +28,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
-// Hero Slider Component with solid colors and rounded elements
+// Hero Slider Component with solid colors and sharp edges
 const HeroSlider = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const navigate = useNavigate();
@@ -89,12 +89,12 @@ const HeroSlider = () => {
                   <div className="flex flex-col sm:flex-row gap-4">
                     <button 
                       onClick={() => navigate('/login')}
-                      className="bg-white text-gray-900 px-8 py-4 rounded-xl font-semibold text-lg hover:bg-gray-100 transition-all duration-300 transform hover:scale-105 shadow-2xl"
+                      className="bg-white text-gray-900 px-8 py-4 font-semibold text-lg hover:bg-gray-100 transition-all duration-300 transform hover:scale-105 shadow-2xl"
                     >
                       Start Your Journey
                       <ArrowRight className="inline ml-2 w-5 h-5" />
                     </button>
-                    <button className="border-2 border-white text-white px-8 py-4 rounded-xl font-semibold text-lg hover:bg-white hover:text-gray-900 transition-all duration-300 flex items-center justify-center">
+                    <button className="border-2 border-white text-white px-8 py-4 font-semibold text-lg hover:bg-white hover:text-gray-900 transition-all duration-300 flex items-center justify-center">
                       <Play className="w-5 h-5 mr-2" />
                       Watch Demo
                     </button>
@@ -106,7 +106,7 @@ const HeroSlider = () => {
                     <img 
                       src={slide.image} 
                       alt="Finance AI Coach"
-                      className="w-full max-w-md mx-auto rounded-2xl shadow-2xl"
+                      className="w-full max-w-md mx-auto shadow-2xl"
                       onError={(e) => {
                         e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgdmlld0JveD0iMCAwIDQwMCAzMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0yMDAgMTUwQzIyMC45MTEgMTUwIDIzOCAxMzIuOTExIDIzOCAxMTJDMjM4IDkxLjA4OTYgMjIwLjkxMSA3NCAyMDAgNzRDMTc5LjA4OSA3NCAxNjIgOTEuMDg5NiAxNjIgMTEyQzE2MiAxMzIuOTExIDE3OS4wODkgMTUwIDIwMCAxNTBaIiBmaWxsPSIjOUI5QkEzIi8+CjxwYXRoIGQ9Ik0yMDAgMjI2QzI0NC4xODMgMjI2IDI4MCAyMDAuNzM0IDI4MCAxNzBIMTIwQzEyMCAyMDAuNzM0IDE1NS44MTcgMjI2IDIwMCAyMjZaIiBmaWxsPSIjOUI5QkEzIi8+Cjwvc3ZnPgo=';
                       }}
@@ -172,8 +172,6 @@ const Navigation = () => {
   };
 
   const navItems = [
-    { label: 'Features', href: 'features' },
-    { label: 'Solutions', href: 'solutions' },
     { label: 'About Us', href: '/about' },
     { label: 'Team', href: '/team' },
     { label: 'Pricing', href: '/pricing' },
@@ -195,11 +193,11 @@ const Navigation = () => {
         <div className="flex items-center justify-between h-20">
           {/* Logo */}
           <div className="flex items-center space-x-3">
-            <div className="w-12 h-12 bg-purple-600 rounded-xl flex items-center justify-center">
+            <div className="w-12 h-12 bg-purple-600 flex items-center justify-center">
               <img 
                 src="/WhatsApp Image 2025-06-29 at 13.46.00_d292e4a6.jpg" 
                 alt="Finance AI Coach" 
-                className="h-8 w-8 object-contain rounded-lg"
+                className="h-8 w-8 object-contain"
                 onError={(e) => {
                   e.target.style.display = 'none';
                   e.target.nextSibling.style.display = 'block';
@@ -235,7 +233,7 @@ const Navigation = () => {
             </button>
             <button 
               onClick={() => navigate('/login')}
-              className="bg-purple-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-purple-700 transition-all duration-300 transform hover:scale-105"
+              className="bg-purple-600 text-white px-6 py-3 font-semibold hover:bg-purple-700 transition-all duration-300 transform hover:scale-105"
             >
               Get Started
             </button>
@@ -244,7 +242,7 @@ const Navigation = () => {
           {/* Mobile Menu Button */}
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="lg:hidden p-2 text-gray-700 rounded-lg"
+            className="lg:hidden p-2 text-gray-700"
           >
             {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
@@ -272,7 +270,7 @@ const Navigation = () => {
                 </button>
                 <button 
                   onClick={() => navigate('/login')}
-                  className="block w-full bg-purple-600 text-white px-6 py-3 rounded-xl font-semibold text-center"
+                  className="block w-full bg-purple-600 text-white px-6 py-3 font-semibold text-center"
                 >
                   Get Started
                 </button>
@@ -355,7 +353,7 @@ const FeaturesSection = () => {
                 <img 
                   src={feature.image} 
                   alt={feature.title}
-                  className="w-full h-48 object-cover rounded-xl mb-4"
+                  className="w-full h-48 object-cover mb-4"
                 />
                 <div className={`w-16 h-16 ${feature.color} rounded-2xl flex items-center justify-center absolute -bottom-2 left-4 group-hover:scale-110 transition-transform duration-300`}>
                   <feature.icon className="w-8 h-8 text-white" />
@@ -482,14 +480,89 @@ const CTASection = () => {
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <button 
             onClick={() => navigate('/login')}
-            className="bg-purple-600 text-white px-8 py-4 rounded-xl font-semibold text-lg hover:bg-purple-700 transition-all duration-300 transform hover:scale-105"
+            className="bg-purple-600 text-white px-8 py-4 font-semibold text-lg hover:bg-purple-700 transition-all duration-300 transform hover:scale-105"
           >
             Start Free Trial
             <ArrowRight className="inline ml-2 w-5 h-5" />
           </button>
-          <button className="border-2 border-white text-white px-8 py-4 rounded-xl font-semibold text-lg hover:bg-white hover:text-gray-900 transition-all duration-300">
+          <button className="border-2 border-white text-white px-8 py-4 font-semibold text-lg hover:bg-white hover:text-gray-900 transition-all duration-300">
             Schedule Demo
           </button>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+// Newsletter Section
+const NewsletterSection = () => {
+  const [email, setEmail] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState(null);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!email) return;
+    
+    setIsSubmitting(true);
+    
+    // Simulate API call
+    setTimeout(() => {
+      setSubmitStatus('success');
+      setEmail('');
+      setIsSubmitting(false);
+    }, 1500);
+  };
+
+  return (
+    <section className="py-24 bg-blue-600">
+      <div className="container mx-auto px-6 lg:px-8">
+        <div className="max-w-4xl mx-auto text-center">
+          <h2 className="text-4xl font-bold text-white mb-6">
+            Stay Updated with Financial Tips
+          </h2>
+          <p className="text-xl text-blue-100 mb-8">
+            Subscribe to our newsletter for the latest financial insights, tips, and product updates.
+          </p>
+          
+          {submitStatus === 'success' ? (
+            <div className="bg-white/10 backdrop-blur-sm p-6 rounded-xl">
+              <CheckCircle className="w-12 h-12 text-green-300 mx-auto mb-4" />
+              <h3 className="text-2xl font-bold text-white mb-2">Thank You for Subscribing!</h3>
+              <p className="text-blue-100">
+                You've been added to our newsletter. Watch your inbox for financial tips and updates.
+              </p>
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-4 max-w-xl mx-auto">
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Enter your email address"
+                className="flex-1 px-6 py-4 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              />
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="bg-white text-blue-600 px-8 py-4 font-semibold text-lg hover:bg-gray-100 transition-all duration-300 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center"
+              >
+                {isSubmitting ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mr-2" />
+                    Subscribing...
+                  </>
+                ) : (
+                  <>Subscribe</>
+                )}
+              </button>
+            </form>
+          )}
+          
+          <p className="text-blue-200 text-sm mt-4">
+            We respect your privacy. Unsubscribe at any time.
+          </p>
         </div>
       </div>
     </section>
@@ -606,7 +679,7 @@ const ContactForm = () => {
               <h3 className="text-2xl font-bold text-gray-900 mb-6">Send us a Message</h3>
               
               {submitStatus === 'success' && (
-                <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-xl">
+                <div className="mb-6 p-4 bg-green-50 border border-green-200">
                   <div className="flex items-center">
                     <CheckCircle className="w-5 h-5 text-green-600 mr-2" />
                     <p className="text-green-800 font-medium">Message sent successfully!</p>
@@ -616,7 +689,7 @@ const ContactForm = () => {
               )}
 
               {submitStatus === 'error' && (
-                <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl">
+                <div className="mb-6 p-4 bg-red-50 border border-red-200">
                   <div className="flex items-center">
                     <X className="w-5 h-5 text-red-600 mr-2" />
                     <p className="text-red-800 font-medium">Failed to send message.</p>
@@ -638,7 +711,7 @@ const ContactForm = () => {
                       value={formData.name}
                       onChange={handleChange}
                       required
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300"
+                      className="w-full px-4 py-3 border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300"
                       placeholder="Your full name"
                     />
                   </div>
@@ -653,7 +726,7 @@ const ContactForm = () => {
                       value={formData.email}
                       onChange={handleChange}
                       required
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300"
+                      className="w-full px-4 py-3 border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300"
                       placeholder="your@email.com"
                     />
                   </div>
@@ -670,7 +743,7 @@ const ContactForm = () => {
                     value={formData.subject}
                     onChange={handleChange}
                     required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300"
+                    className="w-full px-4 py-3 border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300"
                     placeholder="How can we help you?"
                   />
                 </div>
@@ -686,7 +759,7 @@ const ContactForm = () => {
                     onChange={handleChange}
                     required
                     rows={5}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 resize-none"
+                    className="w-full px-4 py-3 border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 resize-none"
                     placeholder="Tell us about your issue or question..."
                   />
                 </div>
@@ -694,7 +767,7 @@ const ContactForm = () => {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full bg-blue-600 text-white px-8 py-4 rounded-xl font-semibold hover:bg-blue-700 transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                  className="w-full bg-blue-600 text-white px-8 py-4 font-semibold hover:bg-blue-700 transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                 >
                   {isSubmitting ? (
                     <>
@@ -741,11 +814,11 @@ const Footer = () => {
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
           <div>
             <div className="flex items-center space-x-3 mb-6">
-              <div className="w-10 h-10 bg-purple-600 rounded-xl flex items-center justify-center">
+              <div className="w-10 h-10 bg-purple-600 flex items-center justify-center">
                 <img 
                   src="/WhatsApp Image 2025-06-29 at 13.46.00_d292e4a6.jpg" 
                   alt="Finance AI Coach" 
-                  className="h-6 w-6 object-contain rounded-lg"
+                  className="h-6 w-6 object-contain"
                   onError={(e) => {
                     e.target.style.display = 'none';
                     e.target.nextSibling.style.display = 'block';
@@ -813,6 +886,7 @@ const LandingPage = () => {
       <FeaturesSection />
       <SolutionsSection />
       <StatsSection />
+      <NewsletterSection />
       <CTASection />
       <ContactForm />
       <Footer />

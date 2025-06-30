@@ -36,7 +36,7 @@ const NotificationDropdown = ({ isOpen, onClose }) => {
   };
 
   return (
-    <div className="absolute right-0 mt-2 w-72 sm:w-80 bg-white dark:bg-gray-800 shadow-lg border border-gray-200 dark:border-gray-700 rounded-lg z-50 max-h-96 overflow-hidden">
+    <div className="absolute right-0 mt-2 w-72 sm:w-80 bg-white dark:bg-gray-800 shadow-lg border border-gray-200 dark:border-gray-700 z-50 max-h-96 overflow-hidden">
       {/* Header */}
       <div className="p-3 sm:p-4 border-b border-gray-200 dark:border-gray-700">
         <div className="flex items-center justify-between">
@@ -185,7 +185,7 @@ const Header = ({ onMenuClick }) => {
               }}
             />
             <div 
-              className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center hidden"
+              className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center hidden"
             >
               <span className="text-white font-bold text-sm">F</span>
             </div>

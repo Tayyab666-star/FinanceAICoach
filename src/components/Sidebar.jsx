@@ -66,7 +66,7 @@ const Sidebar = ({ isOpen, onClose }) => {
               }}
             />
             <div 
-              className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center hidden flex-shrink-0"
+              className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center hidden flex-shrink-0"
             >
               <span className="text-white font-bold text-sm">F</span>
             </div>
@@ -90,7 +90,7 @@ const Sidebar = ({ isOpen, onClose }) => {
               to={to}
               onClick={onClose}
               className={({ isActive }) => `
-                flex items-center px-3 py-2 mb-1 text-sm font-medium rounded-lg transition-colors
+                flex items-center px-3 py-2 mb-1 text-sm font-medium transition-colors
                 ${isActive 
                   ? 'bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/50 dark:to-purple-900/50 text-blue-700 dark:text-blue-300 border-r-2 border-blue-700 dark:border-blue-400' 
                   : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white'
