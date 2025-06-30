@@ -15,7 +15,10 @@ import {
   Edit3,
   MoreVertical,
   RefreshCw,
-  X
+  X,
+  Menu,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTransactions, useGoals, useBudgetCategories } from '../hooks/useSupabaseData';
@@ -82,7 +85,7 @@ const generateQuickInsights = (userProfile, transactions, budgets) => {
   return insights;
 };
 
-// Chat Session Sidebar Component
+// Chat Session Sidebar Component with collapsible functionality
 const ChatSessionSidebar = ({ 
   sessions, 
   currentSession, 
@@ -91,7 +94,9 @@ const ChatSessionSidebar = ({
   onDeleteSession, 
   onRenameSession,
   isOpen,
-  onClose 
+  onClose,
+  isCollapsed,
+  onToggleCollapse
 }) => {
   const [editingSession, setEditingSession] = useState(null);
   const [newTitle, setNewTitle] = useState('');
@@ -126,23 +131,47 @@ const ChatSessionSidebar = ({
       
       {/* Sidebar */}
       <div className={`
-        fixed inset-y-0 left-0 z-50 w-80 bg-white dark:bg-gray-800 shadow-lg transform transition-transform duration-300 ease-in-out border-r border-gray-200 dark:border-gray-700
+        fixed inset-y-0 left-0 z-50 bg-white dark:bg-gray-800 shadow-lg transform transition-all duration-300 ease-in-out border-r border-gray-200 dark:border-gray-700
         lg:translate-x-0 lg:static lg:inset-0
         ${isOpen ? 'translate-x-0' : '-translate-x-full'}
+        ${isCollapsed ? 'lg:w-16' : 'lg:w-80'}
+        w-80
       `}>
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Chat History</h3>
+          {!isCollapsed && (
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Chat History</h3>
+          )}
           <div className="flex items-center space-x-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onNewSession}
-              className="flex items-center"
+            {!isCollapsed && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onNewSession}
+                className="flex items-center"
+              >
+                <Plus className="w-4 h-4 mr-1" />
+                New
+              </Button>
+            )}
+            {isCollapsed && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onNewSession}
+                className="p-2"
+                title="New Chat"
+              >
+                <Plus className="w-4 h-4" />
+              </Button>
+            )}
+            <button 
+              onClick={onToggleCollapse}
+              className="hidden lg:block p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+              title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
             >
-              <Plus className="w-4 h-4 mr-1" />
-              New
-            </Button>
+              {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+            </button>
             <button 
               onClick={onClose}
               className="lg:hidden p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
@@ -156,9 +185,13 @@ const ChatSessionSidebar = ({
         <div className="flex-1 overflow-y-auto p-2">
           {sessions.length === 0 ? (
             <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-              <MessageSquare className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-2" />
-              <p className="text-sm">No chat sessions yet</p>
-              <p className="text-xs">Start a conversation to create your first chat</p>
+              <MessageSquare className={`${isCollapsed ? 'w-6 h-6' : 'w-12 h-12'} text-gray-300 dark:text-gray-600 mx-auto mb-2`} />
+              {!isCollapsed && (
+                <>
+                  <p className="text-sm">No chat sessions yet</p>
+                  <p className="text-xs">Start a conversation to create your first chat</p>
+                </>
+              )}
             </div>
           ) : (
             <div className="space-y-1">
@@ -169,12 +202,17 @@ const ChatSessionSidebar = ({
                     currentSession?.id === session.id
                       ? 'bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700'
                       : 'hover:bg-gray-50 dark:hover:bg-gray-700'
-                  }`}
+                  } ${isCollapsed ? 'px-2' : ''}`}
                   onClick={() => onLoadSession(session.id)}
+                  title={isCollapsed ? session.title : ''}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex-1 min-w-0">
-                      {editingSession === session.id ? (
+                      {isCollapsed ? (
+                        <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/50 rounded-full flex items-center justify-center">
+                          <MessageSquare className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                        </div>
+                      ) : editingSession === session.id ? (
                         <div className="flex items-center space-x-2">
                           <input
                             type="text"
@@ -218,7 +256,7 @@ const ChatSessionSidebar = ({
                       )}
                     </div>
                     
-                    {editingSession !== session.id && (
+                    {!isCollapsed && editingSession !== session.id && (
                       <ResponsiveDropdown
                         trigger={
                           <button
@@ -322,7 +360,7 @@ const TypingIndicator = () => (
   </div>
 );
 
-// Main AI Coach component
+// Main AI Coach component with responsive sidebar
 const AICoach = () => {
   const { userProfile } = useAuth();
   const { transactions } = useTransactions();
@@ -346,6 +384,7 @@ const AICoach = () => {
   const [isTyping, setIsTyping] = useState(false);
   const [showSidebar, setShowSidebar] = useState(false);
   const [showChatSidebar, setShowChatSidebar] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const [aiStatus, setAiStatus] = useState('connected');
   const messagesEndRef = useRef(null);
 
@@ -603,6 +642,8 @@ Keep your response conversational, encouraging, and under 300 words. Use their a
         onRenameSession={updateSessionTitle}
         isOpen={showChatSidebar}
         onClose={() => setShowChatSidebar(false)}
+        isCollapsed={isCollapsed}
+        onToggleCollapse={() => setIsCollapsed(!isCollapsed)}
       />
 
       {/* Main Chat Area */}

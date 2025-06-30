@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotifications } from '../contexts/NotificationContext';
 import Card from '../components/Card';
 import Input from '../components/Input';
 import Button from '../components/Button';
-import { Mail, Shield, ArrowRight, CheckCircle, AlertCircle, ExternalLink, RefreshCw, LogIn, Clock } from 'lucide-react';
+import { Mail, Shield, ArrowRight, CheckCircle, AlertCircle, ExternalLink, RefreshCw, LogIn, Clock, ArrowLeft } from 'lucide-react';
 
 const Login = () => {
+  const navigate = useNavigate();
   const [step, setStep] = useState('email'); // 'email' or 'verification'
   const [email, setEmail] = useState('');
   const [verificationCode, setVerificationCode] = useState('');
@@ -20,7 +21,7 @@ const Login = () => {
   const { addNotification } = useNotifications();
 
   // Redirect if already logged in
-  if (user) return <Navigate to="/dashboard" replace />;
+  if (user) return <Navigate to="/app/dashboard" replace />;
 
   // Clear auth errors when component mounts or step changes
   React.useEffect(() => {
@@ -180,6 +181,10 @@ const Login = () => {
     setLastCodeSentAt(null);
   };
 
+  const handleBackToLanding = () => {
+    navigate('/');
+  };
+
   // Show loading state while auth is being checked
   if (isLoading) {
     return (
@@ -200,6 +205,17 @@ const Login = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 px-4 py-8">
       <div className="max-w-md w-full">
+        {/* Back to Landing Button */}
+        <div className="mb-6">
+          <button
+            onClick={handleBackToLanding}
+            className="flex items-center text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors duration-300"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Home
+          </button>
+        </div>
+
         {/* Header */}
         <div className="text-center mb-6 sm:mb-8">
           {/* Logo - Centered on mobile/tablet, left-aligned on desktop */}
