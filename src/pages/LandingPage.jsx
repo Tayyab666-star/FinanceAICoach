@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { 
   ArrowRight, 
   Play, 
@@ -74,6 +74,17 @@ const HeroSlider = () => {
     setCurrentSlide(index);
   };
 
+  const handleGetStarted = () => {
+    // Smooth scroll to top before navigation
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+    setTimeout(() => {
+      navigate('/login');
+    }, 300);
+  };
+
   return (
     <div className="relative h-screen overflow-hidden">
       {/* Slides container with infinite loop effect */}
@@ -120,13 +131,13 @@ const HeroSlider = () => {
                       </p>
                       <div className="flex flex-col sm:flex-row gap-4">
                         <button 
-                          onClick={() => navigate('/login')}
-                          className="bg-white text-gray-900 px-8 py-4 font-semibold text-lg hover:bg-gray-100 transition-all duration-300 transform hover:scale-105 shadow-2xl"
+                          onClick={handleGetStarted}
+                          className="bg-white text-gray-900 px-8 py-4 rounded-lg font-semibold text-lg hover:bg-gray-100 transition-all duration-300 transform hover:scale-105 shadow-2xl"
                         >
                           Start Your Journey
                           <ArrowRight className="inline ml-2 w-5 h-5" />
                         </button>
-                        <button className="border-2 border-white text-white px-8 py-4 font-semibold text-lg hover:bg-white hover:text-gray-900 transition-all duration-300 flex items-center justify-center">
+                        <button className="border-2 border-white text-white px-8 py-4 rounded-lg font-semibold text-lg hover:bg-white hover:text-gray-900 transition-all duration-300 flex items-center justify-center">
                           <Play className="w-5 h-5 mr-2" />
                           Watch Demo
                         </button>
@@ -354,6 +365,16 @@ const StatsSection = () => {
 const CTASection = () => {
   const navigate = useNavigate();
 
+  const handleGetStarted = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+    setTimeout(() => {
+      navigate('/login');
+    }, 300);
+  };
+
   return (
     <section className="py-24 bg-gray-900">
       <div className="container mx-auto px-6 lg:px-8 text-center">
@@ -366,13 +387,13 @@ const CTASection = () => {
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <button 
-            onClick={() => navigate('/login')}
-            className="bg-purple-600 text-white px-8 py-4 font-semibold text-lg hover:bg-purple-700 transition-all duration-300 transform hover:scale-105"
+            onClick={handleGetStarted}
+            className="bg-purple-600 text-white px-8 py-4 rounded-lg font-semibold text-lg hover:bg-purple-700 transition-all duration-300 transform hover:scale-105"
           >
             Start Free Trial
             <ArrowRight className="inline ml-2 w-5 h-5" />
           </button>
-          <button className="border-2 border-white text-white px-8 py-4 font-semibold text-lg hover:bg-white hover:text-gray-900 transition-all duration-300">
+          <button className="border-2 border-white text-white px-8 py-4 rounded-lg font-semibold text-lg hover:bg-white hover:text-gray-900 transition-all duration-300">
             Schedule Demo
           </button>
         </div>
@@ -427,13 +448,13 @@ const NewsletterSection = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Enter your email address"
-                className="flex-1 px-6 py-4 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="flex-1 px-6 py-4 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 required
               />
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="bg-white text-blue-600 px-8 py-4 font-semibold text-lg hover:bg-gray-100 transition-all duration-300 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center"
+                className="bg-white text-blue-600 px-8 py-4 rounded-lg font-semibold text-lg hover:bg-gray-100 transition-all duration-300 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center"
               >
                 {isSubmitting ? (
                   <>
@@ -562,11 +583,11 @@ const ContactForm = () => {
             </div>
 
             {/* Contact Form */}
-            <div className="bg-white p-8 shadow-lg">
+            <div className="bg-white p-8 rounded-lg shadow-lg">
               <h3 className="text-2xl font-bold text-gray-900 mb-6">Send us a Message</h3>
               
               {submitStatus === 'success' && (
-                <div className="mb-6 p-4 bg-green-50 border border-green-200">
+                <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
                   <div className="flex items-center">
                     <CheckCircle className="w-5 h-5 text-green-600 mr-2" />
                     <p className="text-green-800 font-medium">Message sent successfully!</p>
@@ -576,7 +597,7 @@ const ContactForm = () => {
               )}
 
               {submitStatus === 'error' && (
-                <div className="mb-6 p-4 bg-red-50 border border-red-200">
+                <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
                   <div className="flex items-center">
                     <X className="w-5 h-5 text-red-600 mr-2" />
                     <p className="text-red-800 font-medium">Failed to send message.</p>
@@ -598,7 +619,7 @@ const ContactForm = () => {
                       value={formData.name}
                       onChange={handleChange}
                       required
-                      className="w-full px-4 py-3 border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300"
                       placeholder="Your full name"
                     />
                   </div>
@@ -613,7 +634,7 @@ const ContactForm = () => {
                       value={formData.email}
                       onChange={handleChange}
                       required
-                      className="w-full px-4 py-3 border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300"
                       placeholder="your@email.com"
                     />
                   </div>
@@ -630,7 +651,7 @@ const ContactForm = () => {
                     value={formData.subject}
                     onChange={handleChange}
                     required
-                    className="w-full px-4 py-3 border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300"
                     placeholder="How can we help you?"
                   />
                 </div>
@@ -646,7 +667,7 @@ const ContactForm = () => {
                     onChange={handleChange}
                     required
                     rows={5}
-                    className="w-full px-4 py-3 border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 resize-none"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 resize-none"
                     placeholder="Tell us about your issue or question..."
                   />
                 </div>
@@ -654,7 +675,7 @@ const ContactForm = () => {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full bg-blue-600 text-white px-8 py-4 font-semibold hover:bg-blue-700 transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                  className="w-full bg-blue-600 text-white px-8 py-4 rounded-lg font-semibold hover:bg-blue-700 transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                 >
                   {isSubmitting ? (
                     <>
@@ -695,16 +716,26 @@ const Footer = () => {
     }
   };
 
+  const handleNavigation = (path) => {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+    setTimeout(() => {
+      navigate(path);
+    }, 300);
+  };
+
   return (
     <footer className="bg-gray-900 text-white py-16">
       <div className="container mx-auto px-6 lg:px-8">
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
           <div>
             <button 
-              onClick={() => navigate('/')}
+              onClick={() => handleNavigation('/')}
               className="flex items-center space-x-3 mb-6 hover:opacity-80 transition-opacity"
             >
-              <div className="w-10 h-10 bg-purple-600 flex items-center justify-center">
+              <div className="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center">
                 <img 
                   src="/WhatsApp Image 2025-06-29 at 13.46.00_d292e4a6.jpg" 
                   alt="Finance AI Coach" 
@@ -734,15 +765,15 @@ const Footer = () => {
             <ul className="space-y-2 text-gray-400">
               <li><button onClick={() => scrollToSection('features')} className="hover:text-white transition-colors">Features</button></li>
               <li><button onClick={() => scrollToSection('solutions')} className="hover:text-white transition-colors">Solutions</button></li>
-              <li><button onClick={() => navigate('/pricing')} className="hover:text-white transition-colors">Pricing</button></li>
+              <li><button onClick={() => handleNavigation('/pricing')} className="hover:text-white transition-colors">Pricing</button></li>
             </ul>
           </div>
           
           <div>
             <h3 className="font-semibold mb-4">Company</h3>
             <ul className="space-y-2 text-gray-400">
-              <li><button onClick={() => navigate('/about')} className="hover:text-white transition-colors">About Us</button></li>
-              <li><button onClick={() => navigate('/team')} className="hover:text-white transition-colors">Team</button></li>
+              <li><button onClick={() => handleNavigation('/about')} className="hover:text-white transition-colors">About Us</button></li>
+              <li><button onClick={() => handleNavigation('/team')} className="hover:text-white transition-colors">Team</button></li>
               <li><a href="#" className="hover:text-white transition-colors">Careers</a></li>
               <li><button onClick={() => scrollToSection('contact')} className="hover:text-white transition-colors">Contact</button></li>
             </ul>
@@ -751,7 +782,7 @@ const Footer = () => {
           <div>
             <h3 className="font-semibold mb-4">Legal</h3>
             <ul className="space-y-2 text-gray-400">
-              <li><button onClick={() => navigate('/privacy')} className="hover:text-white transition-colors">Privacy Policy</button></li>
+              <li><button onClick={() => handleNavigation('/privacy')} className="hover:text-white transition-colors">Privacy Policy</button></li>
               <li><a href="#" className="hover:text-white transition-colors">Terms of Service</a></li>
               <li><a href="#" className="hover:text-white transition-colors">Security</a></li>
               <li><a href="#" className="hover:text-white transition-colors">Compliance</a></li>
@@ -767,8 +798,30 @@ const Footer = () => {
   );
 };
 
-// Main Landing Page Component
+// Main Landing Page Component with scroll handling
 const LandingPage = () => {
+  const location = useLocation();
+
+  // Handle scroll to section when navigating from other pages
+  useEffect(() => {
+    if (location.state?.scrollTo) {
+      // Small delay to ensure the page has loaded
+      setTimeout(() => {
+        const element = document.getElementById(location.state.scrollTo);
+        if (element) {
+          const headerOffset = 80;
+          const elementPosition = element.getBoundingClientRect().top;
+          const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+          
+          window.scrollTo({
+            top: offsetPosition,
+            behavior: 'smooth'
+          });
+        }
+      }, 100);
+    }
+  }, [location]);
+
   return (
     <div className="min-h-screen">
       <Navbar />
