@@ -4,6 +4,10 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { NotificationProvider } from './contexts/NotificationContext';
 import { DarkModeProvider } from './contexts/DarkModeContext';
 import LandingPage from './pages/LandingPage';
+import AboutPage from './pages/AboutPage';
+import TeamPage from './pages/TeamPage';
+import PricingPage from './pages/PricingPage';
+import PrivacyPage from './pages/PrivacyPage';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Transactions from './pages/Transactions';
@@ -66,7 +70,7 @@ const PublicRoute = ({ children }) => {
   // Redirect to dashboard if already authenticated
   if (user) {
     console.log('User found, redirecting to dashboard');
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to="/app/dashboard" replace />;
   }
   
   // Render public content
@@ -81,8 +85,14 @@ function App() {
           <Router>
             <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
               <Routes>
-                {/* Public Routes - Landing page and login */}
+                {/* Public Routes - Landing page and static pages */}
                 <Route path="/" element={<LandingPage />} />
+                <Route path="/about" element={<AboutPage />} />
+                <Route path="/team" element={<TeamPage />} />
+                <Route path="/pricing" element={<PricingPage />} />
+                <Route path="/privacy" element={<PrivacyPage />} />
+                
+                {/* Login Route */}
                 <Route 
                   path="/login" 
                   element={

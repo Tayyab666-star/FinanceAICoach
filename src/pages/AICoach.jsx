@@ -167,14 +167,14 @@ const ChatSessionSidebar = ({
             )}
             <button 
               onClick={onToggleCollapse}
-              className="hidden lg:block p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+              className="hidden lg:block p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
               title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
             >
               {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
             </button>
             <button 
               onClick={onClose}
-              className="lg:hidden p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+              className="lg:hidden p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
             >
               <X className="w-5 h-5 text-gray-600 dark:text-gray-300" />
             </button>
@@ -222,7 +222,7 @@ const ChatSessionSidebar = ({
                               if (e.key === 'Enter') handleSaveRename();
                               if (e.key === 'Escape') handleCancelRename();
                             }}
-                            className="flex-1 px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                            className="flex-1 px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                             autoFocus
                           />
                           <button
@@ -261,7 +261,7 @@ const ChatSessionSidebar = ({
                         trigger={
                           <button
                             onClick={(e) => e.stopPropagation()}
-                            className="opacity-0 group-hover:opacity-100 p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-opacity"
+                            className="opacity-0 group-hover:opacity-100 p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-opacity"
                           >
                             <MoreVertical className="w-4 h-4 text-gray-600 dark:text-gray-300" />
                           </button>
@@ -273,7 +273,7 @@ const ChatSessionSidebar = ({
                             e.stopPropagation();
                             handleRename(session);
                           }}
-                          className="flex items-center w-full px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600"
+                          className="flex items-center w-full px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-lg"
                         >
                           <Edit3 className="w-4 h-4 mr-2" />
                           Rename
@@ -283,7 +283,7 @@ const ChatSessionSidebar = ({
                             e.stopPropagation();
                             onDeleteSession(session.id);
                           }}
-                          className="flex items-center w-full px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-600"
+                          className="flex items-center w-full px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-lg"
                         >
                           <Trash2 className="w-4 h-4 mr-2" />
                           Delete
@@ -384,7 +384,7 @@ const AICoach = () => {
   const [isTyping, setIsTyping] = useState(false);
   const [showSidebar, setShowSidebar] = useState(false);
   const [showChatSidebar, setShowChatSidebar] = useState(false);
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(window.innerWidth < 1024); // Start collapsed on mobile
   const [aiStatus, setAiStatus] = useState('connected');
   const messagesEndRef = useRef(null);
 
@@ -395,6 +395,19 @@ const AICoach = () => {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isTyping]);
+
+  // Handle window resize for responsive sidebar
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 1024) {
+        setIsCollapsed(true);
+        setShowChatSidebar(false);
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Generate comprehensive user context for AI
   const generateUserContext = () => {
@@ -797,6 +810,7 @@ Keep your response conversational, encouraging, and under 300 words. Use their a
                         </div>
                         <div className="min-w-0 flex-1">
                           <h4 className="text-sm font-medium text-gray-900 dark:text-white">{insight.title}</h4>
+                
                           <p className="text-xs text-gray-600 dark:text-gray-300 break-words">{insight.description}</p>
                         </div>
                       </div>
@@ -813,7 +827,7 @@ Keep your response conversational, encouraging, and under 300 words. Use their a
                     <button
                       key={index}
                       onClick={() => handleSuggestedQuestion(question)}
-                      className="w-full text-left text-sm text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 p-2 rounded transition-colors break-words"
+                      className="w-full text-left text-sm text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 p-2 rounded-lg transition-colors break-words"
                     >
                       {question}
                     </button>

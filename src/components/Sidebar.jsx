@@ -76,7 +76,7 @@ const Sidebar = ({ isOpen, onClose }) => {
           </button>
           <button 
             onClick={onClose}
-            className="lg:hidden p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded flex-shrink-0"
+            className="lg:hidden p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg flex-shrink-0"
           >
             <X className="w-5 h-5 text-gray-600 dark:text-gray-300" />
           </button>
