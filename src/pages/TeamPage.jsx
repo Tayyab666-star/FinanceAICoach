@@ -40,7 +40,7 @@ const TeamPage = () => {
     },
     {
       name: "Tayyab Nasir",
-      role: "Team Lead",
+      role: "Team Leader/Manager",
       image: "/tayyab.jpg",
       bio: "AI researcher from Stanford with expertise in machine learning and financial algorithms. Zeeshan architected our core AI engine.",
       education: "BS in Computer Science from Stanford",
