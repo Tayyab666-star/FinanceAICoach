@@ -304,7 +304,7 @@ const RecentTransactions = ({ transactions }) => {
           <Button 
             variant="outline" 
             size="sm"
-            onClick={() => navigate('/transactions')}
+            onClick={() => navigate('/app/transactions')}
           >
             View All
           </Button>
@@ -365,7 +365,7 @@ const BudgetOverview = ({ budgetUsage }) => {
           <Button 
             variant="outline" 
             size="sm"
-            onClick={() => navigate('/budget')}
+            onClick={() => navigate('/app/budget')}
           >
             Manage Budget
           </Button>
@@ -421,7 +421,7 @@ const ConnectedAccountsOverview = ({ accounts }) => {
           <Button 
             variant="outline" 
             size="sm"
-            onClick={() => navigate('/settings')}
+            onClick={() => navigate('/app/settings')}
           >
             Manage Accounts
           </Button>
@@ -476,7 +476,7 @@ const GoalsProgress = ({ goals }) => {
           <Button 
             variant="outline" 
             size="sm"
-            onClick={() => navigate('/goals')}
+            onClick={() => navigate('/app/goals')}
           >
             View All Goals
           </Button>
@@ -535,7 +535,7 @@ const AIInsights = ({ insights }) => {
           <Button 
             variant="outline" 
             size="sm"
-            onClick={() => navigate('/ai-coach')}
+            onClick={() => navigate('/app/ai-coach')}
           >
             AI Coach
           </Button>
@@ -829,56 +829,56 @@ const Dashboard = () => {
               description="Record income or expense"
               icon={Plus}
               color="blue"
-              path="/transactions"
+              path="/app/transactions"
             />
             <QuickActionCard
               title="Manage Budget"
               description="Plan your spending"
               icon={PieChart}
               color="green"
-              path="/budget"
+              path="/app/budget"
             />
             <QuickActionCard
               title="Set Goals"
               description="Create financial targets"
               icon={Target}
               color="purple"
-              path="/goals"
+              path="/app/goals"
             />
             <QuickActionCard
               title="AI Coach"
               description="Get financial insights"
               icon={Brain}
               color="indigo"
-              path="/ai-coach"
+              path="/app/ai-coach"
             />
             <QuickActionCard
               title="View Analytics"
               description="Analyze your finances"
               icon={BarChart}
               color="orange"
-              path="/analytics"
+              path="/app/analytics"
             />
             <QuickActionCard
               title="Generate Reports"
               description="Export financial data"
               icon={Calendar}
               color="pink"
-              path="/reports"
+              path="/app/reports"
             />
             <QuickActionCard
               title="Shopping Tracker"
               description="Track your purchases"
               icon={ShoppingBag}
               color="green"
-              path="/transactions"
+              path="/app/transactions"
             />
             <QuickActionCard
               title="Settings"
               description="Manage your account"
               icon={Edit}
               color="blue"
-              path="/settings"
+              path="/app/settings"
             />
           </div>
         </div>
