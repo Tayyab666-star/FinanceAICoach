@@ -145,9 +145,7 @@ const TeamPage = () => {
                     <div className="text-xs text-gray-500">
                       <strong>Education:</strong> {member.education}
                     </div>
-                    <div className="text-xs text-gray-500">
-                      <strong>Experience:</strong> {member.experience}
-                    </div>
+                     
                   </div>
                   
                   <div className="flex space-x-3">
