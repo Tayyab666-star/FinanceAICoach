@@ -14,14 +14,14 @@ import {
 
 // Navigation items configuration
 const navItems = [
-  { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-  { to: '/transactions', icon: CreditCard, label: 'Transactions' },
-  { to: '/analytics', icon: BarChart3, label: 'Analytics' },
-  { to: '/budget', icon: PiggyBank, label: 'Budget' },
-  { to: '/goals', icon: Target, label: 'Goals' },
-  { to: '/ai-coach', icon: Bot, label: 'AI Coach' },
-  { to: '/reports', icon: FileText, label: 'Reports' },
-  { to: '/settings', icon: Settings, label: 'Settings' }
+  { to: '/app/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+  { to: '/app/transactions', icon: CreditCard, label: 'Transactions' },
+  { to: '/app/analytics', icon: BarChart3, label: 'Analytics' },
+  { to: '/app/budget', icon: PiggyBank, label: 'Budget' },
+  { to: '/app/goals', icon: Target, label: 'Goals' },
+  { to: '/app/ai-coach', icon: Bot, label: 'AI Coach' },
+  { to: '/app/reports', icon: FileText, label: 'Reports' },
+  { to: '/app/settings', icon: Settings, label: 'Settings' }
 ];
 
 // Responsive sidebar component
@@ -29,7 +29,7 @@ const Sidebar = ({ isOpen, onClose }) => {
   const navigate = useNavigate();
 
   const handleLogoClick = () => {
-    navigate('/dashboard');
+    navigate('/app/dashboard');
     onClose(); // Close sidebar on mobile after navigation
   };
 

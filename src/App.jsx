@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { NotificationProvider } from './contexts/NotificationContext';
 import { DarkModeProvider } from './contexts/DarkModeContext';
+import LandingPage from './pages/LandingPage';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Transactions from './pages/Transactions';
@@ -80,7 +81,8 @@ function App() {
           <Router>
             <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
               <Routes>
-                {/* Public Routes - Show when no user is logged in */}
+                {/* Public Routes - Landing page and login */}
+                <Route path="/" element={<LandingPage />} />
                 <Route 
                   path="/login" 
                   element={
@@ -92,14 +94,14 @@ function App() {
                 
                 {/* Protected Routes - Show only when user is logged in */}
                 <Route 
-                  path="/" 
+                  path="/app" 
                   element={
                     <ProtectedRoute>
                       <Layout />
                     </ProtectedRoute>
                   }
                 >
-                  <Route index element={<Navigate to="/dashboard" replace />} />
+                  <Route index element={<Navigate to="/app/dashboard" replace />} />
                   <Route path="dashboard" element={<Dashboard />} />
                   <Route path="transactions" element={<Transactions />} />
                   <Route path="analytics" element={<Analytics />} />
@@ -110,8 +112,11 @@ function App() {
                   <Route path="settings" element={<Settings />} />
                 </Route>
                 
-                {/* Catch-all route - redirect based on auth status */}
-                <Route path="*" element={<Navigate to="/dashboard" replace />} />
+                {/* Legacy dashboard route redirect */}
+                <Route path="/dashboard" element={<Navigate to="/app/dashboard" replace />} />
+                
+                {/* Catch-all route - redirect to landing page */}
+                <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
               <ToastContainer />
             </div>
