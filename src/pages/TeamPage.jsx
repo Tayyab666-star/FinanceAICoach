@@ -79,7 +79,7 @@ const TeamPage = () => {
     },
     {
       name: "M Yousaf",
-      role: "Head of Marketing",
+      role: "Backend Developer",
       image: "/yousaf.jpg",
       bio: "Marketing strategist with a passion for financial education. Yousaf leads our mission to make financial literacy accessible to all.",
       education: "MBA from Wharton",
@@ -92,7 +92,7 @@ const TeamPage = () => {
     },
     {
       name: "Zeeshan Younas",
-      role: "Head of Customer Success",
+      role: "Ai/Ml developer",
       image: "/zeeshan.jpg",
       bio: "Customer success expert dedicated to helping users achieve their financial goals. James leads our support and education initiatives.",
       education: "BA in Business from UC Berkeley",
