@@ -26,68 +26,68 @@ const TeamPage = () => {
 
   const team = [
     {
-      name: "Sarah Johnson",
+      name: "Tayyab",
       role: "CEO & Co-Founder",
-      image: "https://images.unsplash.com/photo-1494790108755-2616b612b786?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-      bio: "Former Goldman Sachs analyst with 15+ years in fintech. Sarah leads our vision to democratize financial intelligence.",
+      image: "/tayyab.jpg",
+      bio: "Former Goldman Sachs analyst with 15+ years in fintech. Tayyab leads our vision to democratize financial intelligence.",
       education: "MBA from Harvard Business School",
       experience: "Previously VP at JPMorgan Chase",
       social: {
         linkedin: "#",
         twitter: "#",
-        email: "sarah@financeaicoach.com"
+        email: "tayyab@financeaicoach.com"
       }
     },
     {
-      name: "Michael Chen",
+      name: "Zeeshan",
       role: "CTO & Co-Founder",
-      image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-      bio: "AI researcher from Stanford with expertise in machine learning and financial algorithms. Michael architected our core AI engine.",
+      image: "/zeeshan.jpg",
+      bio: "AI researcher from Stanford with expertise in machine learning and financial algorithms. Zeeshan architected our core AI engine.",
       education: "PhD in Computer Science from Stanford",
       experience: "Former Senior Engineer at Google AI",
       social: {
         linkedin: "#",
         github: "#",
-        email: "michael@financeaicoach.com"
+        email: "zeeshan@financeaicoach.com"
       }
     },
     {
-      name: "Emily Rodriguez",
+      name: "Usama",
       role: "Head of Product",
-      image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-      bio: "Product leader with expertise in financial UX design. Emily ensures our platform is intuitive and user-friendly.",
+      image: "/usama.jpg",
+      bio: "Product leader with expertise in financial UX design. Usama ensures our platform is intuitive and user-friendly.",
       education: "MS in Design from RISD",
       experience: "Former Product Manager at Mint",
       social: {
         linkedin: "#",
         twitter: "#",
-        email: "emily@financeaicoach.com"
+        email: "usama@financeaicoach.com"
       }
     },
     {
-      name: "David Kim",
+      name: "Izza",
       role: "Head of Security",
-      image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-      bio: "Cybersecurity expert with government and private sector experience. David ensures your financial data is always protected.",
+      image: "/izza.jpg",
+      bio: "Cybersecurity expert with government and private sector experience. Izza ensures your financial data is always protected.",
       education: "MS in Cybersecurity from MIT",
       experience: "Former Security Analyst at NSA",
       social: {
         linkedin: "#",
         github: "#",
-        email: "david@financeaicoach.com"
+        email: "izza@financeaicoach.com"
       }
     },
     {
-      name: "Lisa Wang",
+      name: "Yousaf",
       role: "Head of Marketing",
-      image: "https://images.unsplash.com/photo-1580489944761-15a19d654956?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-      bio: "Marketing strategist with a passion for financial education. Lisa leads our mission to make financial literacy accessible to all.",
+      image: "/yousaf.jpg",
+      bio: "Marketing strategist with a passion for financial education. Yousaf leads our mission to make financial literacy accessible to all.",
       education: "MBA from Wharton",
       experience: "Former Marketing Director at Robinhood",
       social: {
         linkedin: "#",
         twitter: "#",
-        email: "lisa@financeaicoach.com"
+        email: "yousaf@financeaicoach.com"
       }
     },
     {
