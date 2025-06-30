@@ -11,24 +11,34 @@ if (!supabaseUrl || !supabaseAnonKey) {
     url: supabaseUrl ? 'Set' : 'Missing',
     key: supabaseAnonKey ? 'Set' : 'Missing'
   });
-  throw new Error(
+  
+  // Don't throw error immediately, allow app to continue with warning
+  console.warn(
     'Missing Supabase environment variables. Please ensure VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are set in your .env file. ' +
     'Click the "Connect to Supabase" button in the top right to set up your Supabase connection.'
   );
 }
 
-// Validate URL format
-try {
-  new URL(supabaseUrl);
-} catch (error) {
-  throw new Error(`Invalid VITE_SUPABASE_URL format: ${supabaseUrl}. Please check your environment variables.`);
+// Validate URL format only if URL exists
+if (supabaseUrl) {
+  try {
+    new URL(supabaseUrl);
+  } catch (error) {
+    console.error(`Invalid VITE_SUPABASE_URL format: ${supabaseUrl}. Please check your environment variables.`);
+  }
 }
 
-// Test connection function with timeout and better error handling
+// Test connection function with better error handling and fallback
 const testConnection = async () => {
+  // Skip connection test if environment variables are missing
+  if (!supabaseUrl || !supabaseAnonKey) {
+    console.warn('Skipping Supabase connection test - environment variables not configured');
+    return false;
+  }
+
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 second timeout
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // Increased timeout to 5 seconds
     
     const response = await fetch(`${supabaseUrl}/rest/v1/`, {
       method: 'HEAD',
@@ -54,20 +64,26 @@ const testConnection = async () => {
     return true;
   } catch (error) {
     if (error.name === 'AbortError') {
-      console.warn('Supabase connection test timed out (non-critical)');
+      console.warn('Supabase connection test timed out - this may indicate network issues or incorrect URL');
+    } else if (error.message === 'Failed to fetch') {
+      console.warn('Supabase connection failed - please check your environment variables and network connection');
     } else {
-      console.error('Supabase connection test error:', error);
+      console.error('Supabase connection test error:', error.message);
     }
     return false;
   }
 };
 
-// Test connection on initialization (non-blocking)
-testConnection().catch(() => {
-  // Ignore connection test failures - they're not critical for app functionality
-});
+// Test connection on initialization (non-blocking) - only if env vars are present
+if (supabaseUrl && supabaseAnonKey) {
+  testConnection().catch(() => {
+    // Ignore connection test failures - they're not critical for app functionality
+    console.warn('Supabase connection test failed, but app will continue to function');
+  });
+}
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+// Create Supabase client with fallback for missing environment variables
+export const supabase = supabaseUrl && supabaseAnonKey ? createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     autoRefreshToken: true,
     persistSession: true,
@@ -90,20 +106,22 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
       eventsPerSecond: 10
     }
   }
-});
+}) : null;
 
-// Add connection monitoring with better error handling
-supabase.auth.onAuthStateChange((event, session) => {
-  if (event === 'SIGNED_IN') {
-    console.log('User signed in successfully');
-  } else if (event === 'SIGNED_OUT') {
-    console.log('User signed out');
-  } else if (event === 'TOKEN_REFRESHED') {
-    console.log('Auth token refreshed');
-  } else if (event === 'USER_UPDATED') {
-    console.log('User updated');
-  }
-});
+// Add connection monitoring with better error handling - only if client exists
+if (supabase) {
+  supabase.auth.onAuthStateChange((event, session) => {
+    if (event === 'SIGNED_IN') {
+      console.log('User signed in successfully');
+    } else if (event === 'SIGNED_OUT') {
+      console.log('User signed out');
+    } else if (event === 'TOKEN_REFRESHED') {
+      console.log('Auth token refreshed');
+    } else if (event === 'USER_UPDATED') {
+      console.log('User updated');
+    }
+  });
+}
 
 // Storage bucket for receipts
 export const RECEIPTS_BUCKET = 'receipts';
@@ -214,6 +232,10 @@ const predictCategory = (merchantName, fullText) => {
 
 // Helper function to upload receipt image with improved error handling
 export const uploadReceipt = async (file, userId) => {
+  if (!supabase) {
+    throw new Error('Supabase client not initialized. Please check your environment variables.');
+  }
+
   try {
     console.log('Starting receipt upload...', { fileName: file.name, fileSize: file.size, userId });
     
@@ -252,6 +274,10 @@ export const uploadReceipt = async (file, userId) => {
 
 // Helper function to delete receipt
 export const deleteReceipt = async (url) => {
+  if (!supabase) {
+    throw new Error('Supabase client not initialized. Please check your environment variables.');
+  }
+
   try {
     // Extract filename from URL
     const urlParts = url.split('/');
@@ -479,6 +505,10 @@ const generateMockReceiptData = () => {
 
 // Store receipt data in Supabase with improved error handling
 export const storeReceiptData = async (receiptData, userId) => {
+  if (!supabase) {
+    throw new Error('Supabase client not initialized. Please check your environment variables.');
+  }
+
   try {
     console.log('Storing receipt data:', { userId, receiptData });
     
