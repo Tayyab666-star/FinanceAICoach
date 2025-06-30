@@ -126,7 +126,7 @@ export const AuthProvider = ({ children }) => {
       .join(' ');
   };
 
-  // Optimized auth user handler - faster execution
+  // Enhanced auth user handler with better profile fetching
   const handleAuthUser = async (authUser) => {
     try {
       console.log('Handling auth user:', authUser.email);
@@ -141,47 +141,38 @@ export const AuthProvider = ({ children }) => {
       console.log('Setting user data immediately:', userData);
       setUser(userData);
       
-      // Try to get profile quickly with timeout
-      const profilePromise = supabase
-        .from('user_profiles')
-        .select('*')
-        .eq('id', authUser.id)
-        .maybeSingle();
-
-      // Set a timeout for profile fetch (1 second max)
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Profile fetch timeout')), 1000)
-      );
-
+      // Fetch profile with proper error handling
       try {
-        const { data: existingProfile } = await Promise.race([profilePromise, timeoutPromise]);
+        console.log('Fetching user profile from database...');
+        const { data: existingProfile, error: fetchError } = await supabase
+          .from('user_profiles')
+          .select('*')
+          .eq('id', authUser.id)
+          .single(); // Use single() instead of maybeSingle() to ensure we get the profile
+
+        if (fetchError) {
+          console.error('Error fetching profile:', fetchError);
+          
+          // If profile doesn't exist, create it
+          if (fetchError.code === 'PGRST116') {
+            console.log('Profile not found, creating new profile...');
+            await createUserProfile(authUser.id, authUser.email);
+            return;
+          }
+          
+          throw fetchError;
+        }
 
         if (existingProfile) {
           console.log('Found existing profile:', existingProfile);
           setUserProfile(existingProfile);
           return;
         }
-      } catch (error) {
-        console.log('Profile fetch failed or timed out:', error.message);
+      } catch (profileError) {
+        console.error('Profile fetch failed:', profileError);
+        // Create new profile if fetch fails
+        await createUserProfile(authUser.id, authUser.email);
       }
-
-      // Create fallback profile immediately
-      const fallbackProfile = {
-        id: authUser.id,
-        email: authUser.email,
-        name: capitalizeName(authUser.email.split('@')[0]),
-        monthly_income: 0,
-        monthly_budget: 0,
-        setup_completed: false,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      };
-      
-      console.log('Setting fallback profile:', fallbackProfile);
-      setUserProfile(fallbackProfile);
-      
-      // Create profile in database in background (non-blocking)
-      createProfileInBackground(authUser.id, authUser.email);
       
     } catch (error) {
       console.error('Error handling auth user:', error);
@@ -206,32 +197,47 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Background profile creation - completely non-blocking
-  const createProfileInBackground = async (authUserId, email) => {
+  // Create user profile function with proper error handling
+  const createUserProfile = async (authUserId, email) => {
     try {
-      console.log('Creating profile in background for:', email);
+      console.log('Creating new user profile for:', email);
+      
+      const newProfile = {
+        id: authUserId,
+        email: email,
+        name: capitalizeName(email.split('@')[0]),
+        monthly_income: 0,
+        monthly_budget: 0,
+        setup_completed: false
+      };
       
       const { data, error } = await supabase
         .from('user_profiles')
-        .upsert({
-          id: authUserId,
-          email: email,
-          name: capitalizeName(email.split('@')[0]),
-          monthly_income: 0,
-          monthly_budget: 0,
-          setup_completed: false
-        }, {
-          onConflict: 'id'
-        })
+        .insert([newProfile])
         .select()
         .single();
 
-      if (!error && data) {
-        console.log('Background profile creation successful:', data);
-        setUserProfile(data);
+      if (error) {
+        console.error('Error creating profile:', error);
+        // Set fallback profile
+        setUserProfile(newProfile);
+        return;
       }
+      
+      console.log('Profile created successfully:', data);
+      setUserProfile(data);
+      
     } catch (error) {
-      console.log('Background profile creation failed (non-critical):', error);
+      console.error('Error in createUserProfile:', error);
+      // Set fallback profile
+      setUserProfile({
+        id: authUserId,
+        email: email,
+        name: capitalizeName(email.split('@')[0]),
+        monthly_income: 0,
+        monthly_budget: 0,
+        setup_completed: false
+      });
     }
   };
 
@@ -355,12 +361,12 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Enhanced update user profile with better error handling and immediate UI updates
+  // Enhanced update user profile with better persistence
   const updateUserProfile = async (updates) => {
     if (!user?.id) {
       console.error('No user ID available for profile update');
       setError('No user session found. Please login again.');
-      return;
+      throw new Error('No user session found');
     }
     
     try {
@@ -380,97 +386,47 @@ export const AuthProvider = ({ children }) => {
         cleanedUpdates.monthly_budget = parseFloat(updates.monthly_budget) || 0;
       }
       
+      // Ensure setup_completed is properly set
+      if (updates.setup_completed !== undefined) {
+        cleanedUpdates.setup_completed = Boolean(updates.setup_completed);
+      }
+      
       console.log('Updating profile with cleaned data:', cleanedUpdates);
       
-      // Update local state immediately for responsive UI
-      const updatedProfile = {
-        ...userProfile,
-        ...cleanedUpdates,
-        updated_at: new Date().toISOString()
-      };
-      
-      console.log('Setting updated profile locally:', updatedProfile);
-      setUserProfile(updatedProfile);
-      
-      // Update user object if name changed
-      if (cleanedUpdates.name) {
-        const updatedUser = {
-          ...user,
-          name: cleanedUpdates.name
-        };
-        setUser(updatedUser);
+      // Update database first to ensure persistence
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .update({
+          ...cleanedUpdates,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', user.id)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Database update error:', error);
+        setError('Failed to save profile changes. Please try again.');
+        throw error;
       }
       
-      // Update database with retry logic
-      let retryCount = 0;
-      const maxRetries = 3;
+      console.log('Profile updated successfully in database:', data);
       
-      while (retryCount < maxRetries) {
-        try {
-          console.log(`Attempting database update (attempt ${retryCount + 1}/${maxRetries})`);
-          
-          const { data, error } = await supabase
-            .from('user_profiles')
-            .update({
-              ...cleanedUpdates,
-              updated_at: new Date().toISOString()
-            })
-            .eq('id', user.id)
-            .select()
-            .single();
-
-          if (error) {
-            console.error('Database update error:', error);
-            
-            if (retryCount === maxRetries - 1) {
-              // Last attempt failed, revert local changes
-              setUserProfile(userProfile);
-              if (cleanedUpdates.name) {
-                setUser(user);
-              }
-              setError('Failed to save profile changes. Please try again.');
-              throw error;
-            }
-            
-            retryCount++;
-            await new Promise(resolve => setTimeout(resolve, 1000 * retryCount)); // Exponential backoff
-            continue;
-          }
-          
-          // Success - update with database response
-          if (data) {
-            console.log('Profile updated successfully in database:', data);
-            setUserProfile(data);
-            
-            // Update user object with latest name
-            if (data.name) {
-              const updatedUser = {
-                ...user,
-                name: data.name
-              };
-              setUser(updatedUser);
-            }
-          }
-          
-          return data || updatedProfile;
-          
-        } catch (dbError) {
-          console.error(`Database update attempt ${retryCount + 1} failed:`, dbError);
-          
-          if (retryCount === maxRetries - 1) {
-            // Final attempt failed
-            setUserProfile(userProfile);
-            if (cleanedUpdates.name) {
-              setUser(user);
-            }
-            setError('Failed to save profile changes. Please check your connection and try again.');
-            throw dbError;
-          }
-          
-          retryCount++;
-          await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+      // Update local state with database response
+      if (data) {
+        setUserProfile(data);
+        
+        // Update user object if name changed
+        if (data.name) {
+          const updatedUser = {
+            ...user,
+            name: data.name
+          };
+          setUser(updatedUser);
         }
       }
+      
+      return data;
       
     } catch (error) {
       console.error('Error updating user profile:', error);

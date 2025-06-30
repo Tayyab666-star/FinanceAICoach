@@ -47,6 +47,16 @@ const SetupModal = ({ isOpen, onClose, onSave, userProfile }) => {
   const [error, setError] = useState('');
   const { addNotification } = useNotifications();
 
+  // Update form data when userProfile changes
+  React.useEffect(() => {
+    if (userProfile) {
+      setFormData({
+        monthly_income: userProfile.monthly_income || 5000,
+        monthly_budget: userProfile.monthly_budget || 4000
+      });
+    }
+  }, [userProfile]);
+
   if (!isOpen) return null;
 
   const handleSubmit = async (e) => {
@@ -579,16 +589,18 @@ const Dashboard = () => {
   const { accounts, loading: accountsLoading, getTotalBalance } = useConnectedAccounts();
   const [showSetupModal, setShowSetupModal] = useState(false);
 
-  // Show setup modal for new users who haven't completed setup
-  const needsSetup = userProfile && !userProfile.setup_completed;
+  // Check if user needs setup - only show modal if setup is not completed
+  const needsSetup = userProfile && userProfile.setup_completed === false;
 
   // Auto-show setup modal for new users
   React.useEffect(() => {
     if (needsSetup) {
-      console.log('User needs setup, showing modal');
+      console.log('User needs setup, showing modal. Profile:', userProfile);
       setShowSetupModal(true);
+    } else {
+      console.log('User setup completed or no profile yet. Profile:', userProfile);
     }
-  }, [needsSetup]);
+  }, [needsSetup, userProfile]);
 
   // Calculate metrics
   const totalIncome = useMemo(() => 
@@ -653,6 +665,7 @@ const Dashboard = () => {
       console.log('Dashboard handleSetupSave called with:', setupData);
       await updateUserProfile(setupData);
       console.log('Profile updated successfully');
+      setShowSetupModal(false); // Close modal after successful save
     } catch (error) {
       console.error('Error in handleSetupSave:', error);
       throw error; // Re-throw to let the modal handle the error
