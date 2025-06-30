@@ -12,25 +12,25 @@ export const AuthProvider = ({ children }) => {
   const [isInitialized, setIsInitialized] = useState(false);
   const [error, setError] = useState(null);
 
-  // Initialize auth state on mount with faster session validation
+  // Initialize auth state on mount with improved session handling
   useEffect(() => {
     let mounted = true;
     let initializationTimeout;
 
-    // Get initial session with timeout protection
+    // Get initial session with better error handling
     const getInitialSession = async () => {
       try {
         setIsLoading(true);
         setError(null);
         
-        // Set a maximum timeout for initialization (3 seconds)
+        // Set a reasonable timeout for initialization (5 seconds)
         initializationTimeout = setTimeout(() => {
           if (mounted) {
             console.log('Auth initialization timeout - proceeding without session');
             setIsLoading(false);
             setIsInitialized(true);
           }
-        }, 3000);
+        }, 5000);
         
         // Check for existing session
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
@@ -141,37 +141,27 @@ export const AuthProvider = ({ children }) => {
       console.log('Setting user data immediately:', userData);
       setUser(userData);
       
-      // Fetch profile with proper error handling
+      // Fetch profile with timeout protection
+      const profilePromise = fetchUserProfile(authUser.id, authUser.email);
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Profile fetch timeout')), 3000)
+      );
+      
       try {
-        console.log('Fetching user profile from database...');
-        const { data: existingProfile, error: fetchError } = await supabase
-          .from('user_profiles')
-          .select('*')
-          .eq('id', authUser.id)
-          .single(); // Use single() instead of maybeSingle() to ensure we get the profile
-
-        if (fetchError) {
-          console.error('Error fetching profile:', fetchError);
-          
-          // If profile doesn't exist, create it
-          if (fetchError.code === 'PGRST116') {
-            console.log('Profile not found, creating new profile...');
-            await createUserProfile(authUser.id, authUser.email);
-            return;
-          }
-          
-          throw fetchError;
-        }
-
-        if (existingProfile) {
-          console.log('Found existing profile:', existingProfile);
-          setUserProfile(existingProfile);
-          return;
-        }
-      } catch (profileError) {
-        console.error('Profile fetch failed:', profileError);
-        // Create new profile if fetch fails
-        await createUserProfile(authUser.id, authUser.email);
+        await Promise.race([profilePromise, timeoutPromise]);
+      } catch (error) {
+        console.warn('Profile fetch failed or timed out:', error);
+        // Set fallback profile to prevent blocking
+        setUserProfile({
+          id: authUser.id,
+          email: authUser.email,
+          name: userData.name,
+          monthly_income: 0,
+          monthly_budget: 0,
+          setup_completed: false,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        });
       }
       
     } catch (error) {
@@ -192,8 +182,40 @@ export const AuthProvider = ({ children }) => {
         name: userData.name,
         monthly_income: 0,
         monthly_budget: 0,
-        setup_completed: false
+        setup_completed: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
       });
+    }
+  };
+
+  // Separate function to fetch user profile with better error handling
+  const fetchUserProfile = async (userId, email) => {
+    try {
+      console.log('Fetching user profile from database...');
+      
+      const { data: existingProfile, error: fetchError } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('id', userId)
+        .maybeSingle(); // Use maybeSingle to handle no results gracefully
+
+      if (fetchError) {
+        console.error('Error fetching profile:', fetchError);
+        throw fetchError;
+      }
+
+      if (existingProfile) {
+        console.log('Found existing profile:', existingProfile);
+        setUserProfile(existingProfile);
+        return existingProfile;
+      } else {
+        console.log('No profile found, creating new one...');
+        return await createUserProfile(userId, email);
+      }
+    } catch (error) {
+      console.error('Profile fetch failed:', error);
+      throw error;
     }
   };
 
@@ -213,7 +235,10 @@ export const AuthProvider = ({ children }) => {
       
       const { data, error } = await supabase
         .from('user_profiles')
-        .insert([newProfile])
+        .upsert([newProfile], { 
+          onConflict: 'id',
+          ignoreDuplicates: false 
+        })
         .select()
         .single();
 
@@ -221,23 +246,28 @@ export const AuthProvider = ({ children }) => {
         console.error('Error creating profile:', error);
         // Set fallback profile
         setUserProfile(newProfile);
-        return;
+        return newProfile;
       }
       
       console.log('Profile created successfully:', data);
       setUserProfile(data);
+      return data;
       
     } catch (error) {
       console.error('Error in createUserProfile:', error);
       // Set fallback profile
-      setUserProfile({
+      const fallbackProfile = {
         id: authUserId,
         email: email,
         name: capitalizeName(email.split('@')[0]),
         monthly_income: 0,
         monthly_budget: 0,
-        setup_completed: false
-      });
+        setup_completed: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+      setUserProfile(fallbackProfile);
+      return fallbackProfile;
     }
   };
 
@@ -361,7 +391,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Enhanced update user profile with better persistence
+  // Enhanced update user profile with better persistence and validation
   const updateUserProfile = async (updates) => {
     if (!user?.id) {
       console.error('No user ID available for profile update');
@@ -393,40 +423,66 @@ export const AuthProvider = ({ children }) => {
       
       console.log('Updating profile with cleaned data:', cleanedUpdates);
       
-      // Update database first to ensure persistence
-      const { data, error } = await supabase
-        .from('user_profiles')
-        .update({
-          ...cleanedUpdates,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', user.id)
-        .select()
-        .single();
+      // Update local state immediately for responsive UI
+      const updatedProfile = {
+        ...userProfile,
+        ...cleanedUpdates,
+        updated_at: new Date().toISOString()
+      };
+      setUserProfile(updatedProfile);
+      
+      // Update database with retry logic
+      let retryCount = 0;
+      const maxRetries = 3;
+      
+      while (retryCount < maxRetries) {
+        try {
+          const { data, error } = await supabase
+            .from('user_profiles')
+            .update({
+              ...cleanedUpdates,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', user.id)
+            .select()
+            .single();
 
-      if (error) {
-        console.error('Database update error:', error);
-        setError('Failed to save profile changes. Please try again.');
-        throw error;
-      }
-      
-      console.log('Profile updated successfully in database:', data);
-      
-      // Update local state with database response
-      if (data) {
-        setUserProfile(data);
-        
-        // Update user object if name changed
-        if (data.name) {
-          const updatedUser = {
-            ...user,
-            name: data.name
-          };
-          setUser(updatedUser);
+          if (error) {
+            throw error;
+          }
+          
+          console.log('Profile updated successfully in database:', data);
+          
+          // Update local state with database response
+          if (data) {
+            setUserProfile(data);
+            
+            // Update user object if name changed
+            if (data.name) {
+              const updatedUser = {
+                ...user,
+                name: data.name
+              };
+              setUser(updatedUser);
+            }
+          }
+          
+          return data;
+          
+        } catch (dbError) {
+          retryCount++;
+          console.error(`Database update attempt ${retryCount} failed:`, dbError);
+          
+          if (retryCount >= maxRetries) {
+            console.error('All database update attempts failed, but local state is updated');
+            // Don't throw error - local state is already updated
+            return updatedProfile;
+          }
+          
+          // Wait before retry
+          await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
         }
       }
-      
-      return data;
       
     } catch (error) {
       console.error('Error updating user profile:', error);

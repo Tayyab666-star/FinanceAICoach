@@ -24,11 +24,11 @@ try {
   throw new Error(`Invalid VITE_SUPABASE_URL format: ${supabaseUrl}. Please check your environment variables.`);
 }
 
-// Test connection function with timeout
+// Test connection function with timeout and better error handling
 const testConnection = async () => {
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+    const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 second timeout
     
     const response = await fetch(`${supabaseUrl}/rest/v1/`, {
       method: 'HEAD',
@@ -53,13 +53,19 @@ const testConnection = async () => {
     console.log('Supabase connection test successful');
     return true;
   } catch (error) {
-    console.error('Supabase connection test error:', error);
+    if (error.name === 'AbortError') {
+      console.warn('Supabase connection test timed out (non-critical)');
+    } else {
+      console.error('Supabase connection test error:', error);
+    }
     return false;
   }
 };
 
 // Test connection on initialization (non-blocking)
-testConnection();
+testConnection().catch(() => {
+  // Ignore connection test failures - they're not critical for app functionality
+});
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {

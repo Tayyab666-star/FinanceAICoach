@@ -589,14 +589,18 @@ const Dashboard = () => {
   const { accounts, loading: accountsLoading, getTotalBalance } = useConnectedAccounts();
   const [showSetupModal, setShowSetupModal] = useState(false);
 
-  // Check if user needs setup - only show modal if setup is not completed
+  // Check if user needs setup - only show modal if setup is not completed AND we have a profile
   const needsSetup = userProfile && userProfile.setup_completed === false;
 
-  // Auto-show setup modal for new users
+  // Auto-show setup modal for new users - with delay to ensure profile is loaded
   React.useEffect(() => {
-    if (needsSetup) {
+    if (needsSetup && userProfile) {
       console.log('User needs setup, showing modal. Profile:', userProfile);
-      setShowSetupModal(true);
+      // Small delay to ensure UI is ready
+      const timer = setTimeout(() => {
+        setShowSetupModal(true);
+      }, 500);
+      return () => clearTimeout(timer);
     } else {
       console.log('User setup completed or no profile yet. Profile:', userProfile);
     }
