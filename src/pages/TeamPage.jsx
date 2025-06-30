@@ -1,11 +1,13 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Mail, Linkedin, Twitter, Github } from 'lucide-react';
 import Navbar from '../components/Navbar';
+import { useNotifications } from '../contexts/NotificationContext';
 
 const TeamPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { addNotification } = useNotifications();
 
   // Handle scroll to section if coming from landing page
   useEffect(() => {
@@ -23,6 +25,14 @@ const TeamPage = () => {
       }
     }
   }, [location]);
+
+  const handleViewPositions = () => {
+    addNotification({
+      type: 'info',
+      title: 'No Open Positions',
+      message: 'Currently team is full, no positions available'
+    });
+  };
 
   const team = [
     {
@@ -225,7 +235,10 @@ const TeamPage = () => {
             We're always looking for talented individuals who share our passion for revolutionizing personal finance.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <button className="bg-white text-purple-600 px-8 py-4 rounded-xl font-semibold text-lg hover:bg-gray-100 transition-all duration-300 transform hover:scale-105">
+            <button 
+              onClick={handleViewPositions}
+              className="bg-white text-purple-600 px-8 py-4 rounded-xl font-semibold text-lg hover:bg-gray-100 transition-all duration-300 transform hover:scale-105"
+            >
               View Open Positions
             </button>
             <button 
