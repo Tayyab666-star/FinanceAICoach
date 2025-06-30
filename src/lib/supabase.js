@@ -60,7 +60,10 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: false, // Disable URL detection for OTP flow
-    flowType: 'pkce'
+    flowType: 'pkce',
+    storage: window.localStorage, // Explicitly use localStorage for session persistence
+    storageKey: 'financeapp-auth-token', // Custom storage key
+    debug: false // Disable debug logs in production
   },
   global: {
     headers: {
@@ -77,7 +80,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   }
 });
 
-// Add connection monitoring
+// Add connection monitoring with better error handling
 supabase.auth.onAuthStateChange((event, session) => {
   if (event === 'SIGNED_IN') {
     console.log('User signed in successfully');
@@ -85,6 +88,8 @@ supabase.auth.onAuthStateChange((event, session) => {
     console.log('User signed out');
   } else if (event === 'TOKEN_REFRESHED') {
     console.log('Auth token refreshed');
+  } else if (event === 'USER_UPDATED') {
+    console.log('User updated');
   }
 });
 
