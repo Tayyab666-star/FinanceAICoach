@@ -19,6 +19,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useTransactions, useGoals, useBudgetCategories } from '../hooks/useSupabaseData';
 import { useConnectedAccounts } from '../hooks/useConnectedAccounts';
+import { useNotifications } from '../contexts/NotificationContext';
 import { calculateBudgetUsage, generateAIInsights } from '../utils/calculations';
 import Card from '../components/Card';
 import Button from '../components/Button';
@@ -43,23 +44,63 @@ const SetupModal = ({ isOpen, onClose, onSave, userProfile }) => {
     monthly_budget: userProfile?.monthly_budget || 4000
   });
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const { addNotification } = useNotifications();
 
   if (!isOpen) return null;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setError('');
     
     try {
-      await onSave({
-        monthly_income: parseFloat(formData.monthly_income),
-        monthly_budget: parseFloat(formData.monthly_budget),
+      console.log('Submitting setup form with data:', formData);
+      
+      // Validate the data
+      const monthlyIncome = parseFloat(formData.monthly_income);
+      const monthlyBudget = parseFloat(formData.monthly_budget);
+      
+      if (isNaN(monthlyIncome) || monthlyIncome < 0) {
+        setError('Please enter a valid monthly income');
+        return;
+      }
+      
+      if (isNaN(monthlyBudget) || monthlyBudget < 0) {
+        setError('Please enter a valid monthly budget');
+        return;
+      }
+      
+      if (monthlyBudget > monthlyIncome) {
+        setError('Your budget should not exceed your income');
+        return;
+      }
+      
+      const updateData = {
+        monthly_income: monthlyIncome,
+        monthly_budget: monthlyBudget,
         setup_completed: true
+      };
+      
+      console.log('Calling onSave with:', updateData);
+      await onSave(updateData);
+      
+      addNotification({
+        type: 'success',
+        title: 'Setup Complete!',
+        message: `Your financial profile has been set up with $${monthlyIncome.toLocaleString()} monthly income and $${monthlyBudget.toLocaleString()} budget.`
       });
+      
       onClose();
     } catch (error) {
       console.error('Error saving setup:', error);
-      alert('Failed to save setup. Please try again.');
+      setError(error.message || 'Failed to save setup. Please try again.');
+      
+      addNotification({
+        type: 'error',
+        title: 'Setup Failed',
+        message: 'Failed to save your financial setup. Please try again.'
+      });
     } finally {
       setLoading(false);
     }
@@ -73,11 +114,18 @@ const SetupModal = ({ isOpen, onClose, onSave, userProfile }) => {
           To get started with your financial dashboard, please enter your monthly income and budget.
         </p>
         
+        {error && (
+          <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg">
+            <p className="text-red-800 dark:text-red-200 text-sm">{error}</p>
+          </div>
+        )}
+        
         <form onSubmit={handleSubmit} className="space-y-4">
           <Input
             label="Monthly Income"
             type="number"
             step="0.01"
+            min="0"
             value={formData.monthly_income}
             onChange={(e) => setFormData({ ...formData, monthly_income: e.target.value })}
             placeholder="Enter your monthly income"
@@ -88,6 +136,7 @@ const SetupModal = ({ isOpen, onClose, onSave, userProfile }) => {
             label="Monthly Budget"
             type="number"
             step="0.01"
+            min="0"
             value={formData.monthly_budget}
             onChange={(e) => setFormData({ ...formData, monthly_budget: e.target.value })}
             placeholder="Enter your monthly budget"
@@ -100,7 +149,7 @@ const SetupModal = ({ isOpen, onClose, onSave, userProfile }) => {
             </p>
           </div>
           
-          <Button type="submit" className="w-full" loading={loading}>
+          <Button type="submit" className="w-full" loading={loading} disabled={loading}>
             Complete Setup & Continue
           </Button>
         </form>
@@ -536,6 +585,7 @@ const Dashboard = () => {
   // Auto-show setup modal for new users
   React.useEffect(() => {
     if (needsSetup) {
+      console.log('User needs setup, showing modal');
       setShowSetupModal(true);
     }
   }, [needsSetup]);
@@ -599,7 +649,14 @@ const Dashboard = () => {
   }, [transactions]);
 
   const handleSetupSave = async (setupData) => {
-    await updateUserProfile(setupData);
+    try {
+      console.log('Dashboard handleSetupSave called with:', setupData);
+      await updateUserProfile(setupData);
+      console.log('Profile updated successfully');
+    } catch (error) {
+      console.error('Error in handleSetupSave:', error);
+      throw error; // Re-throw to let the modal handle the error
+    }
   };
 
   const handleEditFinancials = () => {

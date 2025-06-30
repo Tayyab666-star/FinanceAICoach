@@ -355,7 +355,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Update user profile
+  // Enhanced update user profile with better error handling and immediate UI updates
   const updateUserProfile = async (updates) => {
     if (!user?.id) {
       console.error('No user ID available for profile update');
@@ -366,21 +366,33 @@ export const AuthProvider = ({ children }) => {
     try {
       setError(null);
       
+      // Clean and validate updates
       let cleanedUpdates = { ...updates };
       if (updates.name) {
         cleanedUpdates.name = capitalizeName(updates.name);
       }
       
-      console.log('Updating profile with:', cleanedUpdates);
+      // Ensure numeric values are properly converted
+      if (updates.monthly_income !== undefined) {
+        cleanedUpdates.monthly_income = parseFloat(updates.monthly_income) || 0;
+      }
+      if (updates.monthly_budget !== undefined) {
+        cleanedUpdates.monthly_budget = parseFloat(updates.monthly_budget) || 0;
+      }
       
+      console.log('Updating profile with cleaned data:', cleanedUpdates);
+      
+      // Update local state immediately for responsive UI
       const updatedProfile = {
         ...userProfile,
         ...cleanedUpdates,
         updated_at: new Date().toISOString()
       };
       
+      console.log('Setting updated profile locally:', updatedProfile);
       setUserProfile(updatedProfile);
       
+      // Update user object if name changed
       if (cleanedUpdates.name) {
         const updatedUser = {
           ...user,
@@ -389,40 +401,77 @@ export const AuthProvider = ({ children }) => {
         setUser(updatedUser);
       }
       
-      const { data, error } = await supabase
-        .from('user_profiles')
-        .update({
-          ...cleanedUpdates,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', user.id)
-        .select()
-        .single();
+      // Update database with retry logic
+      let retryCount = 0;
+      const maxRetries = 3;
+      
+      while (retryCount < maxRetries) {
+        try {
+          console.log(`Attempting database update (attempt ${retryCount + 1}/${maxRetries})`);
+          
+          const { data, error } = await supabase
+            .from('user_profiles')
+            .update({
+              ...cleanedUpdates,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', user.id)
+            .select()
+            .single();
 
-      if (error) {
-        console.error('Error updating profile in database:', error);
-        setUserProfile(userProfile);
-        if (cleanedUpdates.name) {
-          setUser(user);
+          if (error) {
+            console.error('Database update error:', error);
+            
+            if (retryCount === maxRetries - 1) {
+              // Last attempt failed, revert local changes
+              setUserProfile(userProfile);
+              if (cleanedUpdates.name) {
+                setUser(user);
+              }
+              setError('Failed to save profile changes. Please try again.');
+              throw error;
+            }
+            
+            retryCount++;
+            await new Promise(resolve => setTimeout(resolve, 1000 * retryCount)); // Exponential backoff
+            continue;
+          }
+          
+          // Success - update with database response
+          if (data) {
+            console.log('Profile updated successfully in database:', data);
+            setUserProfile(data);
+            
+            // Update user object with latest name
+            if (data.name) {
+              const updatedUser = {
+                ...user,
+                name: data.name
+              };
+              setUser(updatedUser);
+            }
+          }
+          
+          return data || updatedProfile;
+          
+        } catch (dbError) {
+          console.error(`Database update attempt ${retryCount + 1} failed:`, dbError);
+          
+          if (retryCount === maxRetries - 1) {
+            // Final attempt failed
+            setUserProfile(userProfile);
+            if (cleanedUpdates.name) {
+              setUser(user);
+            }
+            setError('Failed to save profile changes. Please check your connection and try again.');
+            throw dbError;
+          }
+          
+          retryCount++;
+          await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
         }
-        setError('Failed to update profile. Please try again.');
-        throw error;
       }
       
-      if (data) {
-        console.log('Profile updated successfully in database:', data);
-        setUserProfile(data);
-        
-        if (data.name) {
-          const updatedUser = {
-            ...user,
-            name: data.name
-          };
-          setUser(updatedUser);
-        }
-      }
-      
-      return data || updatedProfile;
     } catch (error) {
       console.error('Error updating user profile:', error);
       setError(error.message || 'Failed to update profile');
@@ -430,7 +479,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Refresh user profile
+  // Refresh user profile from database
   const refreshUserProfile = async () => {
     if (!user?.id) return;
     
@@ -457,6 +506,8 @@ export const AuthProvider = ({ children }) => {
       
       setUserProfile(data);
       setUser(updatedUser);
+      
+      console.log('Profile refreshed successfully:', data);
     } catch (error) {
       console.error('Error refreshing user profile:', error);
       setError('Failed to refresh profile data');
