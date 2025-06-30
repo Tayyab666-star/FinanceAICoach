@@ -96,7 +96,7 @@ const TeamPage = () => {
       experience: " ",
       social: {
         linkedin: "https://www.linkedin.com/in/yousif-jamali",
-        github: "#",
+        github: "https://github.com/Muhammad-Yousif",
          
       }
     },
