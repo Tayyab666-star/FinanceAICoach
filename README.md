@@ -248,8 +248,9 @@ npm run build
 This project is built for demonstration purposes. Please ensure you have proper licenses for all APIs and services used in production.
 
 ## 🤝 Contributing
-
+Ahmad Raza
 This is a demonstration project showcasing modern web development practices and AI integration in financial applications.
+
 
 ---
 
